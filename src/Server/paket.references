@@ -1,0 +1,11 @@
+group Server
+    FSharp.Core
+    Saturn
+    Fable.JsonConverter
+    Fable.Elmish.Debugger
+    Fulma.Extensions
+    Fable.Elmish.React
+    Fable.Elmish.HMR
+    Fable.Core
+    dotnet-fable
+    Fulma
