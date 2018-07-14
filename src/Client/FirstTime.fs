@@ -24,20 +24,13 @@ let view model dispatch =
         [ Modal.background [ Props [ OnClick (fun _ -> (dispatch ClickBackground) ) ] ] [ ]
           Modal.Card.card [ ]
             [ Modal.Card.head [ ]
-                [ Modal.Card.title [ ]
-                    [ FHR.str "First time" ] ]
+                [ Modal.Card.title [ ] [ FHR.str "Choose your character" ] ]
               Modal.Card.body [ ]
-                [ FHR.str "something" ]
+                //The Checkradio.Name property is used to identify radio buttons in the same 
+                //group.
+                [ Checkradio.radio [ Checkradio.Name "character" ] [ str "Pupil" ]
+                  Checkradio.radio [ Checkradio.Name "character" ] [ str "Teacher" ] ]
               Modal.Card.foot [ ]
                 [ Button.button
                     [ Button.Color IsSuccess ]
                     [ FHR.str "Continue" ] ] ] ]
-(*     Hero.hero
-        [ Hero.Color IsSuccess
-          Hero.IsFullHeight ]
-        [ Hero.body []
-            [ Container.container
-                [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
-                [ Heading.h3
-                    [ Heading.Modifiers [ Modifier.TextColor IsGrey ] ]
-                    [ str "First time?" ] ] ] ] *)
