@@ -4,7 +4,7 @@
 The SAFE stack for F# web development.
 https://safe-stack.github.io/
 
-Install that using the link above then you can run build and run this.
+Install that using the link above. Then see the next section to build and run.
 
 ## Build
 ```
