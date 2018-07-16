@@ -10,8 +10,6 @@ type Model = None
 
 type Msg = None
     
-let toggle = ()
-
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     model, Cmd.none
 
