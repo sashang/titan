@@ -11,11 +11,6 @@ open Fable.Import
 
 open Shared
 
-type Msg =
-| FirstTimeMsg of Client.FirstTime.Msg //message from the first time modal page
-| LoginMsg of Client.Login.Msg //message from the login page
-| Init
-
 let handleNotFound (model: SinglePageState) =
     Browser.console.error("Error parsing url: " + Browser.window.location.href)
     ( model, Navigation.modifyUrl (Client.Pages.toPath Client.Pages.PageType.Login) )
@@ -31,7 +26,7 @@ let urlUpdate (result : Client.Pages.PageType option) (model : SinglePageState) 
         handleNotFound model
 
     | Some Client.Pages.PageType.FirstTime ->
-        { model with page = FirstTimeModel(Client.FirstTime.Model.None); username = None }, Cmd.none    
+        { model with page = FirstTimeModel({pupil = false; teacher = false}); username = None }, Cmd.none    
     
     | Some Client.Pages.PageType.Login ->
         { model with page = LoginModel; username = None }, Cmd.none
@@ -50,17 +45,29 @@ let update (msg : Msg) (model : SinglePageState) : SinglePageState * Cmd<Msg> =
 
     //When the user logs in redirect to the first time page for now.
     //TODO: Change this when we identify the user properly.
-    | LoginMsg _, _ -> {page = FirstTimeModel(Client.FirstTime.Model.None); username = Option.None}, Cmd.none
+    | LoginMsg _, _ ->
+        {page = FirstTimeModel({pupil = false; teacher = false}); username = Option.None}, Cmd.none
 
     //When the user clicks the background we get this message
     //which means they just want to escape so change the page to the login page
     | FirstTimeMsg Client.FirstTime.Msg.ClickBackground, _ ->
         {page = LoginModel; username = Option.None}, Cmd.none
     
+    //Redirect this to the appropriate page
+    | FirstTimeMsg Client.FirstTime.Msg.ClickContinue, { page = FirstTimeModel x; username = _ } ->
+        if x.teacher then
+            {page = NewTeacherModel; username = Option.None}, Cmd.none
+        else if x.pupil then
+            {page = NewPupilModel; username = Option.None}, Cmd.none
+        else
+            {page = LoginModel; username = Option.None}, Cmd.none
 
-    //TOOD: When we have identified the type of user, redirect this to the appropriate page
-    | FirstTimeMsg Client.FirstTime.Msg.ClickContinue, _ ->
-        model, Cmd.none
+    | FirstTimeMsg Client.FirstTime.Msg.TogglePupil, _ ->
+        { model with page = FirstTimeModel({ pupil = true; teacher = false})} , Cmd.none
+    
+    | FirstTimeMsg Client.FirstTime.Msg.ToggleTeacher, _ ->
+        { model with page = FirstTimeModel({ pupil = false; teacher = true})} , Cmd.none
+    
 
 let show = function
 | Some x -> string x
@@ -71,6 +78,8 @@ let view (model : SinglePageState) (dispatch : Msg -> unit) =
     match model.page with
     | LoginModel -> Client.Login.view (LoginMsg >> dispatch)
     | FirstTimeModel m -> Client.FirstTime.view m (FirstTimeMsg >> dispatch)
+    | NewTeacherModel -> Client.NewTeacher.view (NewTeacherMsg >> dispatch)
+    | NewPupilModel -> Client.NewPupil.view (NewPupilMsg >> dispatch)
 
 #if DEBUG
 open Elmish.Debug
@@ -78,6 +87,8 @@ open Elmish.HMR
 #endif
 
 Program.mkProgram init update view
+|> Program.withConsoleTrace
+|> Program.withHMR
 #if DEBUG
 |> Program.withConsoleTrace
 |> Program.withHMR

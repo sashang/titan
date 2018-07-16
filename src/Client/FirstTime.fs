@@ -10,16 +10,26 @@ module FHR = Fable.Helpers.React
 module FHRP = Fable.Helpers.React.Props
 
 [<RequireQualifiedAccess>]
-type Model =
-    | Tutor
-    | Student
-    | None
+type Model = { pupil : bool; teacher : bool }
 
 type Msg =
     | ClickContinue
     | ClickBackground
+    | TogglePupil
+    | ToggleTeacher
 
-let view model dispatch =
+let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
+    match msg with
+    | ClickContinue->
+        model, Cmd.none
+    | ClickBackground ->
+        model, Cmd.none
+    | TogglePupil ->
+        { pupil = true; teacher = false}, Cmd.none
+    | ToggleTeacher ->
+        { pupil = false; teacher = true}, Cmd.none
+        
+let view (model : Model) dispatch =
     Modal.modal [ Modal.IsActive true ]
         [ Modal.background [ Props [ OnClick (fun _ -> (dispatch ClickBackground) ) ] ] [ ]
           Modal.Card.card [ ]
@@ -28,9 +38,16 @@ let view model dispatch =
               Modal.Card.body [ ]
                 //The Checkradio.Name property is used to identify radio buttons in the same 
                 //group.
-                [ Checkradio.radio [ Checkradio.Name "character" ] [ str "Pupil" ]
-                  Checkradio.radio [ Checkradio.Name "character" ] [ str "Teacher" ] ]
+                [ Checkradio.radio 
+                    [ Checkradio.Name "character"
+                      Checkradio.Checked model.pupil                       
+                      Checkradio.OnChange (fun _ -> dispatch TogglePupil) ] [ str "Pupil" ]
+                  Checkradio.radio 
+                    [ Checkradio.Name "character"
+                      Checkradio.Checked model.teacher 
+                      Checkradio.OnChange (fun _ -> dispatch ToggleTeacher) ] [ str "Teacher" ] ]
               Modal.Card.foot [ ]
                 [ Button.button
-                    [ Button.Color IsSuccess ]
+                    [ Button.Color IsSuccess
+                      Button.OnClick (fun _ -> (dispatch ClickContinue)) ]
                     [ FHR.str "Continue" ] ] ] ]
