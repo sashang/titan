@@ -61,13 +61,11 @@ let update (msg : Msg) (model : SinglePageState) : SinglePageState * Cmd<Msg> =
             {page = NewPupilModel; username = Option.None}, Cmd.none
         else
             {page = LoginModel; username = Option.None}, Cmd.none
-
-    | FirstTimeMsg Client.FirstTime.Msg.TogglePupil, _ ->
-        { model with page = FirstTimeModel({ pupil = true; teacher = false})} , Cmd.none
     
-    | FirstTimeMsg Client.FirstTime.Msg.ToggleTeacher, _ ->
-        { model with page = FirstTimeModel({ pupil = false; teacher = true})} , Cmd.none
-    
+    //any other message from the FirstTime page (basically the TogglePupil/ToggleTeacher messages)
+    | FirstTimeMsg msg, {page = FirstTimeModel ft_model; username = _}  ->
+        let ft_model', _ = FirstTime.update msg ft_model
+        { model with page = FirstTimeModel(ft_model')}, Cmd.none
 
 let show = function
 | Some x -> string x

@@ -34,11 +34,12 @@ let view (model : Model) dispatch =
         [ Modal.background [ Props [ OnClick (fun _ -> (dispatch ClickBackground) ) ] ] [ ]
           Modal.Card.card [ ]
             [ Modal.Card.head [ ]
-                [ Modal.Card.title [ ] [ FHR.str "Choose your character" ] ]
+                [ Modal.Card.title [ ] [ FHR.str "Welcome" ] ]
               Modal.Card.body [ ]
                 //The Checkradio.Name property is used to identify radio buttons in the same 
-                //group.
-                [ Checkradio.radio 
+                //group.                
+                [ b[] [ str "It looks like this is your first time here. Are you a pupil or a teacher?" ]
+                  Checkradio.radio 
                     [ Checkradio.Name "character"
                       Checkradio.Checked model.pupil                       
                       Checkradio.OnChange (fun _ -> dispatch TogglePupil) ] [ str "Pupil" ]
