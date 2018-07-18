@@ -32,7 +32,7 @@ let urlUpdate (result : Client.Pages.PageType option) (model : SinglePageState) 
         { model with page = LoginModel; username = None }, Cmd.none
 
 let init () : SinglePageState * Cmd<Msg> =
-    {page = LoginModel; username = None}, Cmd.none
+    {page = HomeModel; username = None}, Cmd.none
 
 (*
     have a look at the parent-child description at
@@ -74,6 +74,7 @@ let show = function
 
 let view (model : SinglePageState) (dispatch : Msg -> unit) =
     match model.page with
+    | HomeModel -> Client.Home.view ()
     | LoginModel -> Client.Login.view (LoginMsg >> dispatch)
     | FirstTimeModel m -> Client.FirstTime.view m (FirstTimeMsg >> dispatch)
     | NewTeacherModel -> Client.NewTeacher.view (NewTeacherMsg >> dispatch)

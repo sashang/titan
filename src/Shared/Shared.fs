@@ -2,6 +2,7 @@ namespace Shared
 
 /// The composed model for the different possible page states of the application
 type PageModel =
+| HomeModel
 | LoginModel
 | FirstTimeModel of Client.FirstTime.Model
 | NewTeacherModel

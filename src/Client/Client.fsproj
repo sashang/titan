@@ -4,6 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Home.fs" />
     <Compile Include="NewPupil.fs" />
     <Compile Include="NewTeacher.fs" />
     <Compile Include="Login.fs" />
