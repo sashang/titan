@@ -17,13 +17,13 @@ let handleNotFound (model: SinglePageState) =
 
 /// The navigation logic of the application given a page identity parsed from the .../#info
 /// information in the URL.
-let urlUpdate (result : Client.Pages.PageType option) (model : SinglePageState) =
+let url_update (result : Client.Pages.PageType option) (model : SinglePageState) =
     match result with
     | None ->
         handleNotFound model
 
     | Some Client.Pages.PageType.Home ->
-        handleNotFound model
+        { model with page = HomeModel; username = None }, Cmd.none
 
     | Some Client.Pages.PageType.FirstTime ->
         { model with page = FirstTimeModel({pupil = false; teacher = false}); username = None }, Cmd.none
@@ -31,7 +31,7 @@ let urlUpdate (result : Client.Pages.PageType option) (model : SinglePageState) 
     | Some Client.Pages.PageType.Login ->
         { model with page = LoginModel; username = None }, Cmd.none
 
-let init () : SinglePageState * Cmd<Msg> =
+let init _ : SinglePageState * Cmd<Msg> =
     {page = HomeModel; username = None}, Cmd.none
 
 (*
@@ -72,13 +72,6 @@ let show = function
 | None -> "Loading..."
 
 
-let view (model : SinglePageState) (dispatch : Msg -> unit) =
-    match model.page with
-    | HomeModel -> Client.Home.view ()
-    | LoginModel -> Client.Login.view (LoginMsg >> dispatch)
-    | FirstTimeModel m -> Client.FirstTime.view m (FirstTimeMsg >> dispatch)
-    | NewTeacherModel -> Client.NewTeacher.view (NewTeacherMsg >> dispatch)
-    | NewPupilModel -> Client.NewPupil.view (NewPupilMsg >> dispatch)
 
 #if DEBUG
 open Elmish.Debug
@@ -86,8 +79,7 @@ open Elmish.HMR
 #endif
 
 Program.mkProgram init update view
-|> Program.withConsoleTrace
-|> Program.withHMR
+|> Program.toNavigable Pages.urlParser url_update
 #if DEBUG
 |> Program.withConsoleTrace
 |> Program.withHMR
