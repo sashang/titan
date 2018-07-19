@@ -5,7 +5,7 @@ type PageModel =
 | HomeModel
 | LoginModel
 | FirstTimeModel of Client.FirstTime.Model
-| NewTeacherModel
+| NewTeacherModel of Client.NewTeacher.Model
 | NewPupilModel
 
 type Msg =
@@ -29,8 +29,8 @@ let view_page model dispatch =
     match model.page with
     | HomeModel -> Client.Home.view ()
     | LoginModel -> Client.Login.view (LoginMsg >> dispatch)
-    | FirstTimeModel m -> Client.FirstTime.view m (FirstTimeMsg >> dispatch)
-    | NewTeacherModel -> Client.NewTeacher.view (NewTeacherMsg >> dispatch)
+    | FirstTimeModel model' -> Client.FirstTime.view model' (FirstTimeMsg >> dispatch)
+    | NewTeacherModel model' -> Client.NewTeacher.view model' (NewTeacherMsg >> dispatch)
     | NewPupilModel -> Client.NewPupil.view (NewPupilMsg >> dispatch)
 
 let view model dispatch =

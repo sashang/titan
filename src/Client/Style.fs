@@ -6,6 +6,8 @@ open Fable.Core.JsInterop
 open Fable.Import
 open Fable.PowerPack
 open Elmish.Browser.Navigation
+open Fulma
+open Fulma.Extensions
 module R = Fable.Helpers.React
 
 

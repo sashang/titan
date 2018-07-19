@@ -56,7 +56,7 @@ let update (msg : Msg) (model : SinglePageState) : SinglePageState * Cmd<Msg> =
     //Redirect this to the appropriate page
     | FirstTimeMsg Client.FirstTime.Msg.ClickContinue, { page = FirstTimeModel ft_model; username = _ } ->
         if ft_model.teacher then
-            {page = NewTeacherModel; username = None}, Cmd.none
+            {page = NewTeacherModel (Client.NewTeacher.init ()); username = None}, Cmd.none
         else if ft_model.pupil then
             {page = NewPupilModel; username = None}, Cmd.none
         else
