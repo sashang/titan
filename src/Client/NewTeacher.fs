@@ -67,10 +67,3 @@ let view model (dispatch : Msg -> unit) =
             ]
         ]
     ]
-    (*Hero.hero [ Hero.Color IsSuccess
-                Hero.IsFullHeight ]
-        [ Hero.body [ ]
-            [ Container.container
-                [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
-                    [ form [ ]
-                        [ input_field "School name" "Name of your school" ] ] ] ]*)
