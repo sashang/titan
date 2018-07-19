@@ -44,9 +44,27 @@ let view model (dispatch : Msg -> unit) =
         Hero.Color IsSuccess
         Hero.IsFullHeight
     ] [
+        Hero.head [ ] [
+            Container.container [ Container.IsFluid ]
+                [ Section.section [ ]
+                    [ Level.level [ ]
+                        [ Level.left [ ]
+                            [ Level.item [ ]
+                                [ Heading.h1 [ Heading.Is3
+                                               Heading.Modifiers [ Modifier.TextColor IsBlack ] ]
+                                               [ str "The New Kid" ] ] ]
+                          Level.right [ ]
+                            [ Level.item [ ]
+                                [ Text.span [ Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is3)
+                                                          Modifier.TextColor IsLink ] ] [ a [ Href "#how_it_works" ] [ str "How it Works" ] ] ]
+                              Level.item [ ]
+                                [ viewLink Pages.Login "Login" ] ] ] ]
+            ]]
         Hero.body [ ] [
             Container.container [
-                Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ]
+                Container.Modifiers [
+                    Modifier.TextAlignment (Screen.All, TextAlignment.Centered)
+                ]
             ] [
                 Column.column [
                     Column.Width (Screen.All, Column.Is4)
@@ -57,10 +75,21 @@ let view model (dispatch : Msg -> unit) =
                     ] [
                         str "Welcome"
                     ]
-                    Box.box' [ ] [
+                    Box.box' [
+                        Modifiers [
+                            Modifier.TextAlignment (Screen.All, TextAlignment.Left)
+                        ]
+                    ] [
                         form [ ] [
                             input_field "School Name" "Give your school a name"
                             input_field "Your Name" "Your name"
+                            Button.button [
+                                Button.Color IsInfo
+                                Button.IsFullWidth
+                                Button.CustomClass "is-large is-block"
+                            ] [
+                                str "Submit"
+                            ]
                         ]
                     ]
                 ]
