@@ -34,6 +34,9 @@ let url_update (result : Client.Pages.PageType option) (model : SinglePageState)
     | Some Client.Pages.PageType.NewTeacher ->
         { model with page = NewTeacherModel (NewTeacher.init ()); username = None }, Cmd.none
 
+    | Some Client.Pages.PageType.NewPupil ->
+        { model with page = NewPupilModel; username = None }, Cmd.none
+
 let init _ : SinglePageState * Cmd<Msg> =
     {page = HomeModel; username = None}, Cmd.none
 
