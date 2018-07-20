@@ -26,10 +26,13 @@ let url_update (result : Client.Pages.PageType option) (model : SinglePageState)
         { model with page = HomeModel; username = None }, Cmd.none
 
     | Some Client.Pages.PageType.FirstTime ->
-        { model with page = FirstTimeModel({pupil = false; teacher = false}); username = None }, Cmd.none
+        { model with page = FirstTimeModel (FirstTime.init ()); username = None }, Cmd.none
 
     | Some Client.Pages.PageType.Login ->
         { model with page = LoginModel; username = None }, Cmd.none
+
+    | Some Client.Pages.PageType.NewTeacher ->
+        { model with page = NewTeacherModel (NewTeacher.init ()); username = None }, Cmd.none
 
 let init _ : SinglePageState * Cmd<Msg> =
     {page = HomeModel; username = None}, Cmd.none
@@ -46,23 +49,17 @@ let update (msg : Msg) (model : SinglePageState) : SinglePageState * Cmd<Msg> =
     //When the user logs in redirect to the first time page for now.
     //TODO: Change this when we identify the user properly.
     | LoginMsg _, _ ->
-        {page = FirstTimeModel({pupil = false; teacher = false}); username = None}, Cmd.none
-
-    //When the user clicks the background we get this message
-    //which means they just want to escape so change the page to the login page
-    | FirstTimeMsg Client.FirstTime.Msg.ClickBackground, _ ->
-        {page = LoginModel; username = None}, Cmd.none
+        {page = FirstTimeModel (FirstTime.init ()); username = None}, Cmd.none
 
     //Redirect this to the appropriate page
     | FirstTimeMsg Client.FirstTime.Msg.ClickContinue, { page = FirstTimeModel ft_model; username = _ } ->
-        if ft_model.teacher then
+        match ft_model.character with
+        | FirstTime.Teacher ->
             {page = NewTeacherModel (Client.NewTeacher.init ()); username = None}, Cmd.none
-        else if ft_model.pupil then
+        | FirstTime.Pupil ->
             {page = NewPupilModel; username = None}, Cmd.none
-        else
-            {page = LoginModel; username = None}, Cmd.none
 
-    //any other message from the FirstTime page (basically the TogglePupil/ToggleTeacher messages)
+    //any other message from the FirstTime page
     | FirstTimeMsg msg, {page = FirstTimeModel ft_model; username = _}  ->
         let ft_model', _ = FirstTime.update msg ft_model
         { model with page = FirstTimeModel(ft_model')}, Cmd.none
@@ -79,7 +76,7 @@ open Elmish.HMR
 #endif
 
 Program.mkProgram init update view
-|> Program.toNavigable Pages.urlParser url_update
+|> Program.toNavigable Client.Pages.urlParser url_update
 #if DEBUG
 |> Program.withConsoleTrace
 |> Program.withHMR

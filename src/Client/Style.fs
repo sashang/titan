@@ -39,39 +39,37 @@ let buttonLink cssClass onClick elements =
           Style [ Cursor "pointer" ] ] elements
 
 let client_header =
-    Container.container [ Container.IsFluid ] [
-        Section.section [ ] [
-            Level.level [ ] [
-                Level.left [ ] [
-                    Level.item [ ] [
-                        Heading.h1 [
-                            Heading.Is3
-                            Heading.Modifiers [
-                                Modifier.TextColor IsBlack
-                            ]
-                        ] [ R.str "The New Kid" ]
-                    ]
-                ]
-                Level.right [ ] [
-                    Level.item [ ] [
-                        Text.span [
-                            Modifiers [
-                                Modifier.TextSize (Screen.All, TextSize.Is3)
-                                Modifier.TextColor IsLink
-                            ]
-                        ] [
-                            R.a [
-                                Href "#how_it_works"
-                            ] [ R.str "How it Works" ]
-                        ]
-                    ]
-                    Level.item [ ] [
-                        viewLink Pages.Login "Login"
-                    ]
-                ]
-            ]
-        ]
-    ]
+      Section.section [ ] [
+          Level.level [ ] [
+              Level.left [ ] [
+                  Level.item [ ] [
+                      Heading.h1 [
+                          Heading.Is3
+                          Heading.Modifiers [
+                              Modifier.TextColor IsBlack
+                          ]
+                      ] [ R.str "The New Kid" ]
+                  ]
+              ]
+              Level.right [ ] [
+                  Level.item [ ] [
+                      Text.span [
+                          Modifiers [
+                              Modifier.TextSize (Screen.All, TextSize.Is3)
+                              Modifier.TextColor IsLink
+                          ]
+                      ] [
+                          R.a [
+                              Href "#how_it_works"
+                          ] [ R.str "How it Works" ]
+                      ]
+                  ]
+                  Level.item [ ] [
+                      viewLink Pages.Login "Login"
+                  ]
+              ]
+          ]
+      ]
 
 let onEnter msg dispatch =
     function

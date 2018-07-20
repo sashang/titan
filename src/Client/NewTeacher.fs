@@ -44,9 +44,9 @@ let view model (dispatch : Msg -> unit) =
         Hero.Color IsSuccess
         Hero.IsFullHeight
     ] [
-        Hero.head [ ] [
+        (*Hero.head [ ] [
             client_header
-        ]
+        ]*)
         Hero.body [ ] [
             Container.container [
                 Container.Modifiers [
