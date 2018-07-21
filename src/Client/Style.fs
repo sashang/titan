@@ -53,16 +53,7 @@ let client_header =
               ]
               Level.right [ ] [
                   Level.item [ ] [
-                      Text.span [
-                          Modifiers [
-                              Modifier.TextSize (Screen.All, TextSize.Is3)
-                              Modifier.TextColor IsLink
-                          ]
-                      ] [
-                          R.a [
-                              Href "#how_it_works"
-                          ] [ R.str "How it Works" ]
-                      ]
+                      viewLink Pages.HowItWorks "How it Works"                      
                   ]
                   Level.item [ ] [
                       viewLink Pages.Login "Login"

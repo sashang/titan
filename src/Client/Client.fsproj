@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
-  <ItemGroup>
+  <ItemGroup>    
     <Compile Include="Pages.fs" />
     <Compile Include="Style.fs" />
     <Compile Include="Home.fs" />
@@ -11,6 +11,8 @@
     <Compile Include="NewTeacher.fs" />
     <Compile Include="Login.fs" />
     <Compile Include="FirstTime.fs" />
+    <Compile Include="MainSchool.fs" />
+    <Compile Include="HowItWorks.fs" />    
     <Compile Include="Shared.fs" />
     <Compile Include="Client.fs" />
   </ItemGroup>

@@ -45,7 +45,9 @@ let select_character dispatch =
 
 let view model dispatch =
     Hero.hero [
-        Hero.Color IsSuccess
+        Hero.IsBold
+        Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ]
+        Hero.Color IsWhite
         Hero.IsFullHeight
     ] [
         Hero.head [ ] [
@@ -87,7 +89,7 @@ let view model dispatch =
                                 Button.button [
                                     Button.Color IsInfo
                                     Button.IsFullWidth
-                                    Button.OnClick (fun ev -> (Navigation.newUrl "new_teacher" |> ignore; dispatch ClickContinue))
+                                    Button.OnClick (fun _ -> dispatch ClickContinue)
                                     Button.CustomClass "is-large is-block"
                                 ] [ str "Submit" ]
                             ]

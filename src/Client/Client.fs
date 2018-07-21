@@ -36,6 +36,12 @@ let url_update (result : Client.Pages.PageType option) (model : SinglePageState)
 
     | Some Client.Pages.PageType.NewPupil ->
         { model with page = NewPupilModel; username = None }, Cmd.none
+    
+    | Some Client.Pages.PageType.HowItWorks ->
+        { model with page = HowItWorksModel; username = None }, Cmd.none
+
+    | Some Client.Pages.PageType.MainSchool->
+        { model with page = MainSchoolModel (MainSchool.init "" ""); username = None }, Cmd.none
 
 let init _ : SinglePageState * Cmd<Msg> =
     {page = HomeModel; username = None}, Cmd.none
@@ -66,6 +72,13 @@ let update (msg : Msg) (model : SinglePageState) : SinglePageState * Cmd<Msg> =
     | FirstTimeMsg msg, {page = FirstTimeModel ft_model; username = _}  ->
         let ft_model', _ = FirstTime.update msg ft_model
         { model with page = FirstTimeModel(ft_model')}, Cmd.none
+    
+    | NewTeacherMsg Client.NewTeacher.Msg.Submit, {page = NewTeacherModel new_teacher_model; username = _} ->
+        {model with page = (MainSchoolModel (Client.MainSchool.init new_teacher_model.teacher_name new_teacher_model.school_name))}, Cmd.none
+
+    | MainSchoolMsg msg, {page = MainSchoolModel main_school_model; username = _} ->
+        let main_school_model', _ = MainSchool.update msg main_school_model
+        {page = MainSchoolModel main_school_model'; username = None}, Cmd.none
 
 let show = function
 | Some x -> string x

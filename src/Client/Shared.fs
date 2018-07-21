@@ -7,12 +7,15 @@ type PageModel =
 | FirstTimeModel of Client.FirstTime.Model
 | NewTeacherModel of Client.NewTeacher.Model
 | NewPupilModel
+| MainSchoolModel of Client.MainSchool.Model
+| HowItWorksModel
 
 type Msg =
 | FirstTimeMsg of Client.FirstTime.Msg //message from the first time modal page
 | LoginMsg of Client.Login.Msg //message from the login page
 | NewTeacherMsg of Client.NewTeacher.Msg
 | NewPupilMsg of Client.NewPupil.Msg
+| MainSchoolMsg of Client.MainSchool.Msg
 | Init
 
 
@@ -32,6 +35,8 @@ let view_page model dispatch =
     | FirstTimeModel model' -> Client.FirstTime.view model' (FirstTimeMsg >> dispatch)
     | NewTeacherModel model' -> Client.NewTeacher.view model' (NewTeacherMsg >> dispatch)
     | NewPupilModel -> Client.NewPupil.view (NewPupilMsg >> dispatch)
+    | MainSchoolModel model' -> Client.MainSchool.view model' (MainSchoolMsg>> dispatch)
+    | HowItWorksModel -> Client.HowItWorks.view ()
 
 let view model dispatch =
     view_page model dispatch

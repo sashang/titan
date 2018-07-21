@@ -14,13 +14,15 @@ open Style
 
 type Model = {
     school_name : string
+    teacher_name : string
 }
 
 type Msg =
 | SetSchoolName
+| Submit
 
 let init () =
-    { school_name = "" }
+    { school_name = ""; teacher_name = "" }
 
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     model, Cmd.none
@@ -44,9 +46,9 @@ let view model (dispatch : Msg -> unit) =
         Hero.Color IsSuccess
         Hero.IsFullHeight
     ] [
-        (*Hero.head [ ] [
+        Hero.head [ ] [
             client_header
-        ]*)
+        ]
         Hero.body [ ] [
             Container.container [
                 Container.Modifiers [
@@ -74,6 +76,7 @@ let view model (dispatch : Msg -> unit) =
                                 Button.Color IsInfo
                                 Button.IsFullWidth
                                 Button.CustomClass "is-large is-block"
+                                Button.OnClick (fun _ -> dispatch Submit)
                             ] [
                                 str "Submit"
                             ]
