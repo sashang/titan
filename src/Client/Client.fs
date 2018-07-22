@@ -53,20 +53,21 @@ let init _ : SinglePageState * Cmd<Msg> =
 *)
 let update (msg : Msg) (model : SinglePageState) : SinglePageState * Cmd<Msg> =
     match msg, model with
-    | Init, _ -> model, Cmd.none
-
     //When the user logs in redirect to the first time page for now.
     //TODO: Change this when we identify the user properly.
     | LoginMsg _, _ ->
-        {page = FirstTimeModel (FirstTime.init ()); username = None}, Cmd.none
+        {page = FirstTimeModel (FirstTime.init ()); username = None},
+        Navigation.newUrl (Client.Pages.toPath Client.Pages.FirstTime)
 
     //Redirect this to the appropriate page
     | FirstTimeMsg Client.FirstTime.Msg.ClickContinue, { page = FirstTimeModel ft_model; username = _ } ->
         match ft_model.character with
         | FirstTime.Teacher ->
-            {page = NewTeacherModel (Client.NewTeacher.init ()); username = None}, Cmd.none
+            {model with page = NewTeacherModel (Client.NewTeacher.init ())},
+            Navigation.newUrl (Client.Pages.toPath Client.Pages.NewTeacher)
         | FirstTime.Pupil ->
-            {page = NewPupilModel; username = None}, Cmd.none
+            {model with page = NewPupilModel},
+            Navigation.newUrl (Client.Pages.toPath Client.Pages.NewPupil)
 
     //any other message from the FirstTime page
     | FirstTimeMsg msg, {page = FirstTimeModel ft_model; username = _}  ->
@@ -74,11 +75,14 @@ let update (msg : Msg) (model : SinglePageState) : SinglePageState * Cmd<Msg> =
         { model with page = FirstTimeModel(ft_model')}, Cmd.none
     
     | NewTeacherMsg Client.NewTeacher.Msg.Submit, {page = NewTeacherModel new_teacher_model; username = _} ->
-        {model with page = (MainSchoolModel (Client.MainSchool.init new_teacher_model.teacher_name new_teacher_model.school_name))}, Cmd.none
+        {model with page = (MainSchoolModel (Client.MainSchool.init new_teacher_model.teacher_name new_teacher_model.school_name))},
+        Navigation.newUrl (Client.Pages.toPath Client.Pages.MainSchool)
 
     | MainSchoolMsg msg, {page = MainSchoolModel main_school_model; username = _} ->
         let main_school_model', _ = MainSchool.update msg main_school_model
-        {page = MainSchoolModel main_school_model'; username = None}, Cmd.none
+        {model with page = MainSchoolModel main_school_model'}, Cmd.none
+    
+    | _,_ -> model, Cmd.none
 
 let show = function
 | Some x -> string x
