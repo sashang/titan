@@ -21,7 +21,7 @@ let webApp = scope {
 }
 *)
 
-let webApp = scope {
+let webApp = router {
     get "" (fun next ctx -> task {
         return! next ctx
     })
@@ -34,7 +34,7 @@ let configureSerialization (services:IServiceCollection) =
 
 let app = application {
     url ("http://0.0.0.0:" + port.ToString() + "/")
-    router webApp
+    use_router webApp
     memory_cache
     use_static publicPath
     service_config configureSerialization
