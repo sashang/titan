@@ -74,25 +74,23 @@ let view model dispatch =
                         ]
                     ] [
                         Box.box' [ ] [
-                            form [ ] [
-                                Label.label [] [ words 20 "It looks like this is your first time here. Are you a pupil or a teacher?" ]
-                                Field.div [] [
-                                    Control.div [] [
-                                        Select.select [ Select.Props [ OnChange (select_character dispatch) ] ] [
-                                            select [ DefaultValue "pupil" ] [
-                                                option [ Value "teacher" ] [ str "Teacher" ]
-                                                option [ Value "pupil" ] [ str "Pupil" ]
-                                            ]
+                            Label.label [] [ words 20 "It looks like this is your first time here. Are you a pupil or a teacher?" ]
+                            Field.div [] [
+                                Control.div [] [
+                                    Select.select [ Select.Props [ OnChange (select_character dispatch) ] ] [
+                                        select [ DefaultValue "pupil" ] [
+                                            option [ Value "teacher" ] [ str "Teacher" ]
+                                            option [ Value "pupil" ] [ str "Pupil" ]
                                         ]
                                     ]
                                 ]
-                                Button.button [
-                                    Button.Color IsInfo
-                                    Button.IsFullWidth
-                                    Button.OnClick (fun _ -> dispatch ClickContinue)
-                                    Button.CustomClass "is-large is-block"
-                                ] [ str "Submit" ]
                             ]
+                            Button.button [
+                                Button.Color IsInfo
+                                Button.IsFullWidth
+                                Button.OnClick (fun _ -> dispatch ClickContinue)
+                                Button.CustomClass "is-large is-block"
+                            ] [ str "Submit" ]
                         ]
                     ]
                 ]

@@ -69,17 +69,15 @@ let view model (dispatch : Msg -> unit) =
                             Modifier.TextAlignment (Screen.All, TextAlignment.Left)
                         ]
                     ] [
-                        form [ ] [
-                            input_field "School Name" "Give your school a name"
-                            input_field "Your Name" "Your name"
-                            Button.button [
-                                Button.Color IsInfo
-                                Button.IsFullWidth
-                                Button.CustomClass "is-large is-block"
-                                Button.OnClick (fun _ -> dispatch Submit)
-                            ] [
-                                str "Submit"
-                            ]
+                        input_field "School Name" "Give your school a name"
+                        input_field "Your Name" "Your name"
+                        Button.button [
+                            Button.Color IsInfo
+                            Button.IsFullWidth
+                            Button.CustomClass "is-large is-block"
+                            Button.OnClick (fun _ -> dispatch Submit)
+                        ] [
+                            str "Submit"
                         ]
                     ]
                 ]
