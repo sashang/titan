@@ -1,15 +1,9 @@
 ﻿module Client.NewTeacher
 
 open Fulma
-open Fulma.Extensions
 open Elmish
 open Fable.Helpers.React
-open Fable.Helpers.React.Props
-open Fable.Core.JsInterop
-open Fable.Helpers.React
-open Fable.Helpers.React.Props
-open Fable.PowerPack
-open Fable.PowerPack.Fetch.Fetch_types
+open Fable.Import
 open Style
 
 type Model = {
@@ -18,16 +12,28 @@ type Model = {
 }
 
 type Msg =
-| SetSchoolName
+| SetSchoolName of string
 | Submit
 
 let init () =
     { school_name = ""; teacher_name = "" }
 
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
-    model, Cmd.none
+    match msg with
+    | SetSchoolName name ->
+        {model with school_name = name}, Cmd.none
+    | Submit ->
+        model, Cmd.none
 
-let input_field field_name description =
+let on_change dispatch =
+    fun (ev : React.FormEvent) ->
+        let sn = ev.Value
+        dispatch (SetSchoolName sn)
+
+let on_submit dispatch =
+    dispatch Submit
+
+let input_field field_name description on_change =
     Field.div [ ] [
         Label.label [ ] [
             words 20 field_name
@@ -37,6 +43,7 @@ let input_field field_name description =
                 Input.Size IsLarge
                 Input.Color IsPrimary
                 Input.Placeholder description
+                Input.OnChange on_change
             ]
         ]
     ]
@@ -71,13 +78,13 @@ let view model (dispatch : Msg -> unit) =
                             Modifier.TextAlignment (Screen.All, TextAlignment.Left)
                         ]
                     ] [
-                        input_field "School Name" "Give your school a name"
-                        input_field "Your Name" "Your name"
+                        input_field "School Name" "Give your school a name" (on_change dispatch)
+                        input_field "Your Name" "Your name" (on_change dispatch)
                         Button.button [
                             Button.Color IsInfo
                             Button.IsFullWidth
                             Button.CustomClass "is-large is-block"
-                            Button.OnClick (fun _ -> dispatch Submit)
+                            Button.OnClick (fun _ -> on_submit dispatch)
                         ] [
                             str "Submit"
                         ]

@@ -71,16 +71,20 @@ let update (msg : Msg) (model : SinglePageState) : SinglePageState * Cmd<Msg> =
 
     //any other message from the FirstTime page
     | FirstTimeMsg msg, {page = FirstTimeModel ft_model; username = _}  ->
-        let ft_model', _ = FirstTime.update msg ft_model
-        { model with page = FirstTimeModel(ft_model')}, Cmd.none
-    
+        let ft_model', msg' = FirstTime.update msg ft_model
+        { model with page = FirstTimeModel(ft_model')}, Cmd.map FirstTimeMsg msg'
+
     | NewTeacherMsg Client.NewTeacher.Msg.Submit, {page = NewTeacherModel new_teacher_model; username = _} ->
-        {model with page = (MainSchoolModel (Client.MainSchool.init new_teacher_model.teacher_name new_teacher_model.school_name))},
-        Navigation.newUrl (Client.Pages.toPath Client.Pages.MainSchool)
+        {model with page = (MainSchoolModel (Client.MainSchool.init new_teacher_model.teacher_name new_teacher_model.school_name))}, Cmd.none
+        //Navigation.newUrl (Client.Pages.toPath Client.Pages.MainSchool)
+
+    | NewTeacherMsg msg, {page = NewTeacherModel nt_model; username = _} ->
+        let nt_model', msg' = NewTeacher.update msg nt_model
+        {model with page = NewTeacherModel(nt_model')}, Cmd.map NewTeacherMsg msg'
 
     | MainSchoolMsg msg, {page = MainSchoolModel main_school_model; username = _} ->
-        let main_school_model', _ = MainSchool.update msg main_school_model
-        {model with page = MainSchoolModel main_school_model'}, Cmd.none
+        let main_school_model', msg' = MainSchool.update msg main_school_model
+        {model with page = MainSchoolModel main_school_model'}, Cmd.map MainSchoolMsg msg'
     
     | _,_ -> model, Cmd.none
 

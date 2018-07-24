@@ -1,15 +1,11 @@
 module Client.FirstTime
 
 open Fulma
-open Fulma.Extensions
-open Elmish.Browser.Navigation
 open Elmish
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.Import
 open Fable.Core.JsInterop
-open Fable.PowerPack
-open Fable.PowerPack.Fetch.Fetch_types
 open Client.Style
 
 type Character =

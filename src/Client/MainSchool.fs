@@ -22,22 +22,17 @@ let init tn sn =
 
 let view model dispatch =
     Hero.hero [
-        Hero.Color IsSuccess
-        Hero.IsFullHeight
+        Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ]
+        Hero.Color IsWhite
+        Hero.IsHalfHeight
     ] [
         Hero.head [ ] [
             client_header
         ]
         Hero.body [ ] [
-            Container.container [
-                Container.IsFluid
-                Container.Modifiers [
-                    Modifier.TextAlignment (Screen.All, TextAlignment.Centered)
-                    Modifier.TextColor IsBlack
-                ]
-            ] [
+            Container.container [ Container.IsFluid ] [
                 Heading.h1[
-                    Heading.Modifiers [ Modifier.TextColor IsGrey ]
+                    Heading.Modifiers [ Modifier.TextColor IsPrimary ]
                 ] [
                     str model.school_name
                 ]
@@ -47,4 +42,3 @@ let view model dispatch =
             ]
         ]
     ]
-        
