@@ -14,6 +14,7 @@ type Model = {
 
 type Msg =
 | SetSchoolName of string
+| SetTeacherName of string
 | Submit
 
 let init () =
@@ -23,13 +24,20 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
     | SetSchoolName name ->
         {model with school_name = name}, Cmd.none
+    | SetTeacherName name ->
+        {model with teacher_name = name}, Cmd.none
     | Submit ->
         model, Navigation.newUrl (Client.Pages.toPath Client.Pages.MainSchool)
 
-let on_change dispatch =
+let on_school_change dispatch =
     fun (ev : React.FormEvent) ->
         let sn = ev.Value
         dispatch (SetSchoolName sn)
+
+let on_teacher_change dispatch =
+    fun (ev : React.FormEvent) ->
+        let tn = ev.Value
+        dispatch (SetTeacherName tn)
 
 let on_submit dispatch =
     dispatch Submit
@@ -79,8 +87,8 @@ let view model (dispatch : Msg -> unit) =
                             Modifier.TextAlignment (Screen.All, TextAlignment.Left)
                         ]
                     ] [
-                        input_field "School Name" "Give your school a name" (on_change dispatch)
-                        input_field "Your Name" "Your name" (on_change dispatch)
+                        input_field "School Name" "Give your school a name" (on_school_change dispatch)
+                        input_field "Your Name" "Your name" (on_teacher_change dispatch)
                         Button.button [
                             Button.Color IsInfo
                             Button.IsFullWidth
