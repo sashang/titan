@@ -43,7 +43,9 @@ let input_field field_name description =
 
 let view model (dispatch : Msg -> unit) =
     Hero.hero [
-        Hero.Color IsSuccess
+        Hero.IsBold
+        Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ]
+        Hero.Color IsWhite
         Hero.IsFullHeight
     ] [
         Hero.head [ ] [

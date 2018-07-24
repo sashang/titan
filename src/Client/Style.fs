@@ -15,14 +15,21 @@ let goToUrl (e: React.MouseEvent) =
     let href = !!e.target?href
     Navigation.newUrl href |> List.map (fun f -> f ignore) |> ignore
 
+(*for documentation about these react properties and styles see for example
+https://facebook.github.io/react-native/docs/layout-props#flexdirection*)
 let viewLink page description =
-  R.a [ Style [ Padding "0 20px" ]
+    R.a [
+        Style [
+            CSSProp.Padding "0 20px"
+            CSSProp.TextDecorationLine "underline"
+            CSSProp.FontSize 25
+        ]
         Href (Pages.toPath page)
-        OnClick goToUrl]
-      [ R.str description]
+        OnClick goToUrl
+    ] [ R.str description]
 
 let centerStyle direction =
-    Style [ Display "flex"
+    Style [ CSSProp.Display "flex"
             FlexDirection direction
             AlignItems "center"
             JustifyContent "center"
@@ -43,12 +50,7 @@ let client_header =
           Level.level [ ] [
               Level.left [ ] [
                   Level.item [ ] [
-                      Heading.h1 [
-                          Heading.Is3
-                          Heading.Modifiers [
-                              Modifier.TextColor IsBlack
-                          ]
-                      ] [ R.str "The New Kid" ]
+                      viewLink Pages.Home "The New Kid"
                   ]
               ]
               Level.right [ ] [

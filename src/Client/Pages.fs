@@ -14,7 +14,7 @@ type PageType =
 
 let toPath =
     function
-    | PageType.Home -> ""
+    | PageType.Home -> "#home"
     | PageType.Login -> "#login"
     | PageType.FirstTime -> "#first_time"
     | PageType.NewTeacher -> "#new_teacher"
@@ -25,7 +25,7 @@ let toPath =
 /// The URL is turned into a Result.
 let pageParser : Parser<PageType -> PageType,_> =
     oneOf
-        [ map PageType.Home (s "")
+        [ map PageType.Home (s "home")
           map PageType.Login (s "login")
           map PageType.FirstTime (s "first_time")
           map PageType.NewTeacher (s "new_teacher")

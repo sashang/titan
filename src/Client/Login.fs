@@ -67,7 +67,8 @@ let column (dispatch : Msg -> unit) =
 let view (dispatch : Msg -> unit) =
     Hero.hero
         [ Hero.Color IsSuccess
-          Hero.IsFullHeight ]
+          Hero.IsFullHeight
+          Hero.Color IsWhite ]
         [ Hero.body [ ]
             [ Container.container
                 [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
