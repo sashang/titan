@@ -2,11 +2,13 @@ module Client.FirstTime
 
 open Fulma
 open Elmish
+open Elmish.Browser.Navigation
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.Import
 open Fable.Core.JsInterop
 open Client.Style
+
 
 type Character =
 | Pupil
@@ -25,8 +27,18 @@ let init () =
 
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
-    | ClickContinue->
-        model, Cmd.none
+    
+    //if we click continue
+    | ClickContinue ->
+        //who did we choose?
+        match model.character with
+        | Teacher ->
+        //then navigate to the teacher page
+            model, Navigation.newUrl (Client.Pages.toPath Client.Pages.NewTeacher)
+        | Pupil ->
+        //navigate the pupil page
+            model, Navigation.newUrl (Client.Pages.toPath Client.Pages.NewPupil)
+
     | SelectCharacter c ->
         { character = c}, Cmd.none
 

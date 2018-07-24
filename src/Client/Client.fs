@@ -41,7 +41,7 @@ let url_update (result : Client.Pages.PageType option) (model : SinglePageState)
         { model with page = HowItWorksModel; username = None }, Cmd.none
 
     | Some Client.Pages.PageType.MainSchool->
-        { model with page = MainSchoolModel (MainSchool.init "" ""); username = None }, Cmd.none
+        { model with page = MainSchoolModel (MainSchool.init "asdasd" "pppp"); username = None }, Cmd.none
 
 let init _ : SinglePageState * Cmd<Msg> =
     {page = HomeModel; username = None}, Cmd.none
@@ -59,24 +59,9 @@ let update (msg : Msg) (model : SinglePageState) : SinglePageState * Cmd<Msg> =
         {page = FirstTimeModel (FirstTime.init ()); username = None},
         Navigation.newUrl (Client.Pages.toPath Client.Pages.FirstTime)
 
-    //Redirect this to the appropriate page
-    | FirstTimeMsg Client.FirstTime.Msg.ClickContinue, { page = FirstTimeModel ft_model; username = _ } ->
-        match ft_model.character with
-        | FirstTime.Teacher ->
-            {model with page = NewTeacherModel (Client.NewTeacher.init ())},
-            Navigation.newUrl (Client.Pages.toPath Client.Pages.NewTeacher)
-        | FirstTime.Pupil ->
-            {model with page = NewPupilModel},
-            Navigation.newUrl (Client.Pages.toPath Client.Pages.NewPupil)
-
-    //any other message from the FirstTime page
     | FirstTimeMsg msg, {page = FirstTimeModel ft_model; username = _}  ->
         let ft_model', msg' = FirstTime.update msg ft_model
         { model with page = FirstTimeModel(ft_model')}, Cmd.map FirstTimeMsg msg'
-
-    | NewTeacherMsg Client.NewTeacher.Msg.Submit, {page = NewTeacherModel new_teacher_model; username = _} ->
-        {model with page = (MainSchoolModel (Client.MainSchool.init new_teacher_model.teacher_name new_teacher_model.school_name))}, Cmd.none
-        //Navigation.newUrl (Client.Pages.toPath Client.Pages.MainSchool)
 
     | NewTeacherMsg msg, {page = NewTeacherModel nt_model; username = _} ->
         let nt_model', msg' = NewTeacher.update msg nt_model

@@ -2,6 +2,7 @@
 
 open Fulma
 open Elmish
+open Elmish.Browser.Navigation
 open Fable.Helpers.React
 open Fable.Import
 open Style
@@ -23,7 +24,7 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     | SetSchoolName name ->
         {model with school_name = name}, Cmd.none
     | Submit ->
-        model, Cmd.none
+        model, Navigation.newUrl (Client.Pages.toPath Client.Pages.MainSchool)
 
 let on_change dispatch =
     fun (ev : React.FormEvent) ->
