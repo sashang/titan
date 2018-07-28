@@ -18,6 +18,7 @@ let handleNotFound (model: SinglePageState) =
 /// The navigation logic of the application given a page identity parsed from the .../#info
 /// information in the URL.
 let url_update (result : Client.Pages.PageType option) (model : SinglePageState) =
+    printf "url_update"
     match result with
     | None ->
         handleNotFound model
@@ -40,8 +41,10 @@ let url_update (result : Client.Pages.PageType option) (model : SinglePageState)
     | Some Client.Pages.PageType.HowItWorks ->
         { model with page = HowItWorksModel; username = None }, Cmd.none
 
-    | Some Client.Pages.PageType.MainSchool->
-        { model with page = MainSchoolModel (MainSchool.init "asdasd" "pppp"); username = None }, Cmd.none
+    | Some (Client.Pages.PageType.MainSchool (Some (sn, tn))) ->
+        printfn "MainSchool url_update"
+        { model with page = MainSchoolModel (MainSchool.init sn tn); username = None }, Cmd.none
+
 
 let init _ : SinglePageState * Cmd<Msg> =
     {page = HomeModel; username = None}, Cmd.none

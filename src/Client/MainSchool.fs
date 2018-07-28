@@ -16,9 +16,8 @@ type Model = {
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     model, Cmd.none
 
-let init tn sn =
+let init sn tn =
     {teacher_name = tn; school_name = sn}
-
 
 let view model dispatch =
     Hero.hero [

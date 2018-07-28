@@ -27,7 +27,8 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     | SetTeacherName name ->
         {model with teacher_name = name}, Cmd.none
     | Submit ->
-        model, Navigation.newUrl (Client.Pages.toPath Client.Pages.MainSchool)
+        printfn "%s %s" model.school_name model.teacher_name
+        model, Navigation.newUrl (Client.Pages.toPath (Client.Pages.MainSchool (Some (model.school_name, model.teacher_name))))
 
 let on_school_change dispatch =
     fun (ev : React.FormEvent) ->
