@@ -35,7 +35,7 @@ let view_page model dispatch =
     | FirstTimeModel model -> Client.FirstTime.view model (FirstTimeMsg >> dispatch)
     | NewTeacherModel model -> Client.NewTeacher.view model (NewTeacherMsg >> dispatch)
     | NewPupilModel -> Client.NewPupil.view (NewPupilMsg >> dispatch)
-    | MainSchoolModel model' -> Client.MainSchool.view model' (MainSchoolMsg>> dispatch)
+    | MainSchoolModel model -> Client.MainSchool.view model (MainSchoolMsg>> dispatch)
     | HowItWorksModel -> Client.HowItWorks.view ()
 
 let view model dispatch =
