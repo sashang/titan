@@ -19,7 +19,7 @@ let view () =
         Hero.body [ ] [
             Container.container [ Container.IsFluid ] [
                 Heading.h1 [ Heading.Modifiers [ Modifier.TextColor IsBlack ] ] [
-                    str "Need to grow your classroom?"
+                    str "Need more space in your classroom?"
                 ]
                 Heading.h3 [ Heading.Modifiers [ Modifier.TextColor IsBlack ] ] [
                     str "Add students to your class virtually"

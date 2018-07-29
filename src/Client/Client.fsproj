@@ -5,6 +5,8 @@
   </PropertyGroup>
   <ItemGroup>    
     <Compile Include="Pages.fs" />
+    <Compile Include="Pupil.fs" />
+    <Compile Include="Class.fs" />
     <Compile Include="Style.fs" />
     <Compile Include="Home.fs" />
     <Compile Include="NewPupil.fs" />
