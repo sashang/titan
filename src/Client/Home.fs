@@ -1,9 +1,7 @@
 ﻿module Client.Home
 
 open Fulma
-open Elmish
 open Fable.Helpers.React
-open Fable.Helpers.React.Props
 
 open Style
 
