@@ -1,5 +1,7 @@
 module Client.Main
 
+open Client.Pages
+
 open Elmish
 open Elmish.Browser
 open Elmish.Browser.Navigation
@@ -47,6 +49,10 @@ let url_update (result : Client.Pages.PageType option) (model : SinglePageState)
         | None ->
             { model with page = MainSchoolModel (MainSchool.init "" "" []); username = None }, Cmd.none
 
+    | Some AddClass ->
+        { model with page = AddClassModel (AddClass.init ()); username = None }, Cmd.none
+        
+
 
 let init _ : SinglePageState * Cmd<Msg> =
     {page = HomeModel; username = None}, Cmd.none
@@ -56,8 +62,8 @@ let init _ : SinglePageState * Cmd<Msg> =
     https://elmish.github.io/elmish/parent-child.html to understand how update messages
     propagate from the child to parent. It's more subtle than it appears from surface.
 *)
-let update (msg : Msg) (model : SinglePageState) : SinglePageState * Cmd<Msg> =
-    match msg, model with
+let update (msg : Msg) (sps : SinglePageState) : SinglePageState * Cmd<Msg> =
+    match msg, sps with
     //When the user logs in redirect to the first time page for now.
     //TODO: Change this when we identify the user properly.
     | LoginMsg _, _ ->
@@ -66,17 +72,19 @@ let update (msg : Msg) (model : SinglePageState) : SinglePageState * Cmd<Msg> =
 
     | FirstTimeMsg msg, {page = FirstTimeModel ft_model; username = _}  ->
         let ft_model', msg' = FirstTime.update msg ft_model
-        { model with page = FirstTimeModel(ft_model')}, Cmd.map FirstTimeMsg msg'
+        { sps with page = FirstTimeModel(ft_model')}, Cmd.map FirstTimeMsg msg'
 
     | NewTeacherMsg msg, {page = NewTeacherModel nt_model; username = _} ->
         let nt_model', msg' = NewTeacher.update msg nt_model
-        {model with page = NewTeacherModel(nt_model')}, Cmd.map NewTeacherMsg msg'
+        {sps with page = NewTeacherModel(nt_model')}, Cmd.map NewTeacherMsg msg'
 
     | MainSchoolMsg msg, {page = MainSchoolModel main_school_model; username = _} ->
         let main_school_model', msg' = MainSchool.update msg main_school_model
-        {model with page = MainSchoolModel main_school_model'}, Cmd.map MainSchoolMsg msg'
-    
-    | _,_ -> model, Cmd.none
+        {sps with page = MainSchoolModel main_school_model'}, Cmd.map MainSchoolMsg msg'
+
+    | AddClassMsg msg, {page = AddClassModel model; username = _} ->
+        let model', msg' = AddClass.update msg model
+        {sps with page = AddClassModel model'}, Cmd.map AddClassMsg msg'
 
 let show = function
 | Some x -> string x

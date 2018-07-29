@@ -9,6 +9,7 @@ type PageModel =
 | NewPupilModel
 | MainSchoolModel of Client.MainSchool.Model
 | HowItWorksModel
+| AddClassModel of Client.AddClass.Model
 
 type Msg =
 | FirstTimeMsg of Client.FirstTime.Msg //message from the first time modal page
@@ -16,6 +17,7 @@ type Msg =
 | NewTeacherMsg of Client.NewTeacher.Msg
 | NewPupilMsg of Client.NewPupil.Msg
 | MainSchoolMsg of Client.MainSchool.Msg
+| AddClassMsg of Client.AddClass.Msg
 | Init
 
 
@@ -24,12 +26,8 @@ type SinglePageState = {
     username : string option //who I am
 }
 
-open Fable.Helpers.React
-open Fable.Helpers.React.Props
-open Client.Style
-
-let view_page model dispatch =
-    match model.page with
+let view_page sps dispatch =
+    match sps.page with
     | HomeModel -> Client.Home.view ()
     | LoginModel -> Client.Login.view (LoginMsg >> dispatch)
     | FirstTimeModel model -> Client.FirstTime.view model (FirstTimeMsg >> dispatch)
@@ -37,6 +35,7 @@ let view_page model dispatch =
     | NewPupilModel -> Client.NewPupil.view (NewPupilMsg >> dispatch)
     | MainSchoolModel model -> Client.MainSchool.view model (MainSchoolMsg>> dispatch)
     | HowItWorksModel -> Client.HowItWorks.view ()
+    | AddClassModel model -> Client.AddClass.view model (AddClassMsg >> dispatch)
 
 let view model dispatch =
     view_page model dispatch

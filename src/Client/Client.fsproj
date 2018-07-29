@@ -8,6 +8,7 @@
     <Compile Include="Pupil.fs" />
     <Compile Include="Class.fs" />
     <Compile Include="Style.fs" />
+    <Compile Include="AddClass.fs" />
     <Compile Include="Home.fs" />
     <Compile Include="NewPupil.fs" />
     <Compile Include="NewTeacher.fs" />

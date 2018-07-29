@@ -1,9 +1,13 @@
 ﻿//The page of the teachers school
 module Client.MainSchool
 
-open Fulma
+open Client.Pages
 open Elmish
+open Elmish.Browser
+open Elmish.Browser.Navigation
 open Fable.Helpers.React
+open Fable.Helpers.React.Props
+open Fulma
 open Style
 open System
 
@@ -19,30 +23,43 @@ type Model = {
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
     | ClickAddClass ->
-        {model with classes = List.append model.classes [{Class.Info.date = DateTimeOffset(DateTime.Now); Class.Info.pupils = [] }] }, Cmd.none
+        model,  Navigation.newUrl (to_path AddClass)
 
 let init sn tn classes =
     {teacher_name = tn; school_name = sn; classes = classes}
 
 ///Create view for an individual class
 let view_class (info : Class.Info) =
-    Section.section [] [
-        str (info.date.ToString ())
+    Media.media [] [
+        Media.left [ ] [
+            str (info.date.ToString("HH:mm"))
+        ]
+        Media.content [] [
+            Image.image [ Image.Is128x128 ] [
+                img [ Src "https://placehold.it/128x128" ]
+            ]
+            str "somename"
+        ]
+        Media.content [] [
+            Image.image [ Image.Is128x128 ] [
+                img [ Src "https://placehold.it/128x128" ]
+            ]
+            str "somename"
+        ]
     ]
 
 ///Create view for a list of classses
 let view_classes model dispatch =
     Section.section [] [
-        Heading.h3 [
+        Heading.h2 [
             Heading.Modifiers [ Modifier.TextColor IsPrimary ]
         ] [
-            str "Upcoming classes"
+            str (DateTime.Today.ToLongDateString())
         ]
         Heading.h5 [ 
-            Heading.IsSubtitle
-            Heading.Modifiers [ Modifier.TextColor IsDark ]] [
+            Heading.Modifiers [ Modifier.TextColor IsGreyDark ]] [
             yield (match model.classes with
-                   | [] -> str "None"
+                   | [] -> str "No classes today!"
                    | classes -> List.map view_class classes |> ofList)
         ]
     ]
@@ -70,7 +87,7 @@ let view model dispatch =
                         ]
                         Heading.h3 [ 
                             Heading.IsSubtitle
-                            Heading.Modifiers [ Modifier.TextColor IsDark ]] [
+                            Heading.Modifiers [ Modifier.TextColor IsGreyDark ]] [
                             str ("Principal " + model.teacher_name)
                         ]
                         view_classes model dispatch

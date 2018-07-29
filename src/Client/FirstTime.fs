@@ -94,7 +94,7 @@ let view model dispatch =
                                 ]
                             ]
                             Button.button [
-                                Button.Color IsInfo
+                                Button.Color IsPrimary
                                 Button.IsFullWidth
                                 Button.OnClick (fun _ -> dispatch ClickContinue)
                                 Button.CustomClass "is-large is-block"

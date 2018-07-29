@@ -50,7 +50,7 @@ let column (dispatch : Msg -> unit) =
                         [ input [ Type "checkbox" ]
                           str "Remember me" ] ]
                   Button.button
-                    [ Button.Color IsInfo
+                    [ Button.Color IsPrimary
                       Button.IsFullWidth
                       Button.OnClick (fun _ -> (dispatch ClickLogin))
                       Button.CustomClass "is-large is-block" ]

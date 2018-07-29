@@ -15,6 +15,7 @@ type PageType =
     | NewPupil
     | MainSchool of (string*string) option
     | HowItWorks
+    | AddClass
 
 let to_path =
     function
@@ -24,6 +25,7 @@ let to_path =
     | PageType.NewTeacher -> "#new_teacher"
     | PageType.NewPupil -> "#new_pupil"
     | PageType.HowItWorks -> "#how_it_works"
+    | PageType.AddClass -> "#add_class"
     | PageType.MainSchool x ->
         match x with
         | Some (sn, tn) -> "#main_school?school_name=" + sn + "&teacher_name=" + tn
@@ -38,6 +40,7 @@ let page_parser : Parser<PageType -> _,_> =
           map PageType.NewTeacher (s "new_teacher")
           map PageType.NewPupil (s "new_pupil")
           map PageType.HowItWorks (s "how_it_works")
+          map PageType.AddClass (s "add_class")
           map ((fun sn tn ->
                     match sn, tn with
                     | Some sn, Some tn -> MainSchool (Some (sn, tn))

@@ -1,48 +1,45 @@
-﻿module Client.NewTeacher
+module Client.AddClass
 
 open Fulma
 open Elmish
 open Elmish.Browser.Navigation
 open Fable.Helpers.React
+open Fable.Helpers.React.Props
 open Fable.Import
 open Style
+open System
 
 type Model = {
-    school_name : string
-    teacher_name : string
+    start_time : DateTimeOffset
+    end_time : DateTimeOffset
 }
 
 type Msg =
-| SetSchoolName of string
-| SetTeacherName of string
 | Submit
+| SetStartTime of DateTimeOffset
+| SetEndTime of DateTimeOffset
 
 let init () =
-    { school_name = ""; teacher_name = "" }
+    { start_time = DateTimeOffset.Now ; end_time = DateTimeOffset.Now }
 
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
-    | SetSchoolName name ->
-        {model with school_name = name}, Cmd.none
-    | SetTeacherName name ->
-        {model with teacher_name = name}, Cmd.none
     | Submit ->
-        model, Navigation.newUrl (Client.Pages.to_path (Client.Pages.MainSchool (Some (model.school_name, model.teacher_name))))
+        model, Navigation.jump -1
 
-let on_school_change dispatch =
-    fun (ev : React.FormEvent) ->
-        let sn = ev.Value
-        dispatch (SetSchoolName sn)
+let on_blur_end_time dispatch =
+    fun (ev : React.FocusEvent) ->
+        let end_time = DateTimeOffset()
+        dispatch (SetStartTime end_time)
 
-let on_teacher_change dispatch =
-    fun (ev : React.FormEvent) ->
-        let tn = ev.Value
-        dispatch (SetTeacherName tn)
+let on_blur_start_time dispatch =
+    fun (ev : React.FocusEvent) ->
+        let start_time = DateTimeOffset()
+        dispatch (SetStartTime start_time)
 
 let on_submit dispatch =
     dispatch Submit
-
-let input_field field_name description on_change =
+let input_field field_name description on_blur =
     Field.div [ ] [
         Label.label [ ] [
             words 20 field_name
@@ -52,17 +49,16 @@ let input_field field_name description on_change =
                 Input.Size IsLarge
                 Input.Color IsPrimary
                 Input.Placeholder description
-                Input.OnChange on_change
+                Input.Props [ OnBlur on_blur ]
             ]
         ]
     ]
 
 let view model (dispatch : Msg -> unit) =
     Hero.hero [
-        Hero.IsBold
         Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ]
         Hero.Color IsWhite
-        Hero.IsFullHeight
+        Hero.IsHalfHeight
     ] [
         Hero.head [ ] [
             client_header
@@ -80,15 +76,15 @@ let view model (dispatch : Msg -> unit) =
                     Heading.h3 [
                         Heading.Modifiers [ Modifier.TextColor IsGrey ]
                     ] [
-                        str "Welcome"
+                        str "Enter the start and end times"
                     ]
                     Box.box' [
                         Modifiers [
                             Modifier.TextAlignment (Screen.All, TextAlignment.Left)
                         ]
                     ] [
-                        input_field "School Name" "Give your school a name" (on_school_change dispatch)
-                        input_field "Your Name" "Your name" (on_teacher_change dispatch)
+                        input_field "Start Time" "" (on_blur_start_time dispatch)
+                        input_field "End Time" "" (on_blur_end_time dispatch)
                         Button.button [
                             Button.Color IsPrimary
                             Button.IsFullWidth
