@@ -13,7 +13,7 @@ open Shared
 
 let handleNotFound (model: SinglePageState) =
     Browser.console.error("Error parsing url: " + Browser.window.location.href)
-    ( model, Navigation.modifyUrl (Client.Pages.toPath Client.Pages.PageType.Login) )
+    ( model, Navigation.modifyUrl (Client.Pages.to_path Client.Pages.PageType.Login) )
 
 /// The navigation logic of the application given a page identity parsed from the .../#info
 /// information in the URL.
@@ -62,7 +62,7 @@ let update (msg : Msg) (model : SinglePageState) : SinglePageState * Cmd<Msg> =
     //TODO: Change this when we identify the user properly.
     | LoginMsg _, _ ->
         {page = FirstTimeModel (FirstTime.init ()); username = None},
-        Navigation.newUrl (Client.Pages.toPath Client.Pages.FirstTime)
+        Navigation.newUrl (Client.Pages.to_path Client.Pages.FirstTime)
 
     | FirstTimeMsg msg, {page = FirstTimeModel ft_model; username = _}  ->
         let ft_model', msg' = FirstTime.update msg ft_model
@@ -90,7 +90,7 @@ open Elmish.HMR
 #endif
 
 Program.mkProgram init update view
-|> Program.toNavigable Client.Pages.urlParser url_update
+|> Program.toNavigable Client.Pages.url_parser url_update
 #if DEBUG
 |> Program.withConsoleTrace
 |> Program.withHMR

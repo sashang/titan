@@ -24,7 +24,7 @@ let viewLink page description =
             CSSProp.TextDecorationLine "underline"
             CSSProp.FontSize 25
         ]
-        Href (Pages.toPath page)
+        Href (Pages.to_path page)
         OnClick goToUrl
     ] [ R.str description]
 

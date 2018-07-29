@@ -34,10 +34,10 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
         match model.character with
         | Teacher ->
         //then navigate to the teacher page
-            model, Navigation.newUrl (Client.Pages.toPath Client.Pages.NewTeacher)
+            model, Navigation.newUrl (Client.Pages.to_path Client.Pages.NewTeacher)
         | Pupil ->
         //navigate the pupil page
-            model, Navigation.newUrl (Client.Pages.toPath Client.Pages.NewPupil)
+            model, Navigation.newUrl (Client.Pages.to_path Client.Pages.NewPupil)
 
     | SelectCharacter c ->
         { character = c}, Cmd.none

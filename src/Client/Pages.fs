@@ -16,7 +16,7 @@ type PageType =
     | MainSchool of (string*string) option
     | HowItWorks
 
-let toPath =
+let to_path =
     function
     | PageType.Home -> "#home"
     | PageType.Login -> "#login"
@@ -30,7 +30,7 @@ let toPath =
         | None -> "#main_school"
 
 /// The URL is turned into a Result.
-let pageParser : Parser<PageType -> _,_> =
+let page_parser : Parser<PageType -> _,_> =
     oneOf
         [ map PageType.Home (s "home")
           map PageType.Login (s "login")
@@ -44,4 +44,4 @@ let pageParser : Parser<PageType -> _,_> =
                     | _ -> MainSchool None))
                 (s "main_school" <?> stringParam "school_name" <?> stringParam "teacher_name")]
 
-let urlParser location = parseHash pageParser location
+let url_parser location = parseHash page_parser location
