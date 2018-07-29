@@ -32,8 +32,8 @@ let view_page model dispatch =
     match model.page with
     | HomeModel -> Client.Home.view ()
     | LoginModel -> Client.Login.view (LoginMsg >> dispatch)
-    | FirstTimeModel model' -> Client.FirstTime.view model' (FirstTimeMsg >> dispatch)
-    | NewTeacherModel model' -> Client.NewTeacher.view model' (NewTeacherMsg >> dispatch)
+    | FirstTimeModel model -> Client.FirstTime.view model (FirstTimeMsg >> dispatch)
+    | NewTeacherModel model -> Client.NewTeacher.view model (NewTeacherMsg >> dispatch)
     | NewPupilModel -> Client.NewPupil.view (NewPupilMsg >> dispatch)
     | MainSchoolModel model' -> Client.MainSchool.view model' (MainSchoolMsg>> dispatch)
     | HowItWorksModel -> Client.HowItWorks.view ()
