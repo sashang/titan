@@ -4,14 +4,14 @@ group Server
     storage: none
     source https://api.nuget.org/v3/index.json
 
-nuget dotnet-fable
-nuget Fable.Elmish
-nuget Fable.Elmish.Browser
-nuget Fable.Elmish.Debugger
-nuget Fable.Elmish.HMR
-nuget Fable.Elmish.React
+    nuget dotnet-fable
+    nuget Fable.Elmish
+    nuget Fable.Elmish.Debugger
+    nuget Fable.Elmish.HMR
+    nuget Fable.Elmish.React
     nuget FSharp.Core
-nuget Fulma
+    nuget Fulma
+nuget jose-jwt
     nuget Saturn
     nuget Fable.JsonConverter
     nuget Fulma.Extensions

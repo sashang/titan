@@ -26,19 +26,43 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
     | Submit ->
         model, Navigation.jump -1
+    | SetEndTime time ->
+        {model with end_time = time}, Cmd.none
+    | SetStartTime time ->
+        {model with start_time = time}, Cmd.none
 
-let on_blur_end_time dispatch =
-    fun (ev : React.FocusEvent) ->
-        let end_time = DateTimeOffset()
-        dispatch (SetStartTime end_time)
+let date_time_offset_from_string s =
+    DateTimeOffset()
 
-let on_blur_start_time dispatch =
-    fun (ev : React.FocusEvent) ->
-        let start_time = DateTimeOffset()
-        dispatch (SetStartTime start_time)
+let on_change_end_time dispatch =
+    fun (ev : React.FormEvent) ->
+        let end_time = ev.Value
+        dispatch (SetEndTime (date_time_offset_from_string end_time))
+
+let on_change_start_time dispatch =
+    fun (ev : React.FormEvent) ->
+        let start_time = ev.Value
+        dispatch (SetStartTime (date_time_offset_from_string start_time))
 
 let on_submit dispatch =
     dispatch Submit
+
+let select_field name on_change =
+    Field.div [ ] [
+        Label.label [ ] [
+            words 20 name
+        ]
+        Control.div [ ] [
+            Select.select [
+                Select.Props [ OnChange on_change ]
+            ] [
+                select [ ] [
+                    option [ Value "1" ] [ str "v1" ]
+                ]
+            ]
+        ]
+    ]
+
 let input_field field_name description on_blur =
     Field.div [ ] [
         Label.label [ ] [
@@ -83,8 +107,8 @@ let view model (dispatch : Msg -> unit) =
                             Modifier.TextAlignment (Screen.All, TextAlignment.Left)
                         ]
                     ] [
-                        input_field "Start Time" "" (on_blur_start_time dispatch)
-                        input_field "End Time" "" (on_blur_end_time dispatch)
+                        select_field "Start Time" (on_change_start_time dispatch)
+                        select_field "End Time" (on_change_end_time dispatch)
                         Button.button [
                             Button.Color IsPrimary
                             Button.IsFullWidth
