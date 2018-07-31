@@ -11,7 +11,6 @@
     <Compile Include="JsonWebToken.fs" />
     <Compile Include="FableJson.fs" />
     <Compile Include="Auth.fs" />
-    <Compile Include="./Storage/Defaults.fs" />
     <Compile Include="./Storage/FileSystem.fs" />
     <Compile Include="Database.fs" />
     <Compile Include="Server.fs" />
