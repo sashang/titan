@@ -1,16 +1,12 @@
 module Client.Main
 
 open Client.Pages
-
 open Elmish
 open Elmish.Browser
 open Elmish.Browser.Navigation
 open Elmish.React
-
-
 open Fable.Import
 open Fable.Import.Browser
-
 open Shared
 
 let handleNotFound (model: SinglePageState) =
@@ -52,8 +48,6 @@ let url_update (result : Client.Pages.PageType option) (model : SinglePageState)
     | Some AddClass ->
         { model with page = AddClassModel (AddClass.init ()); username = None }, Cmd.none
         
-
-
 let init _ : SinglePageState * Cmd<Msg> =
     {page = HomeModel; username = None}, Cmd.none
 

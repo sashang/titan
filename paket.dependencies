@@ -11,10 +11,11 @@ group Server
     nuget Fable.Elmish.React
     nuget FSharp.Core
     nuget Fulma
-nuget jose-jwt
+    nuget jose-jwt
     nuget Saturn
     nuget Fable.JsonConverter
     nuget Fulma.Extensions
+    nuget Saturn.Extensions.Authorization
 
 group Client
     storage: none

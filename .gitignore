@@ -14,3 +14,4 @@ release.sh
 .idea/
 *.DotSettings.user
 yarn-error.log
+.google-oauth-env
