@@ -7,7 +7,29 @@ https://safe-stack.github.io/
 Install that using the link above. Then see the next section to build and run.
 
 ## Build
+
 ```
 fake build --target run
 ```
-This should open up a web browser. If not point the browser at `http://localhost:8080`
+
+## Running
+
+The command above should start both the client and the server and web browser
+should open pointing to the client side port. If not point the browser at
+`http://localhost:8080`. This is the client side interface, which is written
+in F# and transpiled to Javascript. It's implemented as a single page app
+which means that the Javascript for all the pages of this site is loaded when
+the user's browser makes the first request. Subsequent pages don't need to
+make requests to the server. Requests to the server are only made for specfic
+data that resides on the database or for authentication with other
+authetication providers like Google.
+
+
+The server side code runs on port `http://localhost:8085`. This is all in F#
+on top of ASP.NET Core. You'll need the following environment variables set
+```
+GOOGLE_ID
+GOOGLE_SECRET
+```
+which you can get by registering with Google+. If those environment variables
+are not set the server will not start.
