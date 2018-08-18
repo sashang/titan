@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Shared/Maybe.fs" />
+    <Compile Include="../Shared/Shared.fs" />
     <Compile Include="Shared/Domain.fs" />
     <Compile Include="Shared/ServerUrls.fs" />
     <Compile Include="ServerTypes.fs" />

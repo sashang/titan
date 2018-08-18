@@ -7,6 +7,7 @@ open Elmish.Browser.Navigation
 open Elmish.React
 open Fable.Import
 open Fable.Import.Browser
+open Fable.PowerPack
 open Shared
 
 let handleNotFound (model: SinglePageState) =
@@ -56,11 +57,13 @@ let init _ : SinglePageState * Cmd<Msg> =
     https://elmish.github.io/elmish/parent-child.html to understand how update messages
     propagate from the child to parent. It's more subtle than it appears from surface.
 *)
+
 let update (msg : Msg) (sps : SinglePageState) : SinglePageState * Cmd<Msg> =
     match msg, sps with
     //When the user logs in redirect to the first time page for now.
     //TODO: Change this when we identify the user properly.
-    | LoginMsg _, _ ->
+    | LoginMsg msg, {page = LoginModel; username = _} ->
+        let login_model', msg' = Login.update msg
         {page = FirstTimeModel (FirstTime.init ()); username = None},
         Navigation.newUrl (Client.Pages.to_path Client.Pages.FirstTime)
 

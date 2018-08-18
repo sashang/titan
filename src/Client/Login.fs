@@ -1,24 +1,42 @@
 module Client.Login
 
 open Elmish
+open Elmish.Browser.Navigation
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
+open Fable.PowerPack
 open Fulma
+open Shared
 
 type LoginState =
 | FirstTime
+| Failed
 
 type Msg =
-| ClickLogin
+| GetLoginGoogle
+| GotLoginGoogle of UserCredentialsResponse
+| ErrorMsg of exn
 
 type Model = {
     login_state : LoginState
+    user_info : UserCredentialsResponse option
 }
 
-let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
+let get_credentials () =
+    promise {
+        let! credentials = Fetch.fetchAs<UserCredentialsResponse> ("user-credentials") []
+        return credentials
+    }
+
+let update (msg : Msg) : Model*Cmd<Msg> =
     match msg with
-    | ClickLogin ->
-        { model with login_state = FirstTime }, Cmd.none
+    | GetLoginGoogle ->
+        { login_state = FirstTime; user_info = None }, Cmd.ofPromise get_credentials () GotLoginGoogle ErrorMsg
+    | GotLoginGoogle credentials ->
+        { login_state = FirstTime; user_info = Some credentials },
+        Navigation.newUrl  (Client.Pages.to_path Client.Pages.FirstTime)
+    | ErrorMsg _ -> { login_state = Failed; user_info = None }, Cmd.none
+
 
 let column (dispatch : Msg -> unit) =
     Column.column
@@ -52,7 +70,7 @@ let column (dispatch : Msg -> unit) =
                   Button.button
                     [ Button.Color IsPrimary
                       Button.IsFullWidth
-                      Button.OnClick (fun _ -> (dispatch ClickLogin))
+                      Button.OnClick (fun _ -> (dispatch GetLoginGoogle))
                       Button.CustomClass "is-large is-block" ]
                     [ str "Login" ] ] ]
           Text.p [ Modifiers [ Modifier.TextColor IsGrey ] ]

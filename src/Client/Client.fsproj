@@ -6,6 +6,7 @@
   <ItemGroup>    
     <Compile Include="Pages.fs" />
     <Compile Include="Pupil.fs" />
+    <Compile Include="../Shared/Shared.fs" />
     <Compile Include="Class.fs" />
     <Compile Include="Style.fs" />
     <Compile Include="AddClass.fs" />
