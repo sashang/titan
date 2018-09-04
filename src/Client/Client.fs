@@ -28,7 +28,7 @@ let url_update (result : Client.Pages.PageType option) (model : SinglePageState)
         { model with page = FirstTimeModel (FirstTime.init ()); username = None }, Cmd.none
 
     | Some Client.Pages.PageType.Login ->
-        { model with page = LoginModel; username = None }, Cmd.none
+        { model with page = LoginModel Login.init; username = None }, Cmd.none
 
     | Some Client.Pages.PageType.NewTeacher ->
         { model with page = NewTeacherModel (NewTeacher.init ()); username = None }, Cmd.none
@@ -59,29 +59,26 @@ let init _ : SinglePageState * Cmd<Msg> =
 *)
 
 let update (msg : Msg) (sps : SinglePageState) : SinglePageState * Cmd<Msg> =
-    match msg, sps with
-    //When the user logs in redirect to the first time page for now.
-    //TODO: Change this when we identify the user properly.
-    | LoginMsg msg, {page = LoginModel; username = _} ->
-        let login_model', msg' = Login.update msg
-        {page = FirstTimeModel (FirstTime.init ()); username = None},
-        Navigation.newUrl (Client.Pages.to_path Client.Pages.FirstTime)
+    match msg, sps with    
+    | LoginMsg msg, {page = LoginModel login_model; username = _} ->
+        let login_model', cmd = Login.update msg
+        { sps with page = LoginModel login_model' }, Cmd.map LoginMsg cmd
 
     | FirstTimeMsg msg, {page = FirstTimeModel ft_model; username = _}  ->
-        let ft_model', msg' = FirstTime.update msg ft_model
-        { sps with page = FirstTimeModel(ft_model')}, Cmd.map FirstTimeMsg msg'
+        let ft_model', cmd = FirstTime.update msg ft_model
+        { sps with page = FirstTimeModel ft_model' }, Cmd.map FirstTimeMsg cmd
 
     | NewTeacherMsg msg, {page = NewTeacherModel nt_model; username = _} ->
-        let nt_model', msg' = NewTeacher.update msg nt_model
-        {sps with page = NewTeacherModel(nt_model')}, Cmd.map NewTeacherMsg msg'
+        let nt_model', cmd = NewTeacher.update msg nt_model
+        {sps with page = NewTeacherModel nt_model' }, Cmd.map NewTeacherMsg cmd
 
     | MainSchoolMsg msg, {page = MainSchoolModel main_school_model; username = _} ->
-        let main_school_model', msg' = MainSchool.update msg main_school_model
-        {sps with page = MainSchoolModel main_school_model'}, Cmd.map MainSchoolMsg msg'
+        let main_school_model', cmd = MainSchool.update msg main_school_model
+        {sps with page = MainSchoolModel main_school_model'}, Cmd.map MainSchoolMsg cmd
 
     | AddClassMsg msg, {page = AddClassModel model; username = _} ->
-        let model', msg' = AddClass.update msg model
-        {sps with page = AddClassModel model'}, Cmd.map AddClassMsg msg'
+        let model', cmd = AddClass.update msg model
+        {sps with page = AddClassModel model'}, Cmd.map AddClassMsg cmd
 
 let show = function
 | Some x -> string x

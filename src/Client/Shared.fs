@@ -3,7 +3,7 @@ module Client.Shared
 /// The composed model for the different possible page states of the application
 type PageModel =
 | HomeModel
-| LoginModel
+| LoginModel of Client.Login.Model
 | FirstTimeModel of Client.FirstTime.Model
 | NewTeacherModel of Client.NewTeacher.Model
 | NewPupilModel
@@ -29,7 +29,7 @@ type SinglePageState = {
 let view_page sps dispatch =
     match sps.page with
     | HomeModel -> Client.Home.view ()
-    | LoginModel -> Client.Login.view (LoginMsg >> dispatch)
+    | LoginModel model -> Client.Login.view (LoginMsg >> dispatch)
     | FirstTimeModel model -> Client.FirstTime.view model (FirstTimeMsg >> dispatch)
     | NewTeacherModel model -> Client.NewTeacher.view model (NewTeacherMsg >> dispatch)
     | NewPupilModel -> Client.NewPupil.view (NewPupilMsg >> dispatch)

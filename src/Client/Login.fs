@@ -22,9 +22,12 @@ type Model = {
     user_info : UserCredentialsResponse option
 }
 
+let init =
+    {login_state = FirstTime; user_info = None}
+
 let get_credentials () =
     promise {
-        let! credentials = Fetch.fetchAs<UserCredentialsResponse> ("user-credentials") []
+        let! credentials = Fetch.fetchAs<UserCredentialsResponse> ("/api/user-credentials") []
         return credentials
     }
 

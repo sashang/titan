@@ -31,9 +31,6 @@ let logout = pipeline {
 let logged_in_view = router {
     pipe_through login
 
-    get "/" (fun next ctx -> task {
-        return! next ctx
-    })
     get "/user-credentials" (fun next ctx -> task {
         let name = ctx.User.Claims |> Seq.filter (fun claim -> claim.Type = ClaimTypes.Name) |> Seq.head
         return! json { user_name = name.Value } next ctx
@@ -45,10 +42,8 @@ let default_view = router {
     })
 }
 let webApp = router {
-    forward "" default_view //Use the default view
-    forward "/user-credentials" logged_in_view
-    forward "/members-only" logged_in_view
-    forward "/logout" logout
+    pipe_through (pipeline { set_header "x-pipeline-type" "Api" })
+    forward "/api" logged_in_view
 }
 
 let configureSerialization (services:IServiceCollection) =
@@ -70,7 +65,7 @@ let app google_id google_secret =
         service_config configureSerialization
         use_gzip
         use_google_oauth google_id google_secret "/oauth_callback_google" []
-}
+    }
 
 (* Use a maybe computation expression. In the case where one is not defined
 it will return None, and pass that None value through to the subsequent
