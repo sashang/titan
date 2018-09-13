@@ -27,9 +27,18 @@ authetication providers like Google.
 
 The server side code runs on port `http://localhost:8085`. This is all in F#
 on top of ASP.NET Core. You'll need the following environment variables set
+
+### Bash:
 ```
-GOOGLE_ID
-GOOGLE_SECRET
+export GOOGLE_ID="client id"
+export GOOGLE_SECRET="client secret"
 ```
-which you can get by registering with Google+. If those environment variables
+
+### Windows Powershell:
+```
+$Env:GOOLGE_ID="client id"
+$Env:GOOGLE_SECRET="client secret"
+```
+
+The values for those variables you can get by creating an application for use with Google+ (https://console.cloud.google.com/apis/library/plus.googleapis.com). If those environment variables
 are not set the server will not start.
