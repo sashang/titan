@@ -1,5 +1,5 @@
 /// Functions to serialize and deserialize JSON, with client side support.
-module ServerCode.FableJson
+module FableJson
 
 open Newtonsoft.Json
 
@@ -9,8 +9,8 @@ open Newtonsoft.Json
 // it's better to keep a single instance during the server lifetime.
 let private jsonConverter = Fable.JsonConverter() :> JsonConverter
 
-let toJson value =
+let to_json value =
     JsonConvert.SerializeObject(value, [|jsonConverter|])
 
-let ofJson<'a> (json:string) : 'a =
+let from_json<'a> (json:string) : 'a =
     JsonConvert.DeserializeObject<'a>(json, [|jsonConverter|])

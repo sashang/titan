@@ -1,5 +1,5 @@
 /// Domain model shared between client and server.
-namespace ServerCode.Domain
+namespace Domain
 
 open System
 
@@ -21,3 +21,6 @@ type UserData =
     Token    : JWT }
 
 /// The data for each book in /api/wishlist
+type School = {
+    Name : string
+}

@@ -5,7 +5,7 @@ open System
 open Giraffe
 open RequestErrors
 open Microsoft.AspNetCore.Http
-open ServerCode.Domain
+open Domain
 
 let createUserData (login : Domain.Login) =
     {
