@@ -26,7 +26,10 @@ authetication providers like Google.
 
 
 The server side code runs on port `http://localhost:8085`. This is all in F#
-on top of ASP.NET Core. You'll need the following environment variables set
+on top of ASP.NET Core.
+
+## Google authentication
+You'll need the following environment variables set
 
 ### Bash:
 ```
@@ -40,5 +43,25 @@ $Env:GOOLGE_ID="client id"
 $Env:GOOGLE_SECRET="client secret"
 ```
 
-The values for those variables you can get by creating an application for use with Google+ (https://console.cloud.google.com/apis/library/plus.googleapis.com). If those environment variables
-are not set the server will not start.
+The values for those variables you can get by creating an application for use
+with Google+
+(https://console.cloud.google.com/apis/library/plus.googleapis.com). If those
+environment variables are not set the server will not start.
+
+## Filesystem Database
+
+The filesystem database is intended for testing the server side API. It is
+simply a collection of JSON files stored on the filesystem. To enable it set the
+following environment variable
+
+### Bash:
+```
+export TITAN_FILESYSTEM_DB="yes"
+```
+
+### Windows Powershell:
+```
+$Env:TITAN_FILESYSTEM_DB="yes"
+```
+
+Currently other databases are not supported so it's recommended to enabled this.
