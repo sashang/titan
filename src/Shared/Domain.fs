@@ -20,7 +20,22 @@ type UserData =
   { UserName : string
     Token    : JWT }
 
-/// The data for each book in /api/wishlist
+type Pupil = {
+    uuid : string
+}
+
+type Class = {
+    uuid : string
+    date : string
+}
+
 type School = {
-    Name : string
+    uuid : string
+    name : string
+    classes : Class list
+    pupils : Pupil list
+}
+
+type Schools = {
+    schools : School list
 }

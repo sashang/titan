@@ -1,0 +1,26 @@
+{"classes" : [
+    {
+        "uuid" : "1",
+        "description" : "English Literature Year 12",
+        "pupils" : [
+            {
+                "uuid" : "1"
+            },
+            {
+                "uuid" : "2"
+            }
+        ]
+    },
+    {
+        "uuid" : "2",
+        "description" : "English Literature Year 11",
+        "pupils" : [
+            {
+                "uuid" : "3"
+            },
+            {
+                "uuid" : "4"
+            }
+        ]
+    }
+]}

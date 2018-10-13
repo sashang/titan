@@ -7,4 +7,4 @@ open Newtonsoft.Json
 let load_schools =
     let fi = FileInfo("./filesystem-db/schools.json")
     File.ReadAllText(fi.FullName)
-    |> FableJson.from_json<School>
+    |> FableJson.from_json<Schools>
