@@ -8,6 +8,16 @@ Install that using the link above. Then see the next section to build and run.
 
 ## Build
 
+Ensure you have the dotnet sdk 2.1.3 installed. I've found that exporting the
+following variables will ensure a headache free existance:
+
+```
+export DOTNET_ROOT=<path to dotnet root>
+export PATH="<path to dotnet root>:$PATH"
+```
+
+Then cd into the directory you downloaded this source code and run:
+
 ```
 fake build --target run
 ```
@@ -24,23 +34,23 @@ make requests to the server. Requests to the server are only made for specfic
 data that resides on the database or for authentication with other
 authetication providers like Google.
 
-
 The server side code runs on port `http://localhost:8085`. This is all in F#
 on top of ASP.NET Core.
 
 ## Google authentication
-You'll need the following environment variables set
+This is all in a state of flux so may or not may not work. Set the following
+environment variables: 
 
 ### Bash:
 ```
-export GOOGLE_ID="client id"
-export GOOGLE_SECRET="client secret"
+export TITAN_GOOGLE_ID="client id"
+export TITAN_GOOGLE_SECRET="client secret"
 ```
 
 ### Windows Powershell:
 ```
-$Env:GOOLGE_ID="client id"
-$Env:GOOGLE_SECRET="client secret"
+$Env:TITAN_GOOLGE_ID="client id"
+$Env:TITAN_GOOGLE_SECRET="client secret"
 ```
 
 The values for those variables you can get by creating an application for use
