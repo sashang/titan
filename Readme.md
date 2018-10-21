@@ -75,3 +75,24 @@ $Env:TITAN_FILESYSTEM_DB="yes"
 ```
 
 Currently other databases are not supported so it's recommended to enabled this.
+
+## Using Paket
+
+Paket is a package manager for .NET packages. It's used in this project to
+add/remove .NET assmeblies that this project depends on.
+
+### Adding a dependency
+
+```
+.paket/paket.exe add Chiron --version 7.0.0-beta-180105 --project src/Server/Server.fsproj -g Server
+```
+
+### Removing a dependency
+
+```
+.paket/paket.exe remove Chiron
+```
+
+Once added or removed the files `paket.dependencies`, `paket.lock` and
+`src/Server/Server/paket.references` are modified. These changes need to be
+committed.
