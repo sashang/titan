@@ -4,7 +4,7 @@ group Server
     storage: none
     source https://api.nuget.org/v3/index.json
 
-nuget Chiron 7.0.0-beta-180105 beta
+    nuget Chiron 7.0.0-beta-180105 beta
     nuget dotnet-fable
     nuget Fable.Elmish
     nuget Fable.Elmish.Debugger
