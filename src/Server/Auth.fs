@@ -1,11 +1,12 @@
 /// Login web part and functions for API web part request authorisation with JWT.
 module ServerCode.Auth
 
-open System
-open Giraffe
-open RequestErrors
-open Microsoft.AspNetCore.Http
 open Domain
+open FSharp.Control.Tasks
+open Giraffe
+open Microsoft.AspNetCore.Http
+open RequestErrors
+open System
 
 let createUserData (login : Domain.Login) =
     {

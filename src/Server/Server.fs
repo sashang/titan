@@ -1,10 +1,12 @@
 open Database
+open FSharp.Control.Tasks
 open Giraffe
 open Giraffe.Serialization
 open FileSystemDatabase
 open Maybe
 open Microsoft.Extensions.DependencyInjection
 open Saturn
+open Saturn.Auth
 open ServerCode
 open Shared
 open System

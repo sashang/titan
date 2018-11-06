@@ -5,8 +5,10 @@ open Elmish.Browser.Navigation
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.PowerPack
+open Fable.PowerPack.Fetch
 open Fulma
 open Shared
+open Thoth.Json
 
 type LoginState =
 | FirstTime
@@ -27,7 +29,8 @@ let init =
 
 let get_credentials () =
     promise {
-        let! credentials = Fetch.fetchAs<UserCredentialsResponse> ("/api/user-credentials") []
+        let decoder = Decode.Auto.generateDecoder<UserCredentialsResponse>()
+        let! credentials = Fetch.fetchAs<UserCredentialsResponse> ("/api/user-credentials") decoder []
         return credentials
     }
 

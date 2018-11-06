@@ -1,42 +1,41 @@
 source https://www.nuget.org/api/v2
 
 group Server
-    storage: none
     source https://api.nuget.org/v3/index.json
+    framework: netcoreapp2.1
+    storage: none
 
-    nuget Chiron 7.0.0-beta-180105 beta
-    nuget dotnet-fable
-    nuget Fable.Elmish
     nuget Fable.Elmish.Debugger
-    nuget Fable.Elmish.HMR
-    nuget Fable.Elmish.React
     nuget FSharp.Core
-    nuget Fulma
-    nuget jose-jwt
+nuget jose-jwt
     nuget Saturn
     nuget Fable.JsonConverter
-    nuget Fulma.Extensions
-    nuget Saturn.Extensions.Authorization
+nuget Saturn.Extensions.Authorization 0.7.5
 
 group Client
-    storage: none
     source https://api.nuget.org/v3/index.json
+    framework: netstandard2.0
+    storage: none
 
-    nuget Fable.Core
+    nuget Fable.Core ~> 2
+    nuget Fable.Elmish ~> 2
     nuget Fable.Elmish.Browser
-    nuget Fable.Elmish.Debugger
-    nuget Fable.Elmish.React
-    nuget Fable.Elmish.HMR
-    nuget Fulma
+    nuget Fable.Elmish.Debugger ~> 2
+    nuget Fable.Elmish.React ~> 2
+    nuget Fable.Elmish.HMR ~> 2
+    nuget Fable.React ~> 4
+    nuget Fulma ~> 1
     nuget Fulma.Extensions
 
-    clitool dotnet-fable
+    clitool dotnet-fable ~> 2
 
 group Build
-    storage: none
     source https://api.nuget.org/v3/index.json
+    framework: netstandard2.0
+    storage: none
 
     nuget FSharp.Core 4.3.4 // https://github.com/fsharp/FAKE/issues/2001
     nuget Fake.Core.Target
     nuget Fake.DotNet.Cli
     nuget Fake.IO.FileSystem
+    nuget Fake.Core.Process
