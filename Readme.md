@@ -37,17 +37,24 @@ authetication providers like Google.
 The server side code runs on port `http://localhost:8085`. This is all in F#
 on top of ASP.NET Core.
 
-## Google authentication
+## Debugging
+
+It's worth installing Redux DevTools for Chrome as an extension. Then you can
+view the messages in the Chrome debugger (hit F12).
+
+## Environment Variables
+
+### Google authentication
 This is all in a state of flux so may or not may not work. Set the following
 environment variables: 
 
-### Bash:
+#### Bash:
 ```
 export TITAN_GOOGLE_ID="client id"
 export TITAN_GOOGLE_SECRET="client secret"
 ```
 
-### Windows Powershell:
+#### Windows Powershell:
 ```
 $Env:TITAN_GOOLGE_ID="client id"
 $Env:TITAN_GOOGLE_SECRET="client secret"
@@ -58,7 +65,7 @@ with Google+
 (https://console.cloud.google.com/apis/library/plus.googleapis.com). If those
 environment variables are not set the server will not start.
 
-## Filesystem Database
+### Filesystem Database
 
 The filesystem database is intended for testing the server side API. It is
 simply a collection of JSON files stored on the filesystem. To enable it set the
