@@ -1,5 +1,3 @@
-source https://www.nuget.org/api/v2
-
 group Server
     source https://api.nuget.org/v3/index.json
     framework: netcoreapp2.1
@@ -7,10 +5,10 @@ group Server
 
     nuget Fable.Elmish.Debugger
     nuget FSharp.Core
-nuget jose-jwt
+    nuget jose-jwt
     nuget Saturn
-    nuget Fable.JsonConverter
-nuget Saturn.Extensions.Authorization 0.7.5
+    nuget Fable.JsonConverter //fable.JsonConverter only works on the server. don't try it in the client.
+    nuget Saturn.Extensions.Authorization 0.7.5
 
 group Client
     source https://api.nuget.org/v3/index.json
@@ -39,3 +37,4 @@ group Build
     nuget Fake.DotNet.Cli
     nuget Fake.IO.FileSystem
     nuget Fake.Core.Process
+nuget jose-jwt

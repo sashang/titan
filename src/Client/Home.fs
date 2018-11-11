@@ -2,6 +2,7 @@
 
 open Fulma
 open Fable.Helpers.React
+open Fable.Import
 
 open Style
 

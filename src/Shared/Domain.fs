@@ -8,13 +8,10 @@ type JWT = string
 
 // Login credentials.
 type Login =
-    { UserName   : string
-      Password   : string
-      PasswordId : Guid }
-
-    member this.IsValid() =
-        not ((this.UserName <> "test"  || this.Password <> "test") &&
-             (this.UserName <> "test2" || this.Password <> "test2"))
+    { username   : string
+      password   : string }
+    member this.is_valid() =
+        not (this.username <> "test@test"  || this.password <> "test")
 
 type UserData =
   { UserName : string

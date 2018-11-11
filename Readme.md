@@ -8,7 +8,7 @@ Install that using the link above. Then see the next section to build and run.
 
 ## Build
 
-Ensure you have the dotnet sdk 2.1.3 installed. I've found that exporting the
+Ensure you have the dotnet sdk 2.1.4 installed. I've found that exporting the
 following variables will ensure a headache free existance:
 
 ```

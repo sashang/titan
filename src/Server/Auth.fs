@@ -10,12 +10,12 @@ open System
 
 let createUserData (login : Domain.Login) =
     {
-        UserName = login.UserName
+        UserName = login.username
         Token    =
             ServerCode.JsonWebToken.encode (
-                { UserName = login.UserName } : ServerTypes.UserRights
+                { UserName = login.password } : ServerTypes.UserRights
             )
-    } : Domain.UserData
+    }
 
 /// Authenticates a user and returns a token in the HTTP body.
 let login : HttpHandler =
@@ -23,11 +23,11 @@ let login : HttpHandler =
         task {
             let! login = ctx.BindJsonAsync<Domain.Login>()
             return!
-                match login.IsValid() with
+                match login.is_valid() with
                 | true  ->
                     let data = createUserData login
                     ctx.WriteJsonAsync data
-                | false -> UNAUTHORIZED "Bearer" "" (sprintf "User '%s' can't be logged in." login.UserName) next ctx
+                | false -> RequestErrors.UNAUTHORIZED "Bearer" "" (sprintf "User '%s' can't be logged in." login.username) next ctx
         }
 
 let private missingToken = RequestErrors.BAD_REQUEST "Request doesn't contain a JSON Web Token"

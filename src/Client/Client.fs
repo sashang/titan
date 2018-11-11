@@ -61,7 +61,7 @@ let init _ : SinglePageState * Cmd<Msg> =
 let update (msg : Msg) (sps : SinglePageState) : SinglePageState * Cmd<Msg> =
     match msg, sps with    
     | LoginMsg msg, {page = LoginModel login_model; username = _} ->
-        let login_model', cmd = Login.update msg
+        let login_model', cmd = Login.update msg login_model
         { sps with page = LoginModel login_model' }, Cmd.map LoginMsg cmd
 
     | FirstTimeMsg msg, {page = FirstTimeModel ft_model; username = _}  ->

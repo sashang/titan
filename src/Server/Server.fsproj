@@ -10,7 +10,7 @@
     <Compile Include="../Shared/Domain.fs" />
     <Compile Include="ServerTypes.fs" />
     <Compile Include="JsonWebToken.fs" />
-    <Compile Include="FableJson.fs" />
+    <Compile Include="../Shared/FableJson.fs" />
     <Compile Include="FileSystemDatabase.fs" />
     <Compile Include="Auth.fs" />
     <Compile Include="Database.fs" />
