@@ -10,6 +10,7 @@ type PageModel =
 | MainSchoolModel of Client.MainSchool.Model
 | HowItWorksModel
 | AddClassModel of Client.AddClass.Model
+| SignUpModel of Client.SignUp.Model
 
 type Msg =
 | FirstTimeMsg of Client.FirstTime.Msg //message from the first time modal page
@@ -19,6 +20,7 @@ type Msg =
 | MainSchoolMsg of Client.MainSchool.Msg
 | AddClassMsg of Client.AddClass.Msg
 | Init
+| SignUpMsg of Client.SignUp.Msg
 
 
 type SinglePageState = {
@@ -36,6 +38,7 @@ let view_page sps dispatch =
     | MainSchoolModel model -> Client.MainSchool.view model (MainSchoolMsg>> dispatch)
     | HowItWorksModel -> Client.HowItWorks.view ()
     | AddClassModel model -> Client.AddClass.view model (AddClassMsg >> dispatch)
+    | SignUpModel model -> Client.SignUp.view model (SignUpMsg >> dispatch)
 
 let view model dispatch =
     view_page model dispatch

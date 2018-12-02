@@ -45,6 +45,14 @@ let buttonLink cssClass onClick elements =
           OnTouchStart (fun _ -> onClick())
           Style [ Cursor "pointer" ] ] elements
 
+let button dispatch msg text = 
+    Button.button [
+        Button.Color IsPrimary
+        Button.IsFullWidth
+        Button.OnClick (fun _ -> (dispatch msg))
+        Button.CustomClass "is-large is-block"
+    ] [ R.str text ]
+
 let client_header =
       Section.section [ ] [
           Level.level [ ] [

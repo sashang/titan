@@ -12,6 +12,7 @@ open FableJson
 open Fulma
 open Shared
 open Thoth.Json
+open Style
 
 type LoginState =
     | LoggedOut
@@ -28,36 +29,43 @@ type Msg =
 
 type Model =
     { login_state : LoginState
-      user_info : UserInfo }
+      user_info : Domain.Login }
 
 let init =
     { login_state = LoggedOut; user_info = {username = ""; password = ""} }
 
 let get_credentials () =
     promise {
+        let props =
+            [ RequestProperties.Mode RequestMode.Cors]
         let decoder = Decode.Auto.generateDecoder<UserCredentialsResponse>()
-        let! credentials = Fetch.fetchAs<UserCredentialsResponse> ("/api/user-credentials") decoder []
-        return credentials
+        try
+            return! Fetch.fetchAs<UserCredentialsResponse> "/api/user-credentials" decoder props
+        with exn ->
+            return! failwithf "Could not authenticate user: %s." exn.Message
     }
 
-let login (user_info : UserInfo) =
+let login (user_info : Domain.Login) =
     promise {
         let body = Encode.Auto.toString (2, user_info)
         let props =
-            [ Fetch.requestHeaders [
-                  HttpRequestHeaders.ContentType "application/json" ]
+            [ RequestProperties.Method HttpMethod.POST
+              Fetch.requestHeaders [
+                HttpRequestHeaders.ContentType "application/json" ]
               RequestProperties.Body !^body ]
         try
             let decoder = Decode.Auto.generateDecoder<Domain.Login>()
-            return! Fetch.fetchAs<Domain.Login> "api/login" decoder props
-        with _ ->
-            return! failwithf "Could not authenticate user."
+            return! Fetch.fetchAs<Domain.Login> "/api/login" decoder props
+        with exn ->
+            return! failwithf "Could not authenticate user: %s." exn.Message
     }
 
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
+    | LoginSuccess login ->
+        {model with login_state = LoggedIn}, Cmd.none
     | GetLoginGoogle ->
-        Browser.console.error ("requesing auth from Google ")
+        Browser.console.info ("requesing auth from Google ")
         { login_state = LoggedOut; user_info = {username = ""; password = ""} }, Cmd.ofPromise get_credentials () GotLoginGoogle ErrorMsg
     | GotLoginGoogle credentials ->
         { model with login_state = LoggedOut}, Navigation.newUrl  (Client.Pages.to_path Client.Pages.FirstTime)
@@ -83,11 +91,8 @@ let column (dispatch : Msg -> unit) =
           Heading.p
             [ Heading.Modifiers [ Modifier.TextColor IsGrey ] ]
             [ str "Please login to proceed." ]
-          Box.box' [ ]
-            [ figure [ Class "avatar" ]
-                [ img [ Src "https://placehold.it/128x128" ] ]
-              form [ ]
-                [ Field.div [ ]
+          Box.box' [ ] [
+                Field.div [ ]
                     [ Control.div [ ]
                         [ Input.email
                             [ Input.Size IsLarge
@@ -95,25 +100,27 @@ let column (dispatch : Msg -> unit) =
                               Input.Props [ 
                                 AutoFocus true
                                 OnChange (fun ev -> dispatch (SetUsername ev.Value)) ] ] ] ]
-                  Field.div [ ]
+                Field.div [ ]
                     [ Control.div [ ]
                         [ Input.password
                             [ Input.Size IsLarge
                               Input.Placeholder "Your Password"
                               Input.Props [
                                 OnChange (fun ev -> dispatch (SetPassword ev.Value)) ] ] ] ]
-                  Field.div [ ]
+                Field.div [ ]
                     [ Checkbox.checkbox [ ]
                         [ input [ Type "checkbox" ]
                           str "Remember me" ] ] 
-                  Button.button
-                    [ Button.Color IsPrimary
-                      Button.IsFullWidth
-                      Button.OnClick (fun _ -> (dispatch ClickLogin))
-                      Button.CustomClass "is-large is-block" ]
-                    [ str "Login" ] ] ]
+                Field.div [] [
+                    Client.Style.button dispatch ClickLogin "Login"
+                ]
+                Field.div [] [
+                    Client.Style.button dispatch GetLoginGoogle "Login with Google"
+                ]
+          ]
           Text.p [ Modifiers [ Modifier.TextColor IsGrey ] ]
-            [ a [ ] [ str "Sign Up" ]
+            [ a [ Props.Href "#sign-up"
+                  Props.OnClick Client.Style.goToUrl ] [ str "Sign Up" ]
               str "\u00A0·\u00A0"
               a [ ] [ str "Forgot Password" ]
               str "\u00A0·\u00A0"

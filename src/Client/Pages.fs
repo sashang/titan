@@ -2,10 +2,9 @@ module Client.Pages
 
 open Elmish.Browser.UrlParser
 
-type MainSchoolQuery = {
-    school_name : string
-    teacher_name : string
-}
+type MainSchoolQuery = 
+    { school_name : string
+      teacher_name : string }
 /// The different pages of the application. If you add a new page, then add an entry here.
 type PageType =
     | Home
@@ -16,6 +15,7 @@ type PageType =
     | MainSchool of (string*string) option
     | HowItWorks
     | AddClass
+    | SignUp
 
 let to_path =
     function
@@ -30,6 +30,8 @@ let to_path =
         match x with
         | Some (sn, tn) -> "#main_school?school_name=" + sn + "&teacher_name=" + tn
         | None -> "#main_school"
+    | PageType.SignUp -> "#sign-up"
+
 
 /// The URL is turned into a Result.
 let page_parser : Parser<PageType -> _,_> =
@@ -41,6 +43,7 @@ let page_parser : Parser<PageType -> _,_> =
           map PageType.NewPupil (s "new_pupil")
           map PageType.HowItWorks (s "how_it_works")
           map PageType.AddClass (s "add_class")
+          map PageType.SignUp (s "sign-up")
           map ((fun sn tn ->
                     match sn, tn with
                     | Some sn, Some tn -> MainSchool (Some (sn, tn))

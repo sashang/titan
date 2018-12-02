@@ -48,6 +48,9 @@ let url_update (result : Client.Pages.PageType option) (model : SinglePageState)
 
     | Some AddClass ->
         { model with page = AddClassModel (AddClass.init ()); username = None }, Cmd.none
+    
+    | Some SignUp ->
+        { model with page = SignUpModel (SignUp.init ()); username = None }, Cmd.none
         
 let init _ : SinglePageState * Cmd<Msg> =
     {page = HomeModel; username = None}, Cmd.none
@@ -80,11 +83,13 @@ let update (msg : Msg) (sps : SinglePageState) : SinglePageState * Cmd<Msg> =
         let model', cmd = AddClass.update msg model
         {sps with page = AddClassModel model'}, Cmd.map AddClassMsg cmd
 
+    | SignUpMsg msg, { page = SignUpModel model; username = _ } ->
+        let model', cmd = SignUp.update msg model
+        {sps with page = SignUpModel model'}, Cmd.map SignUpMsg cmd
+
 let show = function
 | Some x -> string x
 | None -> "Loading..."
-
-
 
 #if DEBUG
 open Elmish.Debug

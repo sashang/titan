@@ -15,6 +15,7 @@
     <Compile Include="Home.fs" />
     <Compile Include="NewPupil.fs" />
     <Compile Include="NewTeacher.fs" />
+    <Compile Include="SignUp.fs" />
     <Compile Include="Login.fs" />
     <Compile Include="FirstTime.fs" />
     <Compile Include="MainSchool.fs" />
