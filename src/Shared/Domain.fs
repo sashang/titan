@@ -7,6 +7,7 @@ open System
 type JWT = string
 
 // Login credentials.
+[<CLIMutable>] //needed for BindJsonAync to work
 type Login =
     { username   : string
       password   : string }
@@ -17,22 +18,18 @@ type UserData =
   { UserName : string
     Token    : JWT }
 
-type Pupil = {
-    uuid : string
-}
+type Pupil =
+    { uuid : string }
 
-type Class = {
-    uuid : string
-    date : string
-}
+type Class =
+    { uuid : string
+      date : string }
 
-type School = {
-    uuid : string
-    name : string
-    classes : Class list
-    pupils : Pupil list
-}
+type School =
+    { uuid : string
+      name : string
+      classes : Class list
+      pupils : Pupil list }
 
-type Schools = {
-    schools : School list
-}
+type Schools =
+    { schools : School list }
