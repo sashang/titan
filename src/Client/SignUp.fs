@@ -15,9 +15,10 @@ open Thoth.Json
 
 type Msg =
     | ClickSignUp
-    | SignUp
+    | SignUpSuccess of Domain.Login
     | SetUsername of string
     | SetPassword of string
+    | ErrorMsg of exn
 
 type Model =
     { email : string
@@ -26,15 +27,36 @@ type Model =
 let init () =
     { email = ""; password = "" }
 
+let sign_up (user_info : Domain.Login) =
+    promise {
+        let body = Encode.Auto.toString (2, user_info)
+        let props =
+            [ RequestProperties.Method HttpMethod.POST
+              Fetch.requestHeaders [
+                HttpRequestHeaders.ContentType "application/json" ]
+              RequestProperties.Body !^body ]
+        try
+            let decoder = Decode.Auto.generateDecoder<Domain.Login>()
+            return! Fetch.fetchAs<Domain.Login> "/api/sign-up" decoder props
+        with exn ->
+            return! failwithf "Could not sign up user: %s." exn.Message
+    }
+
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
     | ClickSignUp ->
-        Browser.console.info ("clicked sign up")
-        model, Cmd.none
+        Browser.console.info (sprintf "clicked sign up: %s %s" model.email model.password)
+        model, Cmd.ofPromise sign_up {Domain.Login.username = model.email; Domain.Login.password = model.password} SignUpSuccess ErrorMsg
     | SetPassword password ->
-        { model with email = model.email}, Cmd.none
+        { model with password = password }, Cmd.none
     | SetUsername username ->
-        { model with password = model.password}, Cmd.none
+        { model with email = username }, Cmd.none
+    | ErrorMsg err ->
+        Browser.console.error ("Failed to login: " + err.Message)
+        model, Cmd.none
+    | SignUpSuccess login ->
+        model, Navigation.newUrl  (Client.Pages.to_path Client.Pages.FirstTime)
+
 
 let column (dispatch : Msg -> unit) =
     Column.column
