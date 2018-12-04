@@ -60,8 +60,9 @@ let validate_user startup_options next (ctx : HttpContext) = task {
         return!
             match login.is_valid() with
             | true  ->
-                let data = Auth.createUserData login
-                ctx.WriteJsonAsync data
+                //let data = Auth.createUserData login
+                //ctx.WriteJsonAsync data
+                ctx.WriteJsonAsync login
             | false -> RequestErrors.UNAUTHORIZED "Bearer" "" (sprintf "User '%s' can't be logged in." login.username) next ctx
     }
 

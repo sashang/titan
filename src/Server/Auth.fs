@@ -18,18 +18,6 @@ let createUserData (login : Domain.Login) =
     }
 
 /// Authenticates a user and returns a token in the HTTP body.
-let login : HttpHandler =
-    fun (next : HttpFunc) (ctx : HttpContext) ->
-        task {
-            let! login = ctx.BindJsonAsync<Domain.Login>()
-            return!
-                match login.is_valid() with
-                | true  ->
-                    let data = createUserData login
-                    ctx.WriteJsonAsync data
-                | false -> RequestErrors.UNAUTHORIZED "Bearer" "" (sprintf "User '%s' can't be logged in." login.username) next ctx
-        }
-
 let private missingToken = RequestErrors.BAD_REQUEST "Request doesn't contain a JSON Web Token"
 let private invalidToken = RequestErrors.FORBIDDEN "Accessing this API is not allowed"
 
