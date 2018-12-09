@@ -24,6 +24,7 @@ group Client
     nuget Fable.Elmish.React ~> 2
     nuget Fable.Elmish.HMR ~> 2
     nuget Fable.FontAwesome
+    nuget Fable.FontAwesome.Free
     nuget Fable.React ~> 4
     nuget Fulma ~> 1
     nuget Fulma.Extensions
