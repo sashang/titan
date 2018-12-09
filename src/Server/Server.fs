@@ -1,4 +1,5 @@
 open Database
+open Domain
 open FSharp.Control.Tasks
 open Giraffe
 open Giraffe.Serialization
@@ -71,13 +72,14 @@ let sign_up_user (db : IDatabaseFunctions) next (ctx : HttpContext) = task {
     let! result = db.add_user login.username login.password
     return!
         if result then
-            ctx.WriteJsonAsync login
+            ctx.WriteJsonAsync {SignUpResult.result = true; SignUpResult.message = ""}
         else
             //ctx.SetStatusCode 400
             //ctx.SetStatusCode 403
             //ctx.WriteTextAsync (sprintf "User '%s' already exists." login.username)
             //text (sprintf "User '%s' already exists" login.username) next ctx
-            RequestErrors.FORBIDDEN (sprintf "User '%s' already exists." login.username) next ctx
+            //RequestErrors.FORBIDDEN (sprintf "User '%s' already exists." login.username) next ctx
+            ctx.WriteJsonAsync {SignUpResult.result = false; SignUpResult.message = (sprintf "User '%s' already exists." login.username)}
 }
 
 let titan_api (db : IDatabaseFunctions) (startup_options : StartupOptions) =  router {

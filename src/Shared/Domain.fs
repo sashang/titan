@@ -14,9 +14,15 @@ type Login =
     member this.is_valid() =
         not (this.username <> "test@test"  || this.password <> "test")
 
+/// Result of the sign-up action.
+[<CLIMutable>]
+type SignUpResult =
+    { result : bool 
+      message : string }
+
 type UserData =
-  { UserName : string
-    Token    : JWT }
+    { UserName : string
+      Token    : JWT }
 
 type Pupil =
     { uuid : string }
