@@ -68,17 +68,19 @@ let validate_user startup_options next (ctx : HttpContext) = task {
 
 let sign_up_user (db : IDatabaseFunctions) next (ctx : HttpContext) = task {
     let! login = ctx.BindJsonAsync<Domain.Login>()
-    printfn "adding user: %s" login.username
     let! result = db.add_user login.username login.password
     return!
         if result then
             ctx.WriteJsonAsync login
         else
+            //ctx.SetStatusCode 400
+            //ctx.SetStatusCode 403
+            //ctx.WriteTextAsync (sprintf "User '%s' already exists." login.username)
+            //text (sprintf "User '%s' already exists" login.username) next ctx
             RequestErrors.FORBIDDEN (sprintf "User '%s' already exists." login.username) next ctx
 }
 
 let titan_api (db : IDatabaseFunctions) (startup_options : StartupOptions) =  router {
-    printfn "titan_api"
     get "/schools" (fun next ctx -> task {
         let! schools = db.load_schools
         return! ctx.WriteJsonAsync schools

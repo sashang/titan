@@ -9,6 +9,7 @@
     <Compile Include="../Shared/Domain.fs" />
     <Compile Include="../Shared/Shared.fs" />
     <Compile Include="../Shared/FableJson.fs" />
+    <Compile Include="ModifiedFableFetch.fs" />
     <Compile Include="Class.fs" />
     <Compile Include="Style.fs" />
     <Compile Include="AddClass.fs" />

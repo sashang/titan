@@ -8,9 +8,8 @@ open Fable.Import
 open Fable.PowerPack
 open Fable.PowerPack.Fetch
 open Fable.Core.JsInterop
-open FableJson
 open Fulma
-open Shared
+open ModifiedFableFetch
 open Thoth.Json
 
 type Msg =
@@ -27,20 +26,43 @@ type Model =
 let init () =
     { email = ""; password = "" }
 
-let sign_up (user_info : Domain.Login) =
+let sign_up (user_info : Domain.Login) = promise {
+    let body = Encode.Auto.toString (2, user_info)
+    let! response = post_record "/api/sign-up" body []
+    let decoder = Decode.Auto.generateDecoder<Domain.Login>()
+    let! text = response.text ()
+    let result = Decode.fromString decoder text
+    match result with
+    | Ok login -> return login
+    | Error e -> return failwithf "fail: %s" e
+}
+    (*
     promise {
-        let body = Encode.Auto.toString (2, user_info)
         let props =
             [ RequestProperties.Method HttpMethod.POST
               Fetch.requestHeaders [
                 HttpRequestHeaders.ContentType "application/json" ]
               RequestProperties.Body !^body ]
-        try
-            let decoder = Decode.Auto.generateDecoder<Domain.Login>()
-            return! Fetch.fetchAs<Domain.Login> "/api/sign-up" decoder props
-        with exn ->
-            return! failwithf "Could not sign up user: %s." exn.Message
+        let decoder = Decode.Auto.generateDecoder<Domain.Login>()
+        let! result = ModifiedFableFetch.fetch "/api/sign-up" props
+        match result with
+        | Success response ->
+            let! text = response.text ()
+            Browser.console.info (sprintf "what we got: %s" text)
+            let result = Decode.fromString decoder text
+            match result with
+            | Ok login -> return login
+            | Error e -> return failwithf "fail: %s" e
+        | BadStatus response ->
+            let message = (string response.Status + " " + response.StatusText + " for URL " + response.Url)
+            Browser.console.error message
+            return failwith message
+        | NetworkError ->
+            Browser.console.error "network error"
+            return failwith "network error"
+        //return! Fetch.fetchAs<Domain.Login> "/api/sign-up" decoder props
     }
+    *)
 
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
