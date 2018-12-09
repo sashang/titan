@@ -5,6 +5,7 @@ open Elmish
 open Elmish.Browser.Navigation
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
+open Fable.FontAwesome
 open Fable.Import
 open Fable.PowerPack
 open Fable.PowerPack.Fetch

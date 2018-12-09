@@ -1,3 +1,5 @@
+source https://www.nuget.org/api/v2
+
 group Server
     source https://api.nuget.org/v3/index.json
     framework: netcoreapp2.1
@@ -21,6 +23,7 @@ group Client
     nuget Fable.Elmish.Debugger ~> 2
     nuget Fable.Elmish.React ~> 2
     nuget Fable.Elmish.HMR ~> 2
+    nuget Fable.FontAwesome
     nuget Fable.React ~> 4
     nuget Fulma ~> 1
     nuget Fulma.Extensions
