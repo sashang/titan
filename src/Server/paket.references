@@ -4,3 +4,8 @@ Saturn
 Fable.JsonConverter
 jose-jwt
 Saturn.Extensions.Authorization
+Microsoft.AspNetCore.Identity
+Microsoft.AspNetCore.Identity.EntityFrameworkCore
+Microsoft.Extensions.DependencyInjection
+Microsoft.EntityFrameworkCore
+Microsoft.EntityFrameworkCore.InMemory

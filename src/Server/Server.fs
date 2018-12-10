@@ -4,17 +4,19 @@ open FSharp.Control.Tasks
 open Giraffe
 open Giraffe.Serialization
 open FileSystemDatabase
-open Maybe
-open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Cors.Infrastructure
 open Microsoft.Extensions.DependencyInjection
+open Microsoft.AspNetCore.Hosting
+open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.Identity
+open Microsoft.AspNetCore.Identity.EntityFrameworkCore
+open Microsoft.EntityFrameworkCore
 open Saturn
-open Saturn.Auth
-open ServerCode
 open Shared
 open System
 open System.IO
 open System.Security.Claims
-open Microsoft.AspNetCore.Cors.Infrastructure
 
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
@@ -105,10 +107,14 @@ let web_app (startup_options : StartupOptions) =
         forward "/api" (titan_api db startup_options)
     }
 
-let configureSerialization (services:IServiceCollection) =
+let configure_services (services:IServiceCollection) =
     let fableJsonSettings = Newtonsoft.Json.JsonSerializerSettings()
     fableJsonSettings.Converters.Add(Fable.JsonConverter())
-    services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings)
+    services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
+    services.AddDbContext<IdentityDbContext<IdentityUser>>(
+        fun options ->
+            options.UseInMemoryDatabase("NameOfDatabase") |> ignore
+        )
 
 let get_env_var var =
     match Environment.GetEnvironmentVariable(var) with
@@ -129,7 +135,7 @@ let app (startup_options : StartupOptions) =
             use_router (web_app startup_options)
             memory_cache
             use_static publicPath
-            service_config configureSerialization
+            service_config configure_services
             use_gzip
             use_google_oauth id secret "/oauth_callback_google" [] 
             use_cors "CORSPolicy" configure_cors
@@ -140,7 +146,7 @@ let app (startup_options : StartupOptions) =
             use_router (web_app startup_options)
             memory_cache
             use_static publicPath
-            service_config configureSerialization
+            service_config configure_services
             use_gzip
         }
 

@@ -8,6 +8,9 @@ group Server
     nuget Fable.Elmish.Debugger
     nuget FSharp.Core
     nuget jose-jwt
+    nuget Microsoft.AspNetCore.Identity 2.2.0
+    nuget Microsoft.AspNetCore.Identity.EntityFrameworkCore 2.2.0
+    nuget Microsoft.EntityFrameworkCore.InMemory 2.2.0
     nuget Saturn
     nuget Fable.JsonConverter //fable.JsonConverter only works on the server. don't try it in the client.
     nuget Saturn.Extensions.Authorization 0.7.5
@@ -41,4 +44,4 @@ group Build
     nuget Fake.DotNet.Cli
     nuget Fake.IO.FileSystem
     nuget Fake.Core.Process
-nuget jose-jwt
+    nuget jose-jwt
