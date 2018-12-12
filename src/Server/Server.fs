@@ -11,6 +11,7 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Identity
 open Microsoft.AspNetCore.Identity.EntityFrameworkCore
+open Microsoft.Extensions.Identity
 open Microsoft.EntityFrameworkCore
 open Saturn
 open Shared
@@ -70,8 +71,35 @@ let validate_user startup_options next (ctx : HttpContext) = task {
     }
 
 let sign_up_user (db : IDatabaseFunctions) next (ctx : HttpContext) = task {
+
+    let of_code (id_error_code : string) = 
+        if id_error_code.Contains "Password" then
+            SignUpCode.BadPassword
+        else if id_error_code.Contains "User" then
+            SignUpCode.BadUsername
+        else if id_error_code.Contains "Email" then
+            SignUpCode.BadEmail
+        else
+            SignUpCode.Unknown
+
+    let of_id_errors (errors : seq<IdentityError>) =
+        Seq.fold (fun acc (err : IdentityError) ->
+                    printfn "code = %s" err.Code
+                    {SignUpResult.code = List.append acc.code [of_code err.Code]; SignUpResult.message = List.append acc.message [err.Description] })
+                    {SignUpResult.code = []; SignUpResult.message = [] } errors
+
     let! login = ctx.BindJsonAsync<Domain.Login>()
-    let! result = db.add_user login.username login.password
+    let user = IdentityUser(UserName = login.username, Email = login.username)
+    let user_manager = ctx.GetService<UserManager<IdentityUser>>()
+    let! id_result = user_manager.CreateAsync(user, login.password)
+    match id_result.Succeeded with
+    | false ->
+        printfn "Failed to create user"
+        return! ctx.WriteJsonAsync (of_id_errors id_result.Errors)
+    | true -> 
+        return! ctx.WriteJsonAsync {SignUpResult.code = []; SignUpResult.message = []}
+}
+(*
     return!
         if result then
             ctx.WriteJsonAsync {SignUpResult.result = true; SignUpResult.message = ""}
@@ -81,8 +109,7 @@ let sign_up_user (db : IDatabaseFunctions) next (ctx : HttpContext) = task {
             //ctx.WriteTextAsync (sprintf "User '%s' already exists." login.username)
             //text (sprintf "User '%s' already exists" login.username) next ctx
             //RequestErrors.FORBIDDEN (sprintf "User '%s' already exists." login.username) next ctx
-            ctx.WriteJsonAsync {SignUpResult.result = false; SignUpResult.message = (sprintf "User '%s' already exists." login.username)}
-}
+            ctx.WriteJsonAsync {SignUpResult.result = false; SignUpResult.message = (sprintf "User '%s' already exists." login.username)}*)
 
 let titan_api (db : IDatabaseFunctions) (startup_options : StartupOptions) =  router {
     get "/schools" (fun next ctx -> task {
@@ -114,7 +141,28 @@ let configure_services (services:IServiceCollection) =
     services.AddDbContext<IdentityDbContext<IdentityUser>>(
         fun options ->
             options.UseInMemoryDatabase("NameOfDatabase") |> ignore
+        ) |> ignore
+
+    services.AddIdentity<IdentityUser, IdentityRole>(
+        fun options ->
+            // Password settings
+            options.Password.RequireDigit   <- true
+            options.Password.RequiredLength <- 8
+            options.Password.RequireNonAlphanumeric <- false
+            options.Password.RequireUppercase <- true
+            options.Password.RequireLowercase <- false
+
+            // Lockout settings
+            options.Lockout.DefaultLockoutTimeSpan  <- TimeSpan.FromMinutes 30.0
+            options.Lockout.MaxFailedAccessAttempts <- 10
+
+            // User settings
+            options.User.RequireUniqueEmail <- true
         )
+        .AddEntityFrameworkStores<IdentityDbContext<IdentityUser>>()
+        .AddDefaultTokenProviders() |> ignore
+    
+    services
 
 let get_env_var var =
     match Environment.GetEnvironmentVariable(var) with

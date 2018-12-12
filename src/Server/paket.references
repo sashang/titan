@@ -9,3 +9,4 @@ Microsoft.AspNetCore.Identity.EntityFrameworkCore
 Microsoft.Extensions.DependencyInjection
 Microsoft.EntityFrameworkCore
 Microsoft.EntityFrameworkCore.InMemory
+Microsoft.Extensions.Identity.Core

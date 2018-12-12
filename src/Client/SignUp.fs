@@ -16,7 +16,7 @@ open Thoth.Json
 
 type Msg =
     | ClickSignUp
-    | SignUpSuccess of bool
+    | SignUpSuccess of SignUpResult
     | SetUsername of string
     | SetPassword of string
     | SignUpFailure of exn
@@ -24,10 +24,10 @@ type Msg =
 type Model =
     { email : string
       password : string
-      sign_up_error : string option }
+      sign_up_result : SignUpResult option}
 
 let init () =
-    { email = ""; password = ""; sign_up_error = None }
+    { email = ""; password = ""; sign_up_result = None }
 
 let sign_up (user_info : Domain.Login) = promise {
     let body = Encode.Auto.toString (2, user_info)
@@ -36,39 +36,9 @@ let sign_up (user_info : Domain.Login) = promise {
     let! text = response.text ()
     let result = Decode.fromString decoder text
     match result with
-    | Ok sign_up_result -> 
-        match sign_up_result with
-        | {SignUpResult.result = true} -> return true
-        | {SignUpResult.result = false} -> return failwith sign_up_result.message
+    | Ok sign_up_result -> return sign_up_result
     | Error e -> return failwithf "fail: %s" e
 }
-    (*
-    promise {
-        let props =
-            [ RequestProperties.Method HttpMethod.POST
-              Fetch.requestHeaders [
-                HttpRequestHeaders.ContentType "application/json" ]
-              RequestProperties.Body !^body ]
-        let decoder = Decode.Auto.generateDecoder<Domain.Login>()
-        let! result = ModifiedFableFetch.fetch "/api/sign-up" props
-        match result with
-        | Success response ->
-            let! text = response.text ()
-            Browser.console.info (sprintf "what we got: %s" text)
-            let result = Decode.fromString decoder text
-            match result with
-            | Ok login -> return login
-            | Error e -> return failwithf "fail: %s" e
-        | BadStatus response ->
-            let message = (string response.Status + " " + response.StatusText + " for URL " + response.Url)
-            Browser.console.error message
-            return failwith message
-        | NetworkError ->
-            Browser.console.error "network error"
-            return failwith "network error"
-        //return! Fetch.fetchAs<Domain.Login> "/api/sign-up" decoder props
-    }
-    *)
 
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
@@ -81,9 +51,13 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
         { model with email = username }, Cmd.none
     | SignUpFailure err ->
         Browser.console.info ("Failed to login: " + err.Message)
-        { model with sign_up_error = Some err.Message }, Cmd.none
-    | SignUpSuccess login ->
-        model, Navigation.newUrl  (Client.Pages.to_path Client.Pages.FirstTime)
+        model, Cmd.none
+    | SignUpSuccess result ->
+        match result.code with
+        | [] ->
+            model, Navigation.newUrl  (Client.Pages.to_path Client.Pages.FirstTime)
+        | _ ->
+            { model with sign_up_result = Some result }, Cmd.none
 
 
 let column (model : Model) (dispatch : Msg -> unit) =
@@ -108,23 +82,42 @@ let column (model : Model) (dispatch : Msg -> unit) =
                             ] 
                         ]
                     ]
-                    (match model.sign_up_error with
-                           | Some message ->
-                                Help.help [
-                                    Help.Color IsDanger
-                                    Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5) ]
-                                ] [
-                                    str message
-                                ]
-                           | _ -> p [ ] [ ] )  //not sure how to have a null entry here.
+                    (match model.sign_up_result with
+                    | Some r ->
+                        match List.contains SignUpCode.BadUsername r.code with
+                        | true ->
+                            Help.help [
+                                Help.Color IsDanger
+                                Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5) ]
+                            ] [
+                                str "Bad username"
+                            ]
+                        | false -> p [ ] []
+                    | _ ->  p [ ] [ ] )  //not sure how to have a null entry here.
                 ]
-                Field.div [ ]
-                    [ Control.div [ ]
-                        [ Input.password
-                            [ Input.Size IsLarge
-                              Input.Placeholder "Your Password"
-                              Input.Props [
-                                OnChange (fun ev -> dispatch (SetPassword ev.Value)) ] ] ] ]
+                Field.div [ ] [
+                    Control.div [ ] [
+                        Input.password [
+                            Input.Size IsLarge
+                            Input.Placeholder "Your Password"
+                            Input.Props [
+                                OnChange (fun ev -> dispatch (SetPassword ev.Value)) 
+                            ] 
+                        ] 
+                    ]
+                    (match model.sign_up_result with
+                    | Some r ->
+                        match List.contains SignUpCode.BadPassword r.code with
+                        | true ->
+                            Help.help [
+                                Help.Color IsDanger
+                                Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5) ]
+                            ] [
+                                str "Bad password"
+                            ]
+                        | false -> p [ ] []
+                    | _ ->  p [ ] [ ] )  //not sure how to have a null entry here.
+                ]
                 Field.div [] [
                     Client.Style.button dispatch ClickSignUp "Sign Up"
                 ]
