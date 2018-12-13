@@ -10,10 +10,15 @@ type JWT = string
 [<CLIMutable>] //needed for BindJsonAync to work
 type Login =
     { username : string
-      email : string
       password : string }
     member this.is_valid() =
         not (this.username <> "test@test"  || this.password <> "test")
+
+[<CLIMutable>] //needed for BindJsonAync to work
+type SignUp =
+    { username : string
+      email : string
+      password : string }
 
 type SignUpCode = Success = 0 | BadPassword = 1 | BadUsername = 2 | BadEmail = 3 | Unknown = 4
 /// Result of the sign-up action.

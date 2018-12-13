@@ -31,7 +31,7 @@ type Model =
 let init () =
     { email = ""; password = ""; username = ""; sign_up_result = None }
 
-let sign_up (user_info : Domain.Login) = promise {
+let sign_up (user_info : Domain.SignUp) = promise {
     let body = Encode.Auto.toString (2, user_info)
     let! response = post_record "/api/sign-up" body []
     let decoder = Decode.Auto.generateDecoder<Domain.SignUpResult>()
@@ -46,7 +46,7 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
     | ClickSignUp ->
         Browser.console.info (sprintf "clicked sign up: %s %s" model.email model.password)
-        model, Cmd.ofPromise sign_up {Domain.Login.email = model.email; Domain.Login.password = model.password; Domain.Login.username = model.username} SignUpSuccess SignUpFailure
+        model, Cmd.ofPromise sign_up {Domain.SignUp.email = model.email; Domain.SignUp.password = model.password; Domain.SignUp.username = model.username} SignUpSuccess SignUpFailure
     | SetPassword password ->
         { model with password = password }, Cmd.none
     | SetUsername username ->
@@ -100,8 +100,8 @@ let column (model : Model) (dispatch : Msg -> unit) =
                             ] [
                                 str (of_sign_up_result SignUpCode.BadUsername r)
                             ]
-                        | false -> null 
-                    | _ ->  null)  //not sure how to have a null entry here.
+                        | false -> nothing 
+                    | _ ->  nothing)
                 ]
                 Field.div [ ] [
                     Control.div [ ] [
@@ -124,8 +124,8 @@ let column (model : Model) (dispatch : Msg -> unit) =
                             ] [
                                 str (of_sign_up_result SignUpCode.BadEmail r)
                             ]
-                        | false -> null
-                    | _ ->  null)  //not sure how to have a null entry here.
+                        | false -> nothing
+                    | _ ->  nothing)
                 ]
                 Field.div [ ] [
                     Control.div [ ] [
@@ -147,8 +147,8 @@ let column (model : Model) (dispatch : Msg -> unit) =
                             ] [
                                 str (of_sign_up_result SignUpCode.BadPassword r)
                             ]
-                        | false -> null
-                    | _ -> null)  //not sure how to have a null entry here.
+                        | false -> nothing
+                    | _ -> nothing)
                 ]
                 Field.div [] [
                     Client.Style.button dispatch ClickSignUp "Sign Up"
