@@ -19,15 +19,17 @@ type Msg =
     | SignUpSuccess of SignUpResult
     | SetUsername of string
     | SetPassword of string
+    | SetEmail of string
     | SignUpFailure of exn
 
 type Model =
     { email : string
       password : string
+      username : string
       sign_up_result : SignUpResult option}
 
 let init () =
-    { email = ""; password = ""; sign_up_result = None }
+    { email = ""; password = ""; username = ""; sign_up_result = None }
 
 let sign_up (user_info : Domain.Login) = promise {
     let body = Encode.Auto.toString (2, user_info)
@@ -44,11 +46,13 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
     | ClickSignUp ->
         Browser.console.info (sprintf "clicked sign up: %s %s" model.email model.password)
-        model, Cmd.ofPromise sign_up {Domain.Login.username = model.email; Domain.Login.password = model.password} SignUpSuccess SignUpFailure
+        model, Cmd.ofPromise sign_up {Domain.Login.email = model.email; Domain.Login.password = model.password; Domain.Login.username = model.username} SignUpSuccess SignUpFailure
     | SetPassword password ->
         { model with password = password }, Cmd.none
     | SetUsername username ->
-        { model with email = username }, Cmd.none
+        { model with username = username }, Cmd.none
+    | SetEmail email ->
+        {model with email = email}, Cmd.none
     | SignUpFailure err ->
         Browser.console.info ("Failed to login: " + err.Message)
         model, Cmd.none
@@ -61,6 +65,10 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
 
 
 let column (model : Model) (dispatch : Msg -> unit) =
+
+    let of_sign_up_result (code : SignUpCode) (result : SignUpResult) =
+        List.fold2 (fun acc the_code the_message -> if code = the_code then acc + " " + the_message else acc) "" result.code result.message
+
     Column.column
         [ Column.Width (Screen.All, Column.Is4)
           Column.Offset (Screen.All, Column.Is4) ]
@@ -75,7 +83,7 @@ let column (model : Model) (dispatch : Msg -> unit) =
                     Control.div [ ] [
                         Input.email [
                             Input.Size IsLarge
-                            Input.Placeholder "Your Email"
+                            Input.Placeholder "Your Username"
                             Input.Props [ 
                                 AutoFocus true
                                 OnChange (fun ev -> dispatch (SetUsername ev.Value)) 
@@ -90,10 +98,34 @@ let column (model : Model) (dispatch : Msg -> unit) =
                                 Help.Color IsDanger
                                 Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5) ]
                             ] [
-                                str "Bad username"
+                                str (of_sign_up_result SignUpCode.BadUsername r)
                             ]
-                        | false -> p [ ] []
-                    | _ ->  p [ ] [ ] )  //not sure how to have a null entry here.
+                        | false -> null 
+                    | _ ->  null)  //not sure how to have a null entry here.
+                ]
+                Field.div [ ] [
+                    Control.div [ ] [
+                        Input.email [
+                            Input.Size IsLarge
+                            Input.Placeholder "Your Email"
+                            Input.Props [ 
+                                AutoFocus true
+                                OnChange (fun ev -> dispatch (SetEmail ev.Value)) 
+                            ] 
+                        ]
+                    ]
+                    (match model.sign_up_result with
+                    | Some r ->
+                        match List.contains SignUpCode.BadEmail r.code with
+                        | true ->
+                            Help.help [
+                                Help.Color IsDanger
+                                Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5) ]
+                            ] [
+                                str (of_sign_up_result SignUpCode.BadEmail r)
+                            ]
+                        | false -> null
+                    | _ ->  null)  //not sure how to have a null entry here.
                 ]
                 Field.div [ ] [
                     Control.div [ ] [
@@ -113,10 +145,10 @@ let column (model : Model) (dispatch : Msg -> unit) =
                                 Help.Color IsDanger
                                 Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5) ]
                             ] [
-                                str "Bad password"
+                                str (of_sign_up_result SignUpCode.BadPassword r)
                             ]
-                        | false -> p [ ] []
-                    | _ ->  p [ ] [ ] )  //not sure how to have a null entry here.
+                        | false -> null
+                    | _ -> null)  //not sure how to have a null entry here.
                 ]
                 Field.div [] [
                     Client.Style.button dispatch ClickSignUp "Sign Up"

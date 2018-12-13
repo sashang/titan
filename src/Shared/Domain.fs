@@ -9,8 +9,9 @@ type JWT = string
 // Login credentials.
 [<CLIMutable>] //needed for BindJsonAync to work
 type Login =
-    { username   : string
-      password   : string }
+    { username : string
+      email : string
+      password : string }
     member this.is_valid() =
         not (this.username <> "test@test"  || this.password <> "test")
 
