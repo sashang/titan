@@ -1,6 +1,8 @@
 open Database
 open Domain
 open FSharp.Control.Tasks
+open FluentMigrator.Runner
+open FluentMigrator.Runner.Initialization
 open Giraffe
 open Giraffe.Serialization
 open FileSystemDatabase
@@ -138,15 +140,22 @@ let web_app (startup_options : StartupOptions) =
 let configure_services (services:IServiceCollection) =
     let fableJsonSettings = Newtonsoft.Json.JsonSerializerSettings()
     fableJsonSettings.Converters.Add(Fable.JsonConverter())
-    services.AddEntityFrameworkNpgsql() |> ignore
     services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
+
+    services.AddEntityFrameworkNpgsql() |> ignore
     services.AddDbContext<IdentityDbContext<IdentityUser>>(
         fun options ->
             //options.UseInMemoryDatabase("NameOfDatabase") |> ignore
             options.UseNpgsql(pg_dev_conn_string) |> ignore
         ) |> ignore
-    services.BuildServiceProvider() |> ignore
 
+
+    services.AddFluentMigratorCore()
+            .ConfigureRunner(fun rb ->
+                rb.AddPostgres()
+                  .WithGlobalConnectionString(pg_dev_conn_string)
+                  .ScanIn(typeof<TitanMigrations.AddSchool>.Assembly).For.Migrations() |> ignore)
+            .AddLogging(fun lb -> lb.AddFluentMigratorConsole() |> ignore) |> ignore
 
     services.AddIdentity<IdentityUser, IdentityRole>(
         fun options ->
@@ -167,6 +176,9 @@ let configure_services (services:IServiceCollection) =
         .AddEntityFrameworkStores<IdentityDbContext<IdentityUser>>()
         .AddDefaultTokenProviders() |> ignore
     
+    services.BuildServiceProvider(false)
+            .GetRequiredService<IMigrationRunner>()
+            .MigrateUp() |> ignore
     services
 
 let get_env_var var =

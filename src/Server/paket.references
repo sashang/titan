@@ -8,3 +8,6 @@ Microsoft.Extensions.DependencyInjection
 Microsoft.EntityFrameworkCore
 Npgsql.EntityFrameworkCore.PostgreSQL
 Microsoft.AspNetCore.Identity.EntityFrameworkCore
+FluentMigrator
+FluentMigrator.Runner
+FluentMigrator.Runner.Postgres
