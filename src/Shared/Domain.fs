@@ -14,13 +14,17 @@ type Login =
     member this.is_valid() =
         not (this.username <> "test@test"  || this.password <> "test")
 
+type SignUpCode = Success = 0 | BadPassword = 1 | BadUsername = 2 | BadEmail = 3 | Unknown = 4
+
+type TitanRole = Pupil = 0 | Principal = 1 | Unknown = 2
+
 [<CLIMutable>] //needed for BindJsonAync to work
 type SignUp =
     { username : string
       email : string
-      password : string }
+      password : string
+      role : TitanRole }
 
-type SignUpCode = Success = 0 | BadPassword = 1 | BadUsername = 2 | BadEmail = 3 | Unknown = 4
 /// Result of the sign-up action.
 [<CLIMutable>]
 type SignUpResult =

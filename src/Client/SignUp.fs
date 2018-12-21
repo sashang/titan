@@ -16,6 +16,7 @@ open Thoth.Json
 
 type Msg =
     | ClickSignUp
+    | SetRole of string
     | SignUpSuccess of SignUpResult
     | SetUsername of string
     | SetPassword of string
@@ -26,10 +27,11 @@ type Model =
     { email : string
       password : string
       username : string
+      role : TitanRole
       sign_up_result : SignUpResult option}
 
 let init () =
-    { email = ""; password = ""; username = ""; sign_up_result = None }
+    { email = ""; password = ""; username = ""; role = TitanRole.Unknown; sign_up_result = None }
 
 let sign_up (user_info : Domain.SignUp) = promise {
     let body = Encode.Auto.toString (2, user_info)
@@ -42,15 +44,28 @@ let sign_up (user_info : Domain.SignUp) = promise {
     | Error e -> return failwithf "fail: %s" e
 }
 
+let string_to_role role =
+    match role with
+    | "Pupil" -> TitanRole.Pupil
+    | "Principal" -> TitanRole.Principal
+    | _ -> TitanRole.Unknown
+
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
     | ClickSignUp ->
         Browser.console.info (sprintf "clicked sign up: %s %s" model.email model.password)
-        model, Cmd.ofPromise sign_up {Domain.SignUp.email = model.email; Domain.SignUp.password = model.password; Domain.SignUp.username = model.username} SignUpSuccess SignUpFailure
+        model, Cmd.ofPromise sign_up
+            {Domain.SignUp.email = model.email;
+            Domain.SignUp.password = model.password;
+            Domain.SignUp.username = model.username;
+            Domain.SignUp.role = model.role} SignUpSuccess SignUpFailure
     | SetPassword password ->
         { model with password = password }, Cmd.none
     | SetUsername username ->
         { model with username = username }, Cmd.none
+    | SetRole role ->
+        Browser.console.info ("Role: " + role)
+        { model with role = string_to_role role }, Cmd.none
     | SetEmail email ->
         {model with email = email}, Cmd.none
     | SignUpFailure err ->
@@ -59,7 +74,10 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     | SignUpSuccess result ->
         match result.code with
         | [] ->
-            model, Navigation.newUrl  (Client.Pages.to_path Client.Pages.FirstTime)
+            model, Navigation.newUrl  (Client.Pages.to_path (match model.role with
+                                                             | TitanRole.Pupil -> Client.Pages.NewPupil
+                                                             | TitanRole.Principal -> Client.Pages.NewTeacher
+                                                             | _ -> Client.Pages.SignUp))
         | _ ->
             { model with sign_up_result = Some result }, Cmd.none
 
@@ -81,7 +99,7 @@ let column (model : Model) (dispatch : Msg -> unit) =
           Box.box' [ ] [
                 Field.div [ ] [
                     Control.div [ ] [
-                        Input.email [
+                        Input.text [
                             Input.Size IsLarge
                             Input.Placeholder "Your Username"
                             Input.Props [ 
@@ -109,7 +127,6 @@ let column (model : Model) (dispatch : Msg -> unit) =
                             Input.Size IsLarge
                             Input.Placeholder "Your Email"
                             Input.Props [ 
-                                AutoFocus true
                                 OnChange (fun ev -> dispatch (SetEmail ev.Value)) 
                             ] 
                         ]
@@ -150,6 +167,19 @@ let column (model : Model) (dispatch : Msg -> unit) =
                         | false -> nothing
                     | _ -> nothing)
                 ]
+                Field.div [ ] 
+                    [ Label.label [ Label.Modifiers [ Modifier.TextSize (Screen.Desktop, TextSize.Is3) ] ]
+                        [ str "Role" ]
+                      Control.div [ ]
+                        [ Select.select [ Select.Props [ OnChange (fun ev -> dispatch (SetRole ev.Value)) ]
+                                          Select.Modifiers [ Modifier.TextSize (Screen.Desktop, TextSize.Is4) ]
+                                          Select.IsFullWidth ]
+                            [ select [ DefaultValue "Pupil" ]
+                                [ option [ Value "Pupil" ] [ str "Pupil" ]
+                                  option [ Value "Principal"] [ str "Principal" ] ] ] ] ]
+                   (*Control.div [ ] [
+                        Radio.radio [ ] [ Radio.input [ Radio.Input.Props [ OnChange (fun ev -> dispatch (SetRole ev.Value)) ]; Radio.Input.Name "role" ]; str "Teacher" ]
+                        Radio.radio [ ] [ Radio.input [ Radio.Input.Props [ OnChange (fun ev -> dispatch (SetRole ev.Value)) ]; Radio.Input.Name "role" ]; str "Pupil" ] ] ]*)
                 Field.div [] [
                     Client.Style.button dispatch ClickSignUp "Sign Up"
                 ]

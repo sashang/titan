@@ -19,6 +19,8 @@ open System
 open System.IO
 open System.Security.Claims
 
+[<Literal>]
+let pg_dev_conn_string = "Host=localhost;Database=titan_dev;Username=titan_dev;Password=1234"
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
 
@@ -136,11 +138,15 @@ let web_app (startup_options : StartupOptions) =
 let configure_services (services:IServiceCollection) =
     let fableJsonSettings = Newtonsoft.Json.JsonSerializerSettings()
     fableJsonSettings.Converters.Add(Fable.JsonConverter())
+    services.AddEntityFrameworkNpgsql() |> ignore
     services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
     services.AddDbContext<IdentityDbContext<IdentityUser>>(
         fun options ->
-            options.UseInMemoryDatabase("NameOfDatabase") |> ignore
+            //options.UseInMemoryDatabase("NameOfDatabase") |> ignore
+            options.UseNpgsql(pg_dev_conn_string) |> ignore
         ) |> ignore
+    services.BuildServiceProvider() |> ignore
+
 
     services.AddIdentity<IdentityUser, IdentityRole>(
         fun options ->
