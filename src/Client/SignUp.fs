@@ -74,11 +74,13 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     | SignUpSuccess result ->
         match result.code with
         | [] ->
+            Browser.console.info ("Sign up success ")
             model, Navigation.newUrl  (Client.Pages.to_path (match model.role with
                                                              | TitanRole.Pupil -> Client.Pages.NewPupil
                                                              | TitanRole.Principal -> Client.Pages.NewTeacher
                                                              | _ -> Client.Pages.SignUp))
         | _ ->
+            Browser.console.info ("Sign up fail ")
             { model with sign_up_result = Some result }, Cmd.none
 
 

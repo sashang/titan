@@ -12,9 +12,12 @@
     <Compile Include="ServerTypes.fs" />
     <Compile Include="JsonWebToken.fs" />
     <Compile Include="../Shared/FableJson.fs" />
-    <Compile Include="FileSystemDatabase.fs" />
-    <Compile Include="Auth.fs" />
+    <Compile Include="Model/School.fs" />
+    <Compile Include="ValueDeclarations.fs" />
     <Compile Include="Database.fs" />
+    <Compile Include="CreateSchool.fs" />
+    <Compile Include="SignUp.fs" />
+    <Compile Include="Auth.fs" />
     <Compile Include="Server.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

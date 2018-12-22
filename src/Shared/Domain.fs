@@ -1,8 +1,6 @@
 /// Domain model shared between client and server.
 namespace Domain
 
-open System
-
 // Json web token type.
 type JWT = string
 
@@ -14,7 +12,8 @@ type Login =
     member this.is_valid() =
         not (this.username <> "test@test"  || this.password <> "test")
 
-type SignUpCode = Success = 0 | BadPassword = 1 | BadUsername = 2 | BadEmail = 3 | Unknown = 4
+type SignUpCode = Success = 0 | BadPassword = 1 | BadUsername = 2 | BadEmail = 3
+                  | DatabaseError = 4 | Unknown = 5
 
 type TitanRole = Pupil = 0 | Principal = 1 | Unknown = 2
 
@@ -31,6 +30,20 @@ type SignUpResult =
     { code : SignUpCode list
       message : string list }
 
+type CreateSchoolCode = 
+    Success = 0 | SchoolNameInUse = 1 | DatabaseError = 2
+    | Unknown = 3
+
+[<CLIMutable>]
+type CreateSchool =
+    { Name : string
+      Principal : string }
+
+[<CLIMutable>]
+type CreateSchoolResult =
+    { code : CreateSchoolCode list
+      message : string list }
+
 type UserData =
     { UserName : string
       Token    : JWT }
@@ -42,11 +55,3 @@ type Class =
     { uuid : string
       date : string }
 
-type School =
-    { uuid : string
-      name : string
-      classes : Class list
-      pupils : Pupil list }
-
-type Schools =
-    { schools : School list }

@@ -2,20 +2,21 @@
 module Database
 
 open Domain
-open System.Threading.Tasks
+open Dapper
 open FSharp.Control.Tasks.ContextInsensitive
+open Npgsql
+open System.Threading.Tasks
+open ValueDeclarations
 
-[<RequireQualifiedAccess>]
-type DatabaseType =
-    | FileSystem
 
-type IDatabaseFunctions =
-    abstract member load_schools: Task<Domain.Schools>
-    abstract member add_user: string -> string -> string -> TitanRole -> Task<bool>
+type IDatabase =
+    abstract member insert_school: CreateSchool -> Task<bool>
 
-let get_database db_type =
-    match db_type with
-    | DatabaseType.FileSystem ->
-        { new IDatabaseFunctions with
-            member __.load_schools = task { return FileSystemDatabase.load_schools }
-            member __.add_user username password email role = task { return FileSystemDatabase.add_user username password email role} }
+type Database() =
+    interface IDatabase with
+        member this.insert_school (school : CreateSchool) : Task<bool> = task {
+            use pg_connection = new NpgsqlConnection(PG_DEV_CON)
+            pg_connection.Open()
+            let cmd = "insert into \"Schools\"(\"Name\",\"Principal\") values(@Name,@Principal)"
+            return pg_connection.Execute(cmd, school) = 1
+        }

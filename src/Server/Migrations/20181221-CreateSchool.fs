@@ -11,7 +11,7 @@ type AddSchool() =
     override this.Up() =
         this.Create.Table("Schools")
             .WithColumn("Id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("Name").AsString()
+            .WithColumn("Name").AsString().Unique()
             .WithColumn("Principal").AsString() |> ignore
 
     override this.Down() =

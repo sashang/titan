@@ -644,6 +644,10 @@ STORAGE: NONE
 RESTRICTION: == netcoreapp2.1
 NUGET
   remote: https://api.nuget.org/v3/index.json
+    Dapper (1.50.5)
+      System.Data.SqlClient (>= 4.4)
+      System.Reflection.Emit.Lightweight (>= 4.3)
+      System.Reflection.TypeExtensions (>= 4.4)
     Fable.Core (2.0.3)
       FSharp.Core (>= 4.5.2)
     Fable.Elmish (2.0.3)
