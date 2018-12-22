@@ -1,7 +1,6 @@
 open Database
 open Domain
 open FSharp.Control.Tasks
-open FSharp.Data.Sql
 open FluentMigrator.Runner
 open FluentMigrator.Runner.Initialization
 open Giraffe
