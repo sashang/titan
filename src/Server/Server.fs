@@ -27,7 +27,6 @@ let port = 8085us
 type StartupOptions = {
     google_id : string option
     google_secret : string option
-    use_fs_db : bool 
     enable_test_user : bool
 }
 
@@ -173,7 +172,6 @@ let app (startup_options : StartupOptions) =
 let startup_options = {
     google_id = get_env_var "TITAN_GOOGLE_ID"
     google_secret = get_env_var "TITAN_GOOGLE_SECRET"
-    use_fs_db = (get_env_var "TITAN_USE_FILESYSTEM_DB" = Some "yes")
     enable_test_user = (get_env_var "TITAN_ENABLE_TEST_USER" = Some "yes")
 }
 run (app startup_options)
