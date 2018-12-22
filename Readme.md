@@ -8,7 +8,7 @@ Install that using the link above. Then see the next section to build and run.
 
 ## Build
 
-Ensure you have the dotnet sdk 2.1.4 installed. I've found that exporting the
+Ensure you have the dotnet sdk 2.1.500 installed. I've found that exporting the
 following variables will ensure a headache free existance:
 
 ```
@@ -21,6 +21,15 @@ Then cd into the directory you downloaded this source code and run:
 ```
 fake build --target run
 ```
+### Note about .NET SDK and runtime versions
+
+* There's no correlation between the runtime version number and the sdk version number
+  For example 2.1.402 SDK uses the 2.1.4 runtime. 2.1.403 uses the 2.1.5 runtime. Confused yet?
+  There's more....
+* The version numbering isn't lexicographically ordered. After years of reading
+  version numbers as strings I expected that 2.1.4 came after 2.1.300. This is not true.
+  2.1.300 was released after 2.1.4.
+* Check this link for reference https://dotnet.microsoft.com/download/dotnet-core/2.1
 
 ## Running
 
@@ -36,6 +45,23 @@ authetication providers like Google.
 
 The server side code runs on port `http://localhost:8085`. This is all in F#
 on top of ASP.NET Core.
+
+## VSCode
+
+It's easiest to use VSCode with the ionide plugin for fsharp installed. It
+gives good code completion (better than the Vim plugin).
+
+```
+export DOTNET_ROOT=<path to dotnet root>
+export PATH="<path to dotnet root>:$PATH"
+code
+```
+
+If you start it without the DOTNET_ROOT path set to the path to the SDK in
+use for development, it will find whatever SDK is on your system and it
+searches from a set of common paths. This SDK may not be in the one you
+intend to use, so best to start `code` with the right path set in the
+DOTNET_ROOT environment variable.
 
 ## Debugging
 
@@ -65,23 +91,9 @@ with Google+
 (https://console.cloud.google.com/apis/library/plus.googleapis.com). If those
 environment variables are not set the server will not start.
 
-### Filesystem Database
+### Database
 
-The filesystem database is intended for testing the server side API. It is
-simply a collection of JSON files stored on the filesystem. To enable it set the
-following environment variable
-
-### Bash:
-```
-export TITAN_FILESYSTEM_DB="yes"
-```
-
-### Windows Powershell:
-```
-$Env:TITAN_FILESYSTEM_DB="yes"
-```
-
-Currently other databases are not supported so it's recommended to enabled this.
+Using postgres at the moment. The filesystem database is gone.
 
 ## Using Paket
 
