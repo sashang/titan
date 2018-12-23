@@ -55,7 +55,7 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
             Browser.console.info ("Sign up success ")
             model, Navigation.newUrl  (Client.Pages.to_path Client.Pages.AddClass)
         | _ ->
-            Browser.console.info ("Sign up fail ")
+            Browser.console.warn ("Create school failed")
             { model with create_school_result = Some result }, Cmd.none
     | SubmissionFailure err ->
         Browser.console.info ("Failed to create school: " + err.Message)
@@ -90,6 +90,26 @@ let input_field field_name description on_change =
     ]
 
 let view model (dispatch : Msg -> unit) =
+    
+    ///create a  single string from the list of strings in the result
+    let of_create_school_result (code : CreateSchoolCode) (result : CreateSchoolResult) =
+        List.fold2 (fun acc the_code the_message -> if code = the_code then acc + " " + the_message else acc) "" result.code result.message
+
+    ///display error messages based on the result code code and to the user
+    let make_error_user_message (code: CreateSchoolCode) =
+        match model.create_school_result with
+        | Some result ->
+            match List.contains code result.code with
+            | true ->
+                Help.help [
+                    Help.Color IsDanger
+                    Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5) ]
+                ] [
+                    str (of_create_school_result code result)
+                ]
+            | false -> nothing
+        | _ ->  nothing
+
     Hero.hero [
         Hero.IsBold
         Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ]
@@ -120,6 +140,7 @@ let view model (dispatch : Msg -> unit) =
                         ]
                     ] [
                         input_field "School Name" "Give your school a name" (on_school_change dispatch)
+                        make_error_user_message CreateSchoolCode.SchoolNameInUse
                         input_field "Your Name" "Your name" (on_teacher_change dispatch)
                         Button.button [
                             Button.Color IsPrimary
@@ -129,6 +150,8 @@ let view model (dispatch : Msg -> unit) =
                         ] [
                             str "Submit"
                         ]
+                        make_error_user_message CreateSchoolCode.DatabaseError
+                        make_error_user_message CreateSchoolCode.Unknown
                     ]
                 ]
             ]

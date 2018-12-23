@@ -5,9 +5,12 @@ open FluentMigrator.Runner
 open FluentMigrator.Runner.Initialization
 open Giraffe
 open Giraffe.Serialization
+open Microsoft.AspNetCore.Authentication
+open Microsoft.AspNetCore.Authentication.JwtBearer
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Cors.Infrastructure
 open Microsoft.Extensions.DependencyInjection
+open Microsoft.Extensions.Logging
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Identity
@@ -103,7 +106,6 @@ let configure_services (services:IServiceCollection) =
             options.UseNpgsql(PG_DEV_CON) |> ignore
         ) |> ignore
 
-
     services.AddFluentMigratorCore()
             .ConfigureRunner(fun rb ->
                 rb.AddPostgres()
@@ -146,6 +148,10 @@ let configure_cors (builder : CorsPolicyBuilder) =
         .AllowAnyHeader()
     |> ignore
 
+let configure_logging (builder : ILoggingBuilder) =
+    builder.AddConsole()
+        .AddDebug() |> ignore
+
 let app (startup_options : StartupOptions) = 
     match startup_options.google_id, startup_options.google_secret with 
     | Some id, Some secret ->
@@ -166,6 +172,7 @@ let app (startup_options : StartupOptions) =
             memory_cache
             use_static publicPath
             service_config configure_services
+            logging configure_logging
             use_gzip
         }
 

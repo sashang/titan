@@ -30,15 +30,19 @@ type SignUpResult =
     { code : SignUpCode list
       message : string list }
 
+///Return codes to the create school request.
 type CreateSchoolCode = 
     Success = 0 | SchoolNameInUse = 1 | DatabaseError = 2
     | Unknown = 3
 
+///The data submitted with the create school request
 [<CLIMutable>]
 type CreateSchool =
     { Name : string
       Principal : string }
 
+///The result of submitting the create school request when the teacher
+///first creates the school
 [<CLIMutable>]
 type CreateSchoolResult =
     { code : CreateSchoolCode list
