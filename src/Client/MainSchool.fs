@@ -2,17 +2,25 @@
 module Client.MainSchool
 
 open Client.Pages
+open Domain
 open Elmish
 open Elmish.Browser
 open Elmish.Browser.Navigation
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
+open Fable.PowerPack
+open Fetch.Fetch_types
 open Fulma
+open ModifiedFableFetch
 open Style
 open System
+open Thoth.Json
 
 type Msg =
 | ClickAddClass
+| ClickSecure
+| Success of string
+| Failure of exn
 
 type Model = {
     teacher_name : string
@@ -20,10 +28,28 @@ type Model = {
     classes : Class.Info list
 }
 
-let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
+let click_secure (session : Session) = promise {
+    let props = [
+        RequestProperties.Credentials RequestCredentials.Include
+        Fetch.requestHeaders [
+            HttpRequestHeaders.Authorization ("Bearer " + session.token) ]]
+    try
+        let! res = Fetch.fetch "/api/secure/validate" props
+        return! res.text ()
+    with e ->
+        return! failwith "could not get secured route"
+}
+
+let update (msg : Msg) (model : Model) (session : Session) : Model*Cmd<Msg> =
     match msg with
     | ClickAddClass ->
         model,  Navigation.newUrl (to_path AddClass)
+    | ClickSecure ->
+        model, Cmd.ofPromise click_secure session Success Failure
+    | Success msg ->
+        model, Cmd.none
+    | Failure e ->
+        model, Cmd.none
 
 let init sn tn classes =
     {teacher_name = tn; school_name = sn; classes = classes}
@@ -98,6 +124,9 @@ let view model dispatch =
                             Button.CustomClass "is-large is-block"
                             Button.OnClick (fun ev -> dispatch ClickAddClass)
                         ] [ str "Add Class" ] 
+                    ]
+                    Field.div [] [
+                        Client.Style.button dispatch ClickSecure "Secure"
                     ]
                 ]
             ]

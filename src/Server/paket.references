@@ -14,3 +14,4 @@ FluentMigrator.Runner.Postgres
 Dapper
 Npgsql
 System.Runtime.CompilerServices.Unsafe
+Microsoft.AspNetCore.Identity.UI

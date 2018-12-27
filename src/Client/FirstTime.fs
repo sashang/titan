@@ -11,7 +11,7 @@ open Client.Style
 
 
 type Character =
-| Pupil
+| Student
 | Teacher
 
 type Model = {
@@ -23,7 +23,7 @@ type Msg =
 | SelectCharacter of Character
 
 let init () =
-    {character = Pupil}
+    {character = Student}
 
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
@@ -35,9 +35,9 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
         | Teacher ->
         //then navigate to the teacher page
             model, Navigation.newUrl (Client.Pages.to_path Client.Pages.NewTeacher)
-        | Pupil ->
+        | Student ->
         //navigate the pupil page
-            model, Navigation.newUrl (Client.Pages.to_path Client.Pages.NewPupil)
+            model, Navigation.newUrl (Client.Pages.to_path Client.Pages.NewStudent)
 
     | SelectCharacter c ->
         { character = c}, Cmd.none
@@ -49,7 +49,7 @@ let select_character dispatch =
         if (c = "teacher") then
             dispatch (SelectCharacter Teacher)
         else
-            dispatch (SelectCharacter Pupil)
+            dispatch (SelectCharacter Student)
 
 let view model dispatch =
     Hero.hero [

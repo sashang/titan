@@ -11,8 +11,8 @@ type PageType =
     | Login
     | FirstTime
     | NewTeacher
-    | NewPupil
-    | MainSchool of (string*string) option
+    | NewStudent
+    | MainSchool
     | HowItWorks
     | AddClass
     | SignUp
@@ -21,15 +21,12 @@ let to_path =
     function
     | PageType.Home -> "#home"
     | PageType.Login -> "#login"
-    | PageType.FirstTime -> "#first_time"
-    | PageType.NewTeacher -> "#new_teacher"
-    | PageType.NewPupil -> "#new_pupil"
-    | PageType.HowItWorks -> "#how_it_works"
-    | PageType.AddClass -> "#add_class"
-    | PageType.MainSchool x ->
-        match x with
-        | Some (sn, tn) -> "#main_school?school_name=" + sn + "&teacher_name=" + tn
-        | None -> "#main_school"
+    | PageType.FirstTime -> "#first-time"
+    | PageType.NewTeacher -> "#new-teacher"
+    | PageType.NewStudent -> "#new-pupil"
+    | PageType.HowItWorks -> "#how-it-works"
+    | PageType.AddClass -> "#add-class"
+    | PageType.MainSchool -> "#main-school"
     | PageType.SignUp -> "#sign-up"
 
 
@@ -39,15 +36,11 @@ let page_parser : Parser<PageType -> _,_> =
         [ map PageType.Home (s "home")
           map PageType.Login (s "login")
           map PageType.FirstTime (s "first_time")
-          map PageType.NewTeacher (s "new_teacher")
-          map PageType.NewPupil (s "new_pupil")
-          map PageType.HowItWorks (s "how_it_works")
-          map PageType.AddClass (s "add_class")
+          map PageType.NewTeacher (s "new-teacher")
+          map PageType.NewStudent (s "new-pupil")
+          map PageType.HowItWorks (s "how-it-works")
+          map PageType.AddClass (s "add-class")
           map PageType.SignUp (s "sign-up")
-          map ((fun sn tn ->
-                    match sn, tn with
-                    | Some sn, Some tn -> MainSchool (Some (sn, tn))
-                    | _ -> MainSchool None))
-                (s "main_school" <?> stringParam "school_name" <?> stringParam "teacher_name")]
+          map PageType.MainSchool (s "main-school") ]
 
 let url_parser location = parseHash page_parser location

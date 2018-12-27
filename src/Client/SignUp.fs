@@ -27,11 +27,11 @@ type Model =
     { email : string
       password : string
       username : string
-      role : TitanRole
+      role : TitanRole option
       sign_up_result : SignUpResult option}
 
 let init () =
-    { email = ""; password = ""; username = ""; role = TitanRole.Unknown; sign_up_result = None }
+    { email = ""; password = ""; username = ""; role = None ; sign_up_result = None }
 
 let sign_up (user_info : Domain.SignUp) = promise {
     let body = Encode.Auto.toString (2, user_info)
@@ -46,9 +46,10 @@ let sign_up (user_info : Domain.SignUp) = promise {
 
 let string_to_role role =
     match role with
-    | "Pupil" -> TitanRole.Pupil
-    | "Principal" -> TitanRole.Principal
-    | _ -> TitanRole.Unknown
+    | "Student" -> Some TitanRole.Student
+    | "Principal" -> Some TitanRole.Principal
+    | "Admin" -> Some TitanRole.Admin
+    | _ -> None
 
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
@@ -75,10 +76,7 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
         match result.code with
         | [] ->
             Browser.console.info ("Sign up success ")
-            model, Navigation.newUrl  (Client.Pages.to_path (match model.role with
-                                                             | TitanRole.Pupil -> Client.Pages.NewPupil
-                                                             | TitanRole.Principal -> Client.Pages.NewTeacher
-                                                             | _ -> Client.Pages.SignUp))
+            model, Navigation.newUrl  (Client.Pages.to_path Client.Pages.Login)
         | _ ->
             Browser.console.info ("Sign up fail ")
             { model with sign_up_result = Some result }, Cmd.none
@@ -176,12 +174,12 @@ let column (model : Model) (dispatch : Msg -> unit) =
                         [ Select.select [ Select.Props [ OnChange (fun ev -> dispatch (SetRole ev.Value)) ]
                                           Select.Modifiers [ Modifier.TextSize (Screen.Desktop, TextSize.Is4) ]
                                           Select.IsFullWidth ]
-                            [ select [ DefaultValue "Pupil" ]
-                                [ option [ Value "Pupil" ] [ str "Pupil" ]
+                            [ select [ DefaultValue "Student" ]
+                                [ option [ Value "Student" ] [ str "Student" ]
                                   option [ Value "Principal"] [ str "Principal" ] ] ] ] ]
                    (*Control.div [ ] [
                         Radio.radio [ ] [ Radio.input [ Radio.Input.Props [ OnChange (fun ev -> dispatch (SetRole ev.Value)) ]; Radio.Input.Name "role" ]; str "Teacher" ]
-                        Radio.radio [ ] [ Radio.input [ Radio.Input.Props [ OnChange (fun ev -> dispatch (SetRole ev.Value)) ]; Radio.Input.Name "role" ]; str "Pupil" ] ] ]*)
+                        Radio.radio [ ] [ Radio.input [ Radio.Input.Props [ OnChange (fun ev -> dispatch (SetRole ev.Value)) ]; Radio.Input.Name "role" ]; str "Student" ] ] ]*)
                 Field.div [] [
                     Client.Style.button dispatch ClickSignUp "Sign Up"
                 ]

@@ -9,20 +9,48 @@ type JWT = string
 type Login =
     { username : string
       password : string }
+
     member this.is_valid() =
         not (this.username <> "test@test"  || this.password <> "test")
 
-type SignUpCode = Success = 0 | BadPassword = 1 | BadUsername = 2 | BadEmail = 3
-                  | DatabaseError = 4 | Unknown = 5
+type LoginCode = Success = 0 | Failure = 1
 
-type TitanRole = Pupil = 0 | Principal = 1 | Unknown = 2
+[<CLIMutable>]
+type TitanClaim =
+    { Type : string
+      Value : string }
+
+type TitanClaims = 
+    { Claims : TitanClaim list}
+
+[<CLIMutable>]
+type Session = 
+    { username : string
+      token : string
+      cookie : string }
+
+[<CLIMutable>]
+type LoginResult =
+    { code : LoginCode list
+      message : string list
+      token : string
+      username : string }
+
+type SignUpCode = Success = 0 | BadPassword = 1 | BadUsername = 2 | BadEmail = 3
+                  | DatabaseError = 4 | UnknownIdentityError = 5
+
+type TitanRole =
+    | Student
+    | Principal
+    | Admin
 
 [<CLIMutable>] //needed for BindJsonAync to work
+///The data transmitted with the sign up request
 type SignUp =
     { username : string
       email : string
       password : string
-      role : TitanRole }
+      role : TitanRole option }
 
 /// Result of the sign-up action.
 [<CLIMutable>]
@@ -58,4 +86,3 @@ type Pupil =
 type Class =
     { uuid : string
       date : string }
-

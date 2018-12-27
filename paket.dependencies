@@ -12,10 +12,11 @@ group Server
     nuget FSharp.Core
     nuget jose-jwt
     nuget Microsoft.AspNetCore.Identity.EntityFrameworkCore 2.1.0
+    nuget Microsoft.AspNetCore.Identity.UI 2.2.0
     nuget Npgsql.EntityFrameworkCore.PostgreSQL 2.1.0
     nuget Saturn
     nuget Fable.JsonConverter //fable.JsonConverter only works on the server. don't try it in the client.
-    nuget Saturn.Extensions.Authorization 0.7.5
+    nuget Saturn.Extensions.Authorization 0.8.0
 
 group Client
     source https://api.nuget.org/v3/index.json

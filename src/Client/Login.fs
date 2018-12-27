@@ -1,5 +1,6 @@
 module Client.Login
 
+open Domain
 open Elmish
 open Elmish.Browser.Navigation
 open Fable.Helpers.React
@@ -10,6 +11,7 @@ open Fable.PowerPack.Fetch
 open Fable.Core.JsInterop
 open FableJson
 open Fulma
+open ModifiedFableFetch
 open Shared
 open Thoth.Json
 open Style
@@ -18,18 +20,21 @@ type LoginState =
     | LoggedOut
     | LoggedIn
 
+type LoginEx(msg) =
+    inherit System.Exception(msg)
+
 type Msg =
-    | LoginSuccess of Domain.Login
+    | Response of Session
     | GetLoginGoogle
     | GotLoginGoogle of UserCredentialsResponse
-    | ErrorMsg of exn
+    | SubmissionFailure of exn
     | SetPassword of string
     | SetUsername of string
     | ClickLogin
 
 type Model =
     { login_state : LoginState
-      user_info : Domain.Login }
+      user_info : Login }
 
 let init =
     { login_state = LoggedOut; user_info = {username = ""; password = ""} }
@@ -45,31 +50,41 @@ let get_credentials () =
             return! failwithf "Could not authenticate user: %s." exn.Message
     }
 
-let login (user_info : Domain.Login) =
+let login (user_info : Login) =
     promise {
+        //2 in toString means 2 fields in the record. in this case it's username and password
         let body = Encode.Auto.toString (2, user_info)
-        let props =
-            [ RequestProperties.Method HttpMethod.POST
-              Fetch.requestHeaders [
-                HttpRequestHeaders.ContentType "application/json" ]
-              RequestProperties.Body !^body ]
-        try
-            let decoder = Decode.Auto.generateDecoder<Domain.Login>()
-            return! Fetch.fetchAs<Domain.Login> "/api/login" decoder props
-        with exn ->
-            return! failwithf "Could not authenticate user: %s." exn.Message
+        let! response = post_record "/api/login" body []
+        Browser.console.info "looking for cookie"
+        let cookie = if response.Headers.SetCookie.IsSome then 
+                        Browser.console.info response.Headers.SetCookie.Value
+                        response.Headers.SetCookie.Value
+                     else
+                        Browser.console.info "no cookie"
+                        null
+        let! text = response.text()
+        let decoder = Decode.Auto.generateDecoder<LoginResult>()
+        let result = Decode.fromString decoder text
+        match result with
+        | Ok login ->
+            match login.code with
+            | LoginCode.Success :: _ ->
+                return { username = login.username; token = login.token; cookie = cookie }
+            | _ -> return raise (LoginEx "Failed to login")
+        | Error e -> return raise (LoginEx "Failed to dedcode login response")
     }
 
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
-    | LoginSuccess login ->
-        {model with login_state = LoggedIn}, Cmd.none
+    | Response session ->
+         {model with login_state = LoggedIn},
+         Navigation.newUrl (Client.Pages.to_path Client.Pages.MainSchool)
     | GetLoginGoogle ->
         Browser.console.info ("requesing auth from Google ")
-        { login_state = LoggedOut; user_info = {username = ""; password = ""} }, Cmd.ofPromise get_credentials () GotLoginGoogle ErrorMsg
+        model, Cmd.ofPromise get_credentials () GotLoginGoogle SubmissionFailure
     | GotLoginGoogle credentials ->
         { model with login_state = LoggedOut}, Navigation.newUrl  (Client.Pages.to_path Client.Pages.FirstTime)
-    | ErrorMsg err ->
+    | SubmissionFailure err ->
         Browser.console.error ("Failed to login: " + err.Message)
         { model with login_state = LoggedOut }, Cmd.none
     | SetPassword password ->
@@ -78,7 +93,7 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
         { model with user_info = {username = username; password = model.user_info.password }}, Cmd.none
     | ClickLogin ->
         Browser.console.info ("clicked login")
-        model, Cmd.ofPromise login model.user_info LoginSuccess ErrorMsg
+        model, Cmd.ofPromise login model.user_info Response SubmissionFailure
 
 
 let column (dispatch : Msg -> unit) =

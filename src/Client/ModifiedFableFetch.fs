@@ -25,7 +25,9 @@ let fetch (url: string) (init: RequestProperties list) : JS.Promise<FetchResult>
 let post_record (url: string) (body: string) (properties: RequestProperties list) =
     let defaultProps =
       [ RequestProperties.Method HttpMethod.POST
-        requestHeaders [ ContentType "application/json" ]
+        RequestProperties.Credentials RequestCredentials.Include
+        requestHeaders [ HttpRequestHeaders.ContentType "application/json"
+                         HttpRequestHeaders.Accept "application/json" ]
         RequestProperties.Body !^(body) ]
 
     List.append defaultProps properties
@@ -36,7 +38,7 @@ let post_record (url: string) (body: string) (properties: RequestProperties list
             | Success response -> return response
             | BadStatus response ->
                 let! body_text = response.text ()
-                return failwith ("eek!" + body_text + string response.Status + " " + response.StatusText + " for URL " + response.Url)
+                return failwith ("eek! " + body_text + string response.Status + " " + response.StatusText + " for URL " + response.Url)
             | NetworkError ->
                 return failwith "network error"
         }
