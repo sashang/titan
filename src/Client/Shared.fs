@@ -17,6 +17,7 @@ type Msg =
 | Init
 | SignUpMsg of Client.SignUp.Msg
 | SignOutMsg of Client.SignOut.Msg
+| UrlUpdatedMsg of Client.Pages.PageType
 
 
 type SinglePageState = {

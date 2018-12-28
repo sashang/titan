@@ -52,6 +52,7 @@ let update (msg : Msg) (model : Model) (session : Session) : Model*Cmd<Msg> =
     | Failure e ->
         model, Cmd.none
     | SignOutMsg msg ->
+        Fable.Import.Browser.console.info "Main school told to sign out"
         let cmd' = SignOut.update msg
         model, Cmd.map SignOutMsg cmd'
 

@@ -31,7 +31,9 @@ let sign_out () = promise {
 let update (msg : Msg) : Cmd<Msg> =
     match msg with
     | SignOut -> Cmd.ofPromise sign_out () Success Failure
-    | Success result -> Navigation.newUrl (Client.Pages.to_path Client.Pages.Home)
+    | Success result -> 
+        Fable.Import.Browser.console.info "sign out success"
+        Navigation.newUrl (Client.Pages.to_path Client.Pages.Home)
     | Failure ex -> failwith ("Failed to sign out " + ex.Message)
 
 let view dispatch session = 

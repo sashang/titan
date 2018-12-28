@@ -19,26 +19,49 @@ let handleNotFound (model: SinglePageState) =
     ( model, Navigation.modifyUrl (Client.Pages.to_path Client.Pages.PageType.Login) )
 
 /// The navigation logic of the application given a page identity parsed from the .../#info
-/// information in the URL.
+/// information in the URL. In cases where the session = None then we stay where we are for most pages
+/// Login, Home, SignUp are exempt
 let url_update (result : Client.Pages.PageType option) (model : SinglePageState) =
-    match result with
-    | None ->
-        handleNotFound model
+    match result, model with
+    | result, {session = None} ->
+        match result with
+        | None ->
+            handleNotFound model
+        | Some Client.Pages.PageType.Home->
+            { model with page = HomeModel }, Cmd.none
 
-    | Some Client.Pages.PageType.Home ->
-        { model with page = HomeModel }, Cmd.none
+        | Some Client.Pages.PageType.Login ->
+            { model with page = LoginModel Login.init}, Cmd.none
 
-    | Some Client.Pages.PageType.Login ->
-        { model with page = LoginModel Login.init}, Cmd.none
+        | Some SignUp ->
+            { model with page = SignUpModel (SignUp.init ())}, Cmd.none
 
-    | Some Client.Pages.PageType.MainSchool ->
-        {model with page = MainSchoolModel (MainSchool.init "" "" [])}, Cmd.none
+        | _  ->
+            model, Cmd.none
+    // session token present so we can go to the page.
+    | result, {session = Some session} ->
+        match result with
+        | None ->
+            handleNotFound model
 
-    | Some AddClass ->
-        { model with page = AddClassModel (AddClass.init ())}, Cmd.none
+        | Some Client.Pages.PageType.MainSchool ->
+            {model with page = MainSchoolModel (MainSchool.init "" "" [])}, Cmd.none
+
+        | Some Client.Pages.PageType.AddClass ->
+            { model with page = AddClassModel (AddClass.init ())}, Cmd.none
+
+        | Some Client.Pages.PageType.Home ->
+            { model with page = HomeModel }, Cmd.none
+
+        | Some Client.Pages.PageType.Login ->
+            { model with page = LoginModel Login.init}, Cmd.none
+
+        | Some SignUp ->
+            { model with page = SignUpModel (SignUp.init ())}, Cmd.none
+        
+
+
     
-    | Some SignUp ->
-        { model with page = SignUpModel (SignUp.init ())}, Cmd.none
         
 let init _ : SinglePageState * Cmd<Msg> =
     {page = HomeModel; session = None}, Cmd.none
@@ -93,7 +116,11 @@ let update (msg : Msg) (sps : SinglePageState) : SinglePageState * Cmd<Msg> =
     | SignOutMsg msg, some_page ->
         let cmd' = SignOut.update msg
         //remove the session token
+        Browser.console.info "Removing session token"
         {sps with session = None }, Cmd.map SignOutMsg cmd'
+
+    | UrlUpdatedMsg next_page, state ->
+        url_update (Some next_page) state
 
     //potentially mismatched pages and messages we don't care about
     //i.e an AddClasMsg, page = MainSchoolModel which.  The only example of this is where a signout message can
@@ -112,8 +139,21 @@ open Elmish.HMR
 
 let view model dispatch =
     view_page model dispatch 
+let  [<Literal>]  nav_event = "NavigationEvent"
+let url_sub appState : Cmd<_> = 
+    [ fun dispatch -> 
+        let on_change _ = 
+            match url_parser window.location with 
+            | Some parsedPage -> dispatch (UrlUpdatedMsg parsedPage)
+            | None -> ()
+        
+        // listen to manual hash changes or page refresh
+        window.addEventListener_hashchange(unbox on_change)
+        // listen to custom navigation events published by `Urls.navigate [ . . .  ]`
+        window.addEventListener(nav_event, unbox on_change) ]  
 
 Program.mkProgram init update view
+|> Program.withSubscription url_sub //detect changes typed into the address bar
 |> Program.toNavigable Client.Pages.url_parser url_update
 #if DEBUG
 |> Program.withConsoleTrace
