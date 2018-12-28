@@ -26,19 +26,19 @@ let url_update (result : Client.Pages.PageType option) (model : SinglePageState)
         handleNotFound model
 
     | Some Client.Pages.PageType.Home ->
-        { model with page = HomeModel; session = None }, Cmd.none
+        { model with page = HomeModel }, Cmd.none
 
     | Some Client.Pages.PageType.Login ->
-        { model with page = LoginModel Login.init; session = None }, Cmd.none
+        { model with page = LoginModel Login.init}, Cmd.none
 
     | Some Client.Pages.PageType.MainSchool ->
-        {model with page = MainSchoolModel (MainSchool.init "" "" []); session = None}, Cmd.none
+        {model with page = MainSchoolModel (MainSchool.init "" "" [])}, Cmd.none
 
     | Some AddClass ->
-        { model with page = AddClassModel (AddClass.init ()); session = None }, Cmd.none
+        { model with page = AddClassModel (AddClass.init ())}, Cmd.none
     
     | Some SignUp ->
-        { model with page = SignUpModel (SignUp.init ()); session = None }, Cmd.none
+        { model with page = SignUpModel (SignUp.init ())}, Cmd.none
         
 let init _ : SinglePageState * Cmd<Msg> =
     {page = HomeModel; session = None}, Cmd.none
@@ -68,41 +68,38 @@ let update (msg : Msg) (sps : SinglePageState) : SinglePageState * Cmd<Msg> =
         //case we need to store the session info in the toplevel
         | Login.Msg.Response session ->
             Browser.console.debug ("hijacking login response ")
-            (*
-            let jwt_handler = JwtSecurityTokenHandler()
-            let tok_params = TokenValidationParameters()
-            let claims, validated_token = jwt_handler.ValidateToken(session.token, tok_params)
-            let role = claims.FindFirst "TitanRole"
-            Browser.console.info ("has role = " + role.Value)*)
-            let next_state = {sps with  page = MainSchoolModel (MainSchool.init "" "" []); session = Some session}
-            //let login_model', cmd = Login.update msg login_model
-            //{ sps with page = LoginModel login_model'; session = Some session }, Cmd.map LoginMsg cmd
-            //next_state, Navigation.newUrl (Client.Pages.to_path Client.Pages.MainSchool)
-            next_state, Cmd.none 
+            let next_state, cmd' = Login.update msg login_model
+            {sps with page = LoginModel next_state; session = Some session}, Cmd.map LoginMsg cmd'
 
         //in this case pass the message through
         | _ ->
             let login_model', cmd = Login.update msg login_model
             { sps with page = LoginModel login_model'}, Cmd.map LoginMsg cmd
 
-    //any page with no session is not allowed to be accesses
-    | _, {session = None} -> 
-        Browser.console.info ("No authorization to access this page")
+    //any other message with no session we don't process
+    | msg, {session = None} -> 
         sps, Cmd.none
 
-    //from this point all pages have a session
-
+    //from this point we catch all messages with sessions
     | MainSchoolMsg msg, {page = MainSchoolModel main_school_model; session = Some session} ->
-        let main_school_model', cmd = MainSchool.update msg main_school_model session
-        {sps with page = MainSchoolModel main_school_model'}, Cmd.map MainSchoolMsg cmd
+        let main_school_model', cmd' = MainSchool.update msg main_school_model session
+        {sps with page = MainSchoolModel main_school_model'}, Cmd.map MainSchoolMsg cmd'
 
     | AddClassMsg msg, {page = AddClassModel model} ->
-        let model', cmd = AddClass.update msg model
-        {sps with page = AddClassModel model'}, Cmd.map AddClassMsg cmd
+        let model', cmd' = AddClass.update msg model
+        {sps with page = AddClassModel model'}, Cmd.map AddClassMsg cmd'
 
-    //don't care
-    | _, _ -> sps, Cmd.none
+    //signout msg can come from any page. 
+    | SignOutMsg msg, some_page ->
+        let cmd' = SignOut.update msg
+        //remove the session token
+        {sps with session = None }, Cmd.map SignOutMsg cmd'
 
+    //potentially mismatched pages and messages we don't care about
+    //i.e an AddClasMsg, page = MainSchoolModel which.  The only example of this is where a signout message can
+    //come from any page, but that's handled above
+    | any_msg, any_page ->
+        sps, Cmd.none
 
 let show = function
 | Some x -> string x

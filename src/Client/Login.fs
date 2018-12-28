@@ -69,8 +69,7 @@ let login (user_info : Login) =
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     match msg with
     | Response session ->
-         {model with login_state = LoggedIn},
-         Navigation.newUrl (Client.Pages.to_path Client.Pages.MainSchool)
+         {model with login_state = LoggedIn}, Navigation.newUrl (Client.Pages.to_path Client.Pages.MainSchool)
     | GetLoginGoogle ->
         Browser.console.info ("requesing auth from Google ")
         model, Cmd.ofPromise get_credentials () GotLoginGoogle SubmissionFailure
