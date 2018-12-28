@@ -84,20 +84,14 @@ let update (msg : Msg) (sps : SinglePageState) : SinglePageState * Cmd<Msg> =
         {sps with page = SignUpModel model'}, Cmd.map SignUpMsg cmd
 
     | LoginMsg msg, {page = LoginModel login_model; session = None} ->
-        match msg with
-        //hijack the login response since this contains the session token.
-        //normally we don't hijack a message since it violates the elm conceptual flow - the child
-        //and only yhe child should know what to do with a message inteded for it it but in thst
-        //case we need to store the session info in the toplevel
-        | Login.Msg.Response session ->
-            Browser.console.debug ("hijacking login response ")
-            let next_state, cmd' = Login.update msg login_model
+        //The external message returned tells us if we've signed in or not
+        //If we've signed in then unpack it to get the session
+        let next_state, cmd', ext_msg = Login.update msg login_model
+        match ext_msg with
+        | Login.ExternalMsg.SignedIn session ->
             {sps with page = LoginModel next_state; session = Some session}, Cmd.map LoginMsg cmd'
-
-        //in this case pass the message through
-        | _ ->
-            let login_model', cmd = Login.update msg login_model
-            { sps with page = LoginModel login_model'}, Cmd.map LoginMsg cmd
+        | Login.ExternalMsg.Nop ->
+            {sps with page = LoginModel next_state}, Cmd.map LoginMsg cmd'
 
     //any other message with no session we don't process
     | msg, {session = None} -> 

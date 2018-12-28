@@ -22,6 +22,12 @@ type LoginState =
 type LoginEx(msg) =
     inherit System.Exception(msg)
 
+/// Messages that go back to the parent. See https://medium.com/@MangelMaxime/my-tips-for-working-with-elmish-ab8d193d52fd.
+/// This basically obviates the need to hijack the session login message in the parent. 
+type ExternalMsg =
+    | Nop
+    | SignedIn of Session
+
 type Msg =
     | Response of Session
     | GetLoginGoogle
@@ -66,25 +72,27 @@ let login (user_info : Login) =
         | Error e -> return raise (LoginEx "Failed to dedcode login response")
     }
 
-let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
+let update (msg : Msg) (model : Model) : Model*Cmd<Msg>*ExternalMsg =
     match msg with
     | Response session ->
-         {model with login_state = LoggedIn}, Navigation.newUrl (Client.Pages.to_path Client.Pages.MainSchool)
+         {model with login_state = LoggedIn},
+         Navigation.newUrl (Client.Pages.to_path Client.Pages.MainSchool),
+         SignedIn session //return the session. the parent will see this and can store the session state.
     | GetLoginGoogle ->
         Browser.console.info ("requesing auth from Google ")
-        model, Cmd.ofPromise get_credentials () GotLoginGoogle SubmissionFailure
+        model, Cmd.ofPromise get_credentials () GotLoginGoogle SubmissionFailure, Nop
     | GotLoginGoogle credentials ->
-        { model with login_state = LoggedOut}, Navigation.newUrl  (Client.Pages.to_path Client.Pages.MainSchool)
+        { model with login_state = LoggedOut}, Navigation.newUrl  (Client.Pages.to_path Client.Pages.MainSchool), Nop
     | SubmissionFailure err ->
         Browser.console.error ("Failed to login: " + err.Message)
-        { model with login_state = LoggedOut }, Cmd.none
+        { model with login_state = LoggedOut }, Cmd.none, Nop
     | SetPassword password ->
-        { model with user_info = {username = model.user_info.username; password = password }}, Cmd.none
+        { model with user_info = {username = model.user_info.username; password = password }}, Cmd.none, Nop
     | SetUsername username ->
-        { model with user_info = {username = username; password = model.user_info.password }}, Cmd.none
+        { model with user_info = {username = username; password = model.user_info.password }}, Cmd.none, Nop
     | ClickLogin ->
         Browser.console.info ("clicked login")
-        model, Cmd.ofPromise login model.user_info Response SubmissionFailure
+        model, Cmd.ofPromise login model.user_info Response SubmissionFailure, Nop
 
 
 let column (dispatch : Msg -> unit) =
