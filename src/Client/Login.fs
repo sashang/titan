@@ -75,7 +75,7 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
         Browser.console.info ("requesing auth from Google ")
         model, Cmd.ofPromise get_credentials () GotLoginGoogle SubmissionFailure
     | GotLoginGoogle credentials ->
-        { model with login_state = LoggedOut}, Navigation.newUrl  (Client.Pages.to_path Client.Pages.FirstTime)
+        { model with login_state = LoggedOut}, Navigation.newUrl  (Client.Pages.to_path Client.Pages.MainSchool)
     | SubmissionFailure err ->
         Browser.console.error ("Failed to login: " + err.Message)
         { model with login_state = LoggedOut }, Cmd.none

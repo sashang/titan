@@ -28,20 +28,8 @@ let url_update (result : Client.Pages.PageType option) (model : SinglePageState)
     | Some Client.Pages.PageType.Home ->
         { model with page = HomeModel; session = None }, Cmd.none
 
-    | Some Client.Pages.PageType.FirstTime ->
-        { model with page = FirstTimeModel (FirstTime.init ()); session = None }, Cmd.none
-
     | Some Client.Pages.PageType.Login ->
         { model with page = LoginModel Login.init; session = None }, Cmd.none
-
-    | Some Client.Pages.PageType.NewTeacher ->
-        { model with page = NewTeacherModel (NewTeacher.init ()); session = None }, Cmd.none
-
-    | Some Client.Pages.PageType.NewStudent ->
-        { model with page = NewPupilModel; session = None }, Cmd.none
-    
-    | Some Client.Pages.PageType.HowItWorks ->
-        { model with page = HowItWorksModel; session = None }, Cmd.none
 
     | Some Client.Pages.PageType.MainSchool ->
         {model with page = MainSchoolModel (MainSchool.init "" "" []); session = None}, Cmd.none
@@ -103,13 +91,6 @@ let update (msg : Msg) (sps : SinglePageState) : SinglePageState * Cmd<Msg> =
         sps, Cmd.none
 
     //from this point all pages have a session
-    | FirstTimeMsg msg, {page = FirstTimeModel ft_model}  ->
-        let ft_model', cmd = FirstTime.update msg ft_model
-        { sps with page = FirstTimeModel ft_model' }, Cmd.map FirstTimeMsg cmd
-
-    | NewTeacherMsg msg, {page = NewTeacherModel nt_model} ->
-        let nt_model', cmd = NewTeacher.update msg nt_model
-        {sps with page = NewTeacherModel nt_model' }, Cmd.map NewTeacherMsg cmd
 
     | MainSchoolMsg msg, {page = MainSchoolModel main_school_model; session = Some session} ->
         let main_school_model', cmd = MainSchool.update msg main_school_model session

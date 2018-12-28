@@ -64,9 +64,6 @@ let client_header dispatch session =
               ]
               Level.right [ ] [
                   Level.item [ ] [
-                      viewLink Pages.HowItWorks "How it Works"                      
-                  ]
-                  Level.item [ ] [
                       (match session with
                       | None -> viewLink Pages.Login "Sign In"
                       | Some session -> SignOut.view dispatch session)

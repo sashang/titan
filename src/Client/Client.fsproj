@@ -1,9 +1,8 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
-  <ItemGroup>    
+  <ItemGroup>
     <Compile Include="Pages.fs" />
     <Compile Include="Pupil.fs" />
     <Compile Include="../Shared/Domain.fs" />
@@ -14,13 +13,9 @@
     <Compile Include="Style.fs" />
     <Compile Include="AddClass.fs" />
     <Compile Include="Home.fs" />
-    <Compile Include="NewPupil.fs" />
-    <Compile Include="NewTeacher.fs" />
     <Compile Include="SignUp.fs" />
     <Compile Include="Login.fs" />
-    <Compile Include="FirstTime.fs" />
     <Compile Include="MainSchool.fs" />
-    <Compile Include="HowItWorks.fs" />    
     <Compile Include="Shared.fs" />
     <Compile Include="Client.fs" />
   </ItemGroup>
