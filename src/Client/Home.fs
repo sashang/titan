@@ -6,14 +6,14 @@ open Fable.Import
 
 open Style
 
-let view () =
+let view dispatch session =
     Hero.hero [
         Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ]
         Hero.Color IsWhite
         Hero.IsHalfHeight
     ] [
         Hero.head [ ] [
-            client_header
+            client_header dispatch session
         ]
         Hero.body [ ] [
             Container.container [ Container.IsFluid ] [

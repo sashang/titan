@@ -9,7 +9,6 @@ open Fable.Import
 open Fable.PowerPack
 open Fable.PowerPack.Fetch
 open Fable.Core.JsInterop
-open FableJson
 open Fulma
 open ModifiedFableFetch
 open Shared
@@ -55,13 +54,6 @@ let login (user_info : Login) =
         //2 in toString means 2 fields in the record. in this case it's username and password
         let body = Encode.Auto.toString (2, user_info)
         let! response = post_record "/api/login" body []
-        Browser.console.info "looking for cookie"
-        let cookie = if response.Headers.SetCookie.IsSome then 
-                        Browser.console.info response.Headers.SetCookie.Value
-                        response.Headers.SetCookie.Value
-                     else
-                        Browser.console.info "no cookie"
-                        null
         let! text = response.text()
         let decoder = Decode.Auto.generateDecoder<LoginResult>()
         let result = Decode.fromString decoder text
@@ -69,7 +61,7 @@ let login (user_info : Login) =
         | Ok login ->
             match login.code with
             | LoginCode.Success :: _ ->
-                return { username = login.username; token = login.token; cookie = cookie }
+                return { username = login.username; token = login.token}
             | _ -> return raise (LoginEx "Failed to login")
         | Error e -> return raise (LoginEx "Failed to dedcode login response")
     }
@@ -143,7 +135,7 @@ let column (dispatch : Msg -> unit) =
           br [ ] ]
 
 
-let view (dispatch : Msg -> unit) (model : Model) =
+let view (dispatch : Msg -> unit) (model : Model) = 
     match model.login_state with
     | LoggedIn ->   
         Hero.hero

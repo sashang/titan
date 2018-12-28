@@ -61,8 +61,8 @@ let auth_null : HttpHandler =
     fun next ctx ->
          next ctx
 
-let logout = pipeline {
-    sign_off "Cookies"
+let sign_out = pipeline {
+    sign_off "Identity.Application"
 }
 
 let logged_in_view = router {
@@ -91,41 +91,33 @@ let print_claims (claims : TitanClaim list) (logger : ILogger<Debug.DebugLogger>
     List.map (fun x -> "type = " + x.Type + " value = " + x.Value) |>
     List.iter (fun x ->  logger.LogWarning(x))
 
-let validate_user next (ctx : HttpContext) = task {
-    let! login = ctx.BindJsonAsync<Domain.Login>()
-    let sign_in_manager = ctx.GetService<SignInManager<IdentityUser>>()
-    let user_manager = ctx.GetService<UserManager<IdentityUser>>()
-    let! result = sign_in_manager.PasswordSignInAsync(login.username, login.password, true, false)
-    let logger = ctx.GetLogger<Debug.DebugLogger>()
-    logger.LogInformation("logging in....")
-    match result.Succeeded with
-    | true ->
-        let user = IdentityUser(UserName = login.username)
-        //do! sign_in_manager.RefreshSignInAsync(user)
-        //let! claims = user_manager.GetClaimsAsync(user)
-        //let! claims_principal = sign_in_manager.CreateUserPrincipalAsync(user)
-        //let claims = claims_principal.Claims
-        //let token = generateJWT (secret, SecurityAlgorithms.HmacSha256) issuer (DateTime.UtcNow.AddHours(1.0)) []
-        let token = generate_token login.username
-        return! ctx.WriteJsonAsync
-            { LoginResult.code = [LoginCode.Success]
-              LoginResult.message = []
-              token = token
-              username = login.username }
-    | _ -> 
-        let msg = sprintf "Failed to login user '%s'" login.username
-        logger.LogWarning(msg)
-        return! ctx.WriteJsonAsync
-            { LoginResult.code = [LoginCode.Failure]
-              LoginResult.message = [msg]
-              token = ""
-              username = "" }
+let validate_user (next : HttpFunc) (ctx : HttpContext) = task {
+    try
+        let! login = ctx.BindJsonAsync<Domain.Login>()
+        let sign_in_manager = ctx.GetService<SignInManager<IdentityUser>>()
+        let! result = sign_in_manager.PasswordSignInAsync(login.username, login.password, true, false)
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        logger.LogInformation("logging in....")
+        match result.Succeeded with
+        | true ->
+            let token = generate_token login.username
+            return! ctx.WriteJsonAsync
+                { LoginResult.code = [LoginCode.Success]
+                  LoginResult.message = []
+                  token = token
+                  username = login.username }
+        | _ -> 
+            let msg = sprintf "Failed to login user '%s'" login.username
+            logger.LogWarning(msg)
+            return! ctx.WriteJsonAsync
+                { LoginResult.code = [LoginCode.Failure]
+                  LoginResult.message = [msg]
+                  token = ""
+                  username = "" }
+    with ex ->
+        return! failwith ("exception: could not validate user: " + ex.Message)
 }
 
-let auth_failed = pipeline {
-    json {user_name = "sad"}
-    plug print_user_details
-}
 ///endpoints that require authorization to reach
 let must_have_auth = router {
     //pipe_through (pipeline { requires_authentication (json_auth_fail_message)})
@@ -134,13 +126,13 @@ let must_have_auth = router {
 }
 let handleGetSecured =
     fun (next : HttpFunc) (ctx : HttpContext) ->
-        //let email = ctx.User.FindFirst ClaimTypes.NameIdentifier
-        //json ("User " + email.Value + " is authorized to access this resource.") next ctx
-        json "User is ok" next ctx
+        let username = ctx.User.FindFirst ClaimTypes.Name
+        let role = ctx.User.FindFirst "TitanRole"
+        json ("User " + username.Value + " has titan role " + role.Value) next ctx
 
 let secure_router = router {
-    pipe_through (Auth.requireAuthentication JWT)
-    //pipe_through (pipeline { requires_authentication (json_auth_fail_message)})
+    //pipe_through (Auth.requireAuthentication JWT)
+    pipe_through (pipeline { requires_authentication (json_auth_fail_message)})
     get "/validate" handleGetSecured
 }
 
@@ -154,7 +146,8 @@ let titan_api =  router {
         return! ctx.WriteJsonAsync { TitanClaims.Claims = claims }
     })
     post "/login" validate_user
-    post "/sign-up" (SignUp.sign_up_user)
+    post "/sign-up" SignUp.sign_up_user
+    post "/sign-out" sign_out
     forward "/secure" secure_router
 }
 

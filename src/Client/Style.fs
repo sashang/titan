@@ -28,6 +28,7 @@ let viewLink page description =
         OnClick goToUrl
     ] [ R.str description]
 
+
 let centerStyle direction =
     Style [ CSSProp.Display "flex"
             FlexDirection direction
@@ -53,7 +54,7 @@ let button dispatch msg text =
         Button.CustomClass "is-large is-block"
     ] [ R.str text ]
 
-let client_header =
+let client_header dispatch session =
       Section.section [ ] [
           Level.level [ ] [
               Level.left [ ] [
@@ -66,7 +67,9 @@ let client_header =
                       viewLink Pages.HowItWorks "How it Works"                      
                   ]
                   Level.item [ ] [
-                      viewLink Pages.Login "Login"
+                      (match session with
+                      | None -> viewLink Pages.Login "Sign In"
+                      | Some session -> SignOut.view dispatch session)
                   ]
               ]
           ]

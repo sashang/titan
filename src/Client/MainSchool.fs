@@ -21,6 +21,7 @@ type Msg =
 | ClickSecure
 | Success of string
 | Failure of exn
+| SignOutMsg of SignOut.Msg
 
 type Model = {
     teacher_name : string
@@ -50,6 +51,9 @@ let update (msg : Msg) (model : Model) (session : Session) : Model*Cmd<Msg> =
         model, Cmd.none
     | Failure e ->
         model, Cmd.none
+    | SignOutMsg msg ->
+        let cmd' = SignOut.update msg
+        model, Cmd.map SignOutMsg cmd'
 
 let init sn tn classes =
     {teacher_name = tn; school_name = sn; classes = classes}
@@ -90,14 +94,14 @@ let view_classes model dispatch =
         ]
     ]
 
-let view model dispatch =
+let view model dispatch session =
     Hero.hero [
         Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ]
         Hero.Color IsWhite
         Hero.IsHalfHeight
     ] [
         Hero.head [ ] [
-            client_header
+            client_header (SignOutMsg >> dispatch) session
         ]
         Hero.body [ ] [
             Container.container [ Container.IsFluid ] [

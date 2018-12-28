@@ -18,6 +18,7 @@ type Msg =
 | Submit
 | SetStartTime of DateTimeOffset
 | SetEndTime of DateTimeOffset
+| SignOutMsg of SignOut.Msg
 
 let init () =
     { start_time = DateTimeOffset.Now ; end_time = DateTimeOffset.Now }
@@ -30,6 +31,9 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
         {model with end_time = time}, Cmd.none
     | SetStartTime time ->
         {model with start_time = time}, Cmd.none
+    | SignOutMsg msg ->
+        let cmd' = SignOut.update msg
+        model, Cmd.map SignOutMsg cmd'
 
 let date_time_offset_from_string s =
     DateTimeOffset()
@@ -78,14 +82,14 @@ let input_field field_name description on_blur =
         ]
     ]
 
-let view model (dispatch : Msg -> unit) =
+let view model (dispatch : Msg -> unit) session =
     Hero.hero [
         Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ]
         Hero.Color IsWhite
         Hero.IsHalfHeight
     ] [
         Hero.head [ ] [
-            client_header
+            client_header (SignOutMsg >> dispatch) session
         ]
         Hero.body [ ] [
             Container.container [

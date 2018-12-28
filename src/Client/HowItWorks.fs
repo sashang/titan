@@ -1,10 +1,8 @@
 ﻿module Client.HowItWorks
 
 open Fulma
-open Fulma.Extensions
 open Elmish
 open Fable.Helpers.React
-open Fable.Helpers.React.Props
 
 type Model = None
 

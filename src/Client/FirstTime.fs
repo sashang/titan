@@ -21,6 +21,7 @@ type Model = {
 type Msg =
 | ClickContinue
 | SelectCharacter of Character
+| SignOutMsg of SignOut.Msg
 
 let init () =
     {character = Student}
@@ -41,6 +42,9 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
 
     | SelectCharacter c ->
         { character = c}, Cmd.none
+    | SignOutMsg msg ->
+        let cmd' = SignOut.update msg
+        model, Cmd.map SignOutMsg cmd'
 
 let select_character dispatch =
     fun (ev : React.FormEvent) ->
@@ -51,7 +55,7 @@ let select_character dispatch =
         else
             dispatch (SelectCharacter Student)
 
-let view model dispatch =
+let view model dispatch session =
     Hero.hero [
         Hero.IsBold
         Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ]
@@ -59,7 +63,7 @@ let view model dispatch =
         Hero.IsFullHeight
     ] [
         Hero.head [ ] [
-            client_header
+            client_header (SignOutMsg >> dispatch) session
         ]
         Hero.body [ ] [
             Container.container [

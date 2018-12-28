@@ -23,6 +23,7 @@ type Msg =
 | Submit
 | Response of CreateSchoolResult
 | SubmissionFailure of exn
+| SignOutMsg of SignOut.Msg
 
 
 let submit (school : Domain.CreateSchool) = promise {
@@ -60,6 +61,9 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     | SubmissionFailure err ->
         Browser.console.info ("Failed to create school: " + err.Message)
         model, Cmd.none
+    | SignOutMsg msg ->
+        let cmd' = SignOut.update msg
+        model, Cmd.map SignOutMsg cmd'
 
 let on_school_change dispatch =
     fun (ev : React.FormEvent) ->
@@ -89,7 +93,7 @@ let input_field field_name description on_change =
         ]
     ]
 
-let view model (dispatch : Msg -> unit) =
+let view model (dispatch : Msg -> unit) session =
     
     ///create a  single string from the list of strings in the result
     let of_create_school_result (code : CreateSchoolCode) (result : CreateSchoolResult) =
@@ -117,7 +121,7 @@ let view model (dispatch : Msg -> unit) =
         Hero.IsFullHeight
     ] [
         Hero.head [ ] [
-            client_header
+            client_header (SignOutMsg >> dispatch) session
         ]
         Hero.body [ ] [
             Container.container [

@@ -11,6 +11,9 @@ open Fable.Import.Browser
 open Fable.PowerPack
 open Shared
 
+let secret = "spadR2dre#u-ruBrE@TepA&*Uf@U"
+let issuer = "saturnframework.io"
+
 let handleNotFound (model: SinglePageState) =
     Browser.console.error("Error parsing url: " + Browser.window.location.href)
     ( model, Navigation.modifyUrl (Client.Pages.to_path Client.Pages.PageType.Login) )
@@ -76,7 +79,13 @@ let update (msg : Msg) (sps : SinglePageState) : SinglePageState * Cmd<Msg> =
         //and only yhe child should know what to do with a message inteded for it it but in thst
         //case we need to store the session info in the toplevel
         | Login.Msg.Response session ->
-            Browser.console.info ("hijacking login response ")
+            Browser.console.debug ("hijacking login response ")
+            (*
+            let jwt_handler = JwtSecurityTokenHandler()
+            let tok_params = TokenValidationParameters()
+            let claims, validated_token = jwt_handler.ValidateToken(session.token, tok_params)
+            let role = claims.FindFirst "TitanRole"
+            Browser.console.info ("has role = " + role.Value)*)
             let next_state = {sps with  page = MainSchoolModel (MainSchool.init "" "" []); session = Some session}
             //let login_model', cmd = Login.update msg login_model
             //{ sps with page = LoginModel login_model'; session = Some session }, Cmd.map LoginMsg cmd
@@ -122,6 +131,9 @@ let show = function
 open Elmish.Debug
 open Elmish.HMR
 #endif
+
+let view model dispatch =
+    view_page model dispatch 
 
 Program.mkProgram init update view
 |> Program.toNavigable Client.Pages.url_parser url_update

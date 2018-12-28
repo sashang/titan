@@ -23,6 +23,7 @@ type Msg =
 | AddClassMsg of Client.AddClass.Msg
 | Init
 | SignUpMsg of Client.SignUp.Msg
+| SignOutMsg of Client.SignOut.Msg
 
 
 type SinglePageState = {
@@ -32,16 +33,14 @@ type SinglePageState = {
 
 let view_page sps dispatch =
     match sps.page with
-    | HomeModel -> Client.Home.view ()
-    | LoginModel model -> Client.Login.view (LoginMsg >> dispatch) model
-    | FirstTimeModel model -> Client.FirstTime.view model (FirstTimeMsg >> dispatch)
-    | NewTeacherModel model -> Client.NewTeacher.view model (NewTeacherMsg >> dispatch)
-    | NewPupilModel -> Client.NewPupil.view (NewPupilMsg >> dispatch)
-    | MainSchoolModel model -> Client.MainSchool.view model (MainSchoolMsg>> dispatch)
+    | HomeModel -> Client.Home.view (SignOutMsg >> dispatch) sps.session
+    | LoginModel model -> Client.Login.view (LoginMsg >> dispatch) model 
+    | FirstTimeModel model -> Client.FirstTime.view model (FirstTimeMsg >> dispatch) sps.session
+    | NewTeacherModel model -> Client.NewTeacher.view model (NewTeacherMsg >> dispatch) sps.session
+    | NewPupilModel -> Client.NewPupil.view (NewPupilMsg >> dispatch) 
+    | MainSchoolModel model -> Client.MainSchool.view model (MainSchoolMsg>> dispatch) sps.session
     | HowItWorksModel -> Client.HowItWorks.view ()
-    | AddClassModel model -> Client.AddClass.view model (AddClassMsg >> dispatch)
+    | AddClassModel model -> Client.AddClass.view model (AddClassMsg >> dispatch) sps.session
     | SignUpModel model -> Client.SignUp.view model (SignUpMsg >> dispatch)
 
-let view model dispatch =
-    view_page model dispatch
 

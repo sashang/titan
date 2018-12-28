@@ -1,4 +1,6 @@
 source https://www.nuget.org/api/v2
+nuget Fable.MaterialUI
+nuget jose-jwt
 
 group Server
     source https://api.nuget.org/v3/index.json

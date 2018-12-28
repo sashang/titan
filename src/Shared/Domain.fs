@@ -26,8 +26,7 @@ type TitanClaims =
 [<CLIMutable>]
 type Session = 
     { username : string
-      token : string
-      cookie : string }
+      token : string }
 
 [<CLIMutable>]
 type LoginResult =
@@ -52,10 +51,19 @@ type SignUp =
       password : string
       role : TitanRole option }
 
+type SignOutCode =
+    | Success = 0
+    | Failure = 1
+
 /// Result of the sign-up action.
 [<CLIMutable>]
 type SignUpResult =
     { code : SignUpCode list
+      message : string list }
+
+[<CLIMutable>]
+type SignOutResult =
+    { code : SignOutCode list
       message : string list }
 
 ///Return codes to the create school request.
