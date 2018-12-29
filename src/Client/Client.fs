@@ -72,6 +72,15 @@ let print_claims (claims : TitanClaim list) =
     List.iter (fun x -> Browser.console.info x)
     
 
+let msg_to_string msg = function
+| SignUpMsg _ -> "SignUpMsg"
+| LoginMsg _ -> "LoginMsg"
+| MainSchoolMsg _ -> "MainSchoolMsg"
+| AddClassMsg _ -> "AddClassMsg"
+| SignOutMsg _ -> "SignOutMsg"
+| UrlUpdatedMsg _ -> "UrlUpdatedMsg"
+| Init _ -> "Init"
+
 (*
     have a look at the parent-child description at
     https://elmish.github.io/elmish/parent-child.html to understand how update messages
@@ -120,7 +129,8 @@ let update (msg : Msg) (sps : SinglePageState) : SinglePageState * Cmd<Msg> =
     //i.e an AddClasMsg, page = MainSchoolModel which.  The only example of this is where a signout message can
     //come from any page, but that's handled above
     | any_msg, any_page ->
-        sps, Cmd.none
+        Browser.console.info (msg_to_string any_msg)
+        failwith "All messages not handled. Should not reach here"
 
 let show = function
 | Some x -> string x

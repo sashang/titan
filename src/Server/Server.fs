@@ -61,8 +61,19 @@ let auth_null : HttpHandler =
     fun next ctx ->
          next ctx
 
-let sign_out = pipeline {
+let sign_out (next : HttpFunc) (ctx : HttpContext) = task {
+    return! ctx.WriteJsonAsync
+        { SignOutResult.code = [SignOutCode.Success]
+          SignOutResult.message = [] }
+}
+
+let sign_out_pipeline = pipeline {
     sign_off "Identity.Application"
+}
+
+let sign_out_router = router {
+    pipe_through sign_out_pipeline
+    post "/sign-out" sign_out
 }
 
 let logged_in_view = router {
@@ -147,7 +158,7 @@ let titan_api =  router {
     })
     post "/login" validate_user
     post "/sign-up" SignUp.sign_up_user
-    post "/sign-out" sign_out
+    forward "/sign-out" sign_out_router
     forward "/secure" secure_router
 }
 
