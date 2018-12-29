@@ -1,4 +1,4 @@
-module Client.Login
+module Login
 
 open Domain
 open Elmish
@@ -13,7 +13,6 @@ open Fulma
 open ModifiedFableFetch
 open Shared
 open Thoth.Json
-open Style
 
 type LoginState =
     | LoggedOut
@@ -76,7 +75,8 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg>*ExternalMsg =
     match msg with
     | Response session ->
          {model with login_state = LoggedIn},
-         Navigation.newUrl (Client.Pages.to_path Client.Pages.MainSchool),
+         //Navigation.newUrl (Client.Pages.to_path Client.Pages.MainSchool),
+         Cmd.none,
          SignedIn session //return the session. the parent will see this and can store the session state.
     | GetLoginGoogle ->
         Browser.console.info ("requesing auth from Google ")

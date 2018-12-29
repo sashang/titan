@@ -9,6 +9,7 @@ open Elmish.React
 open Fable.Import
 open Fable.Import.Browser
 open Fable.PowerPack
+open Root
 open Shared
 
 let secret = "spadR2dre#u-ruBrE@TepA&*Uf@U"
@@ -21,71 +22,21 @@ let handleNotFound (model: SinglePageState) =
 /// The navigation logic of the application given a page identity parsed from the .../#info
 /// information in the URL. In cases where the session = None then we stay where we are for most pages
 /// Login, Home, SignUp are exempt
-let url_update (result : Client.Pages.PageType option) (model : SinglePageState) =
-    match result, model with
-    | result, {session = None} ->
-        match result with
-        | None ->
-            handleNotFound model
-        | Some Client.Pages.PageType.Home->
-            { model with page = HomeModel }, Cmd.none
-
-        | Some Client.Pages.PageType.Login ->
-            { model with page = LoginModel Login.init}, Cmd.none
-
-        | Some SignUp ->
-            { model with page = SignUpModel (SignUp.init ())}, Cmd.none
-
-        | _  ->
-            model, Cmd.none
-    // session token present so we can go to the page.
-    | result, {session = Some session} ->
-        match result with
-        | None ->
-            handleNotFound model
-
-        | Some Client.Pages.PageType.MainSchool ->
-            {model with page = MainSchoolModel (MainSchool.init "" "" [])}, Cmd.none
-
-        | Some Client.Pages.PageType.AddClass ->
-            { model with page = AddClassModel (AddClass.init ())}, Cmd.none
-
-        | Some Client.Pages.PageType.Home ->
-            { model with page = HomeModel }, Cmd.none
-
-        | Some Client.Pages.PageType.Login ->
-            { model with page = LoginModel Login.init}, Cmd.none
-
-        | Some SignUp ->
-            { model with page = SignUpModel (SignUp.init ())}, Cmd.none
-        
-
-
-    
-        
-let init _ : SinglePageState * Cmd<Msg> =
-    {page = HomeModel; session = None}, Cmd.none
+/// 
+//let init _ : SinglePageState * Cmd<Msg> =
+  //  {page = HomeModel; session = None}, Cmd.none
 
 let print_claims (claims : TitanClaim list) =
     claims |>
     List.map (fun x -> "type = " + x.Type + " value = " + x.Value) |>
     List.iter (fun x -> Browser.console.info x)
     
-
-let msg_to_string msg = function
-| SignUpMsg _ -> "SignUpMsg"
-| LoginMsg _ -> "LoginMsg"
-| MainSchoolMsg _ -> "MainSchoolMsg"
-| AddClassMsg _ -> "AddClassMsg"
-| SignOutMsg _ -> "SignOutMsg"
-| UrlUpdatedMsg _ -> "UrlUpdatedMsg"
-| Init _ -> "Init"
-
 (*
     have a look at the parent-child description at
     https://elmish.github.io/elmish/parent-child.html to understand how update messages
     propagate from the child to parent. It's more subtle than it appears from surface.
 *)
+(*
 let update (msg : Msg) (sps : SinglePageState) : SinglePageState * Cmd<Msg> =
     match msg, sps with    
     | SignUpMsg msg, {page = SignUpModel model} ->
@@ -135,20 +86,19 @@ let update (msg : Msg) (sps : SinglePageState) : SinglePageState * Cmd<Msg> =
 let show = function
 | Some x -> string x
 | None -> "Loading..."
-
+*)
 #if DEBUG
 open Elmish.Debug
 open Elmish.HMR
 #endif
 
-let view model dispatch =
-    view_page model dispatch 
+
 let  [<Literal>]  nav_event = "NavigationEvent"
 let url_sub appState : Cmd<_> = 
     [ fun dispatch -> 
         let on_change _ = 
             match url_parser window.location with 
-            | Some parsedPage -> dispatch (UrlUpdatedMsg parsedPage)
+            | Some parsedPage -> dispatch (Root.UrlUpdatedMsg parsedPage)
             | None -> ()
         
         // listen to manual hash changes or page refresh
@@ -156,7 +106,8 @@ let url_sub appState : Cmd<_> =
         // listen to custom navigation events published by `Urls.navigate [ . . .  ]`
         window.addEventListener(nav_event, unbox on_change) ]  
 
-Program.mkProgram init update view
+//Program.mkProgram init update view
+Program.mkProgram Root.init Root.update Root.view
 |> Program.withSubscription url_sub //detect changes typed into the address bar
 |> Program.toNavigable Client.Pages.url_parser url_update
 #if DEBUG

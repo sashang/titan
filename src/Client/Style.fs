@@ -54,23 +54,6 @@ let button dispatch msg text =
         Button.CustomClass "is-large is-block"
     ] [ R.str text ]
 
-let client_header dispatch session =
-      Section.section [ ] [
-          Level.level [ ] [
-              Level.left [ ] [
-                  Level.item [ ] [
-                      viewLink Pages.Home "The New Kid"
-                  ]
-              ]
-              Level.right [ ] [
-                  Level.item [ ] [
-                      (match session with
-                      | None -> viewLink Pages.Login "Sign In"
-                      | Some session -> SignOut.view dispatch session)
-                  ]
-              ]
-          ]
-      ]
 
 let onEnter msg dispatch =
     function

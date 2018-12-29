@@ -8,14 +8,12 @@
     <Compile Include="../Shared/Domain.fs" />
     <Compile Include="../Shared/Shared.fs" />
     <Compile Include="ModifiedFableFetch.fs" />
-    <Compile Include="Class.fs" />
-    <Compile Include="SignOut.fs" />
     <Compile Include="Style.fs" />
-    <Compile Include="AddClass.fs" />
-    <Compile Include="Home.fs" />
     <Compile Include="SignUp.fs" />
-    <Compile Include="Login.fs" />
-    <Compile Include="MainSchool.fs" />
+    <Compile Include="Root/Home/Home.fs" />
+    <Compile Include="Root/SignOut/SignOut.fs" />
+    <Compile Include="Root/Login/Login.fs" />
+    <Compile Include="Root/Root.fs" />
     <Compile Include="Shared.fs" />
     <Compile Include="Client.fs" />
   </ItemGroup>

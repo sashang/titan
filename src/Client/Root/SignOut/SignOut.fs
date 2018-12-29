@@ -1,4 +1,4 @@
-module Client.SignOut
+module SignOut
 
 open Domain
 open Elmish
@@ -45,7 +45,7 @@ let update (msg : Msg) : Cmd<Msg> =
         Navigation.newUrl (Client.Pages.to_path Client.Pages.Login)
     | Failure ex -> failwith ("Failed to sign out " + ex.Message)
 
-let view dispatch session = 
+let view dispatch = 
     R.a [
         Style [
             CSSProp.Padding "0 20px"

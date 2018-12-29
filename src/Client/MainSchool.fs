@@ -102,7 +102,7 @@ let view model dispatch session =
         Hero.IsHalfHeight
     ] [
         Hero.head [ ] [
-            client_header (SignOutMsg >> dispatch) session
+            //client_header (SignOutMsg >> dispatch) session
         ]
         Hero.body [ ] [
             Container.container [ Container.IsFluid ] [
