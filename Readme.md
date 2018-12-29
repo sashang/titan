@@ -168,3 +168,22 @@ it pulls in the latest version of that assembly. I've started pinning all
 assemblies to the version number so I don't have to deal with this problem.
 
 
+## The client
+
+### Parent - Child relationships
+
+React programs follow a parent child relationship. Components receive data in
+one direction only (Reacts one way binding:
+https://reactjs.org/docs/thinking-in-react.html). Similarly Elmish pushes
+messages down from the main program. Messages triggered by a react element in
+a child component is routed through the top level Elmish runtime first, then
+the main top level component of the client (Root in this case) before making
+it's way down to the component that triggered the message. Along the way down
+this chain you (probably shouldn't [1]) be altering the model of the
+components the message passes through until you get to the component the
+message was intended for. So what is a child component then? It is any
+component whose `update` function we call from the parent becuase only that
+component knows how to change it's model. We can't do it from the parent when
+processing a message.
+
+[1] I say "probably should't" but there's no hard and fast rule against this.
