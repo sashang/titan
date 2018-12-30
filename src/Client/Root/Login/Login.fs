@@ -133,22 +133,26 @@ let column (dispatch : Msg -> unit) =
 
 
 let view  (model : Model) (dispatch : Msg -> unit) = 
-    match model.login_state with
-    | LoggedIn ->   
-        Hero.hero
-            [ Hero.Color IsSuccess
-              Hero.IsFullHeight
-              Hero.Color IsWhite ]
-            [ Hero.body [ ]
-                [ div [ Id "greeting"] [
-                        h3 [ ClassName "text-center" ] [ str (sprintf "Hi %s!" model.user_info.username) ] ] ] ] 
-    | LoggedOut ->
-        Hero.hero
-            [ Hero.Color IsSuccess
-              Hero.IsFullHeight
-              Hero.Color IsWhite ]
-            [ Hero.body [ ]
-                [ Container.container
-                    [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
-                    [ column dispatch ] ] ]
+
+    Container.container [ Container.IsFluid
+                          Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ] [
+        (match model.login_state with
+        | LoggedIn ->   
+            Hero.hero
+                [ Hero.Color IsSuccess
+                  Hero.IsFullHeight
+                  Hero.Color IsWhite ]
+                [ Hero.body [ ]
+                    [ div [ Id "greeting"] [
+                            h3 [ ClassName "text-center" ] [ str (sprintf "Hi %s!" model.user_info.username) ] ] ] ] 
+        | LoggedOut ->
+            Hero.hero
+                [ Hero.Color IsSuccess
+                  Hero.IsFullHeight
+                  Hero.Color IsWhite ]
+                [ Hero.body [ ]
+                    [ Container.container
+                        [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
+                        [ column dispatch ] ] ])
+    ]
 

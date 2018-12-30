@@ -128,8 +128,8 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         { Child = HomeModel; Session = None}, Cmd.map SignOutMsg cmd
 
     | ClickTitle, state ->
-        Browser.console.info "some test message"
-        state, Cmd.none
+        //move to the home page
+        {state with Child = HomeModel}, Cmd.none
 
     | ClickSignOut, state ->
         let cmd = SignOut.update SignOut.SignOut

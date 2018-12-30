@@ -9,7 +9,7 @@
     <Compile Include="../Shared/Shared.fs" />
     <Compile Include="ModifiedFableFetch.fs" />
     <Compile Include="Style.fs" />
-    <Compile Include="SignUp.fs" />
+    <Compile Include="Root/SignUp/SignUp.fs" />
     <Compile Include="Root/Home/Home.fs" />
     <Compile Include="Root/SignOut/SignOut.fs" />
     <Compile Include="Root/Login/Login.fs" />
