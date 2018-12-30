@@ -16,17 +16,23 @@ open Elmish.Browser.Navigation
 open Fulma
 open Fulma.Extensions
 open Client.Style
-module R = Fable.Helpers.React
+open Fable.Helpers.React
 
 
 type RootMsg =
     | LoginMsg of Login.Msg
+    | GotoSignUpPage
+    | GotoLoginPage
+    | ClickSignOut
+    | ClickTitle
     | SignOutMsg of SignOut.Msg
+    | SignUpMsg of SignUp.Msg
     | UrlUpdatedMsg of Client.Pages.PageType
     | ChildMsg
 
 type PageModel =
     | LoginModel of Login.Model
+    | SignUpModel of SignUp.Model
     | HomeModel
 and
     State = {
@@ -65,37 +71,43 @@ let url_update (result : Client.Pages.PageType option) (model : State) =
 
 let init _ : State * Cmd<RootMsg> =
     {Child = HomeModel; Session = None}, Cmd.none
+
+let private nav_item_button (text : string) (msg : RootMsg) dispatch =
+    Navbar.Item.div [ ] [ Button.button [ Button.OnClick (fun _ -> (dispatch msg)) ] [ str text ] ]
+
 let view model dispatch =
     Hero.hero [
         Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ]
         Hero.Color IsWhite
         Hero.IsHalfHeight ] [
         Hero.head [ ] [
-          Section.section [ ] [
-              Level.level [ ] [
-                  Level.left [ ] [
-                      Level.item [ ] [
-                          viewLink Client.Pages.Home "The New Kid"
-                      ]
-                  ]
-                  Level.right [ ] [
-                      Level.item [ ] [
-                          (match model.Session with
-                          | None -> viewLink Client.Pages.Login "Sign In"
-                          | Some session -> SignOut.view (SignOutMsg >> dispatch))
-                      ]
-                  ]
-              ]
-          ]
+            Navbar.navbar [ ] [
+                Container.container [ ] [
+                    Navbar.Brand.div [ ] [
+                        Navbar.Item.a [ Navbar.Item.Props [ Href "#" ] ] [
+                            img [ Style [ Width "2.5em" ]
+                                  Src "https://via.placeholder.com/350" ] ]
+                        Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
+                            str "The New Kid"
+                        ]
+                    ]
+                    Navbar.End.div []
+                        [ match model.Session with
+                          | None ->
+                                yield! [nav_item_button "Login" GotoLoginPage dispatch
+                                        nav_item_button "Sign Up" GotoSignUpPage dispatch]
+                          | Some session -> yield nav_item_button "Logout" ClickSignOut dispatch ]
+                ]
+            ]
         ]
         Hero.body [ ] [
-          Section.section [] [
-              (match model.Child with
-              | LoginModel login_model -> 
-                    Login.view (LoginMsg >> dispatch) login_model
-              | HomeModel ->
-                    Home.view)
-          ]
+            (match model.Child with
+            | LoginModel login_model -> 
+              Login.view login_model (LoginMsg >> dispatch)
+            | SignUpModel sign_up_model ->
+              SignUp.view sign_up_model (SignUpMsg >> dispatch)
+            | HomeModel ->
+              Home.view)
         ]
     ]
 
@@ -112,12 +124,31 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
 
     | SignOutMsg sign_out, state ->
         let cmd = SignOut.update sign_out
+        //assume that signing out worked so we delete the sesison
         { Child = HomeModel; Session = None}, Cmd.map SignOutMsg cmd
+
+    | ClickTitle, state ->
+        Browser.console.info "some test message"
+        state, Cmd.none
+
+    | ClickSignOut, state ->
+        let cmd = SignOut.update SignOut.SignOut
+        state, Cmd.map SignOutMsg cmd
+
+    | GotoSignUpPage, state ->
+        {state with Child = SignUpModel (SignUp.init ())}, Cmd.none
+
+    | GotoLoginPage, state ->
+        {state with Child = LoginModel Login.init}, Cmd.none
+
+    | SignUpMsg signup_msg, {Child = SignUpModel model; Session = None} ->
+        let new_model, cmd = SignUp.update signup_msg model
+        {state with Child = SignUpModel new_model}, Cmd.map SignUpMsg cmd 
 
     | _, {Session = None} ->
         //we don't pass these on, user is not logged in
         state, Cmd.none
-
+        
     //here we are logging in and we are already logged in
     | LoginMsg login_msg, {Session = Some session} ->
         state, Cmd.none

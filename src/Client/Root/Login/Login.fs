@@ -142,7 +142,7 @@ let column (dispatch : Msg -> unit) =
           br [ ] ]
 
 
-let view (dispatch : Msg -> unit) (model : Model) = 
+let view  (model : Model) (dispatch : Msg -> unit) = 
     match model.login_state with
     | LoggedIn ->   
         Hero.hero

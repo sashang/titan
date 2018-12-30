@@ -42,7 +42,7 @@ let update (msg : Msg) : Cmd<Msg> =
         Cmd.ofPromise sign_out () SignOutSuccess Failure
     | SignOutSuccess result -> 
         Fable.Import.Browser.console.info "SignOut.update received SignOutSuccess"
-        Navigation.newUrl (Client.Pages.to_path Client.Pages.Login)
+        Navigation.newUrl (Client.Pages.to_path Client.Pages.Home)
     | Failure ex -> failwith ("Failed to sign out " + ex.Message)
 
 let view dispatch = 

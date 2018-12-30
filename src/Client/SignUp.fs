@@ -186,7 +186,7 @@ let column (model : Model) (dispatch : Msg -> unit) =
         ]
    ]
 
-let view (model : Model) (dispatch : Msg -> unit) =
+let view  (model : Model) (dispatch : Msg -> unit) =
     Hero.hero
         [ Hero.Color IsSuccess
           Hero.IsFullHeight
