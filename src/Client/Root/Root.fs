@@ -77,7 +77,7 @@ let private nav_item_button (text : string) (msg : RootMsg) dispatch =
 
 let view model dispatch =
     Hero.hero [
-        Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ]
+        Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Option.Centered) ]
         Hero.Color IsWhite
         Hero.IsHalfHeight ] [
         Hero.head [ ] [
@@ -88,7 +88,7 @@ let view model dispatch =
                             img [ Style [ Width "2.5em" ]
                                   Src "https://via.placeholder.com/350" ] ]
                         Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
-                            str "The New Kid"
+                            Heading.h3 [ Heading.IsSubtitle] [ str "The New Kid" ]
                         ]
                     ]
                     Navbar.End.div []

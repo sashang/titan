@@ -167,19 +167,6 @@ let column (model : Model) (dispatch : Msg -> unit) =
                         | false -> nothing
                     | _ -> nothing)
                 ]
-                Field.div [ ] 
-                    [ Label.label [ Label.Modifiers [ Modifier.TextSize (Screen.Desktop, TextSize.Is3) ] ]
-                        [ str "Role" ]
-                      Control.div [ ]
-                        [ Select.select [ Select.Props [ OnChange (fun ev -> dispatch (SetRole ev.Value)) ]
-                                          Select.Modifiers [ Modifier.TextSize (Screen.Desktop, TextSize.Is4) ]
-                                          Select.IsFullWidth ]
-                            [ select [ DefaultValue "Student" ]
-                                [ option [ Value "Student" ] [ str "Student" ]
-                                  option [ Value "Principal"] [ str "Principal" ] ] ] ] ]
-                   (*Control.div [ ] [
-                        Radio.radio [ ] [ Radio.input [ Radio.Input.Props [ OnChange (fun ev -> dispatch (SetRole ev.Value)) ]; Radio.Input.Name "role" ]; str "Teacher" ]
-                        Radio.radio [ ] [ Radio.input [ Radio.Input.Props [ OnChange (fun ev -> dispatch (SetRole ev.Value)) ]; Radio.Input.Name "role" ]; str "Student" ] ] ]*)
                 Field.div [] [
                     Client.Style.button dispatch ClickSignUp "Sign Up"
                 ]

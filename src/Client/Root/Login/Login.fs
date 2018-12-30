@@ -128,18 +128,8 @@ let column (dispatch : Msg -> unit) =
                 Field.div [] [
                     Client.Style.button dispatch ClickLogin "Login"
                 ]
-                Field.div [] [
-                    Client.Style.button dispatch GetLoginGoogle "Login with Google"
-                ]
-          ]
-          Text.p [ Modifiers [ Modifier.TextColor IsGrey ] ]
-            [ a [ Props.Href "#sign-up"
-                  Props.OnClick Client.Style.goToUrl ] [ str "Sign Up" ]
-              str "\u00A0·\u00A0"
-              a [ ] [ str "Forgot Password" ]
-              str "\u00A0·\u00A0"
-              a [ ] [ str "Need Help?" ] ]
-          br [ ] ]
+          ] 
+    ]
 
 
 let view  (model : Model) (dispatch : Msg -> unit) = 
