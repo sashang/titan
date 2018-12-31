@@ -11,6 +11,7 @@
     <Compile Include="Style.fs" />
     <Compile Include="Root/SignUp/SignUp.fs" />
     <Compile Include="Root/Home/Home.fs" />
+    <Compile Include="Root/Dashboard/Dashboard.fs" />
     <Compile Include="Root/SignOut/SignOut.fs" />
     <Compile Include="Root/Login/Login.fs" />
     <Compile Include="Root/Root.fs" />

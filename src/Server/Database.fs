@@ -11,11 +11,11 @@ open ValueDeclarations
 
 
 type IDatabase =
-    abstract member insert_school: CreateSchool -> Task<Result<bool, string>>
+    abstract member insert_school: School -> Task<Result<bool, string>>
 
 type Database() = 
     interface IDatabase with
-        member this.insert_school (school : CreateSchool) : Task<Result<bool, string>> = task {
+        member this.insert_school (school : School) : Task<Result<bool, string>> = task {
             try 
                 use pg_connection = new NpgsqlConnection(PG_DEV_CON)
                 pg_connection.Open()

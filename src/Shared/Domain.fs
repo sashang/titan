@@ -73,7 +73,7 @@ type CreateSchoolCode =
 
 ///The data submitted with the create school request
 [<CLIMutable>]
-type CreateSchool =
+type School =
     { Name : string
       Principal : string }
 

@@ -9,7 +9,7 @@ open FSharp.Control.Tasks.ContextInsensitive
 
 let create_school (next : HttpFunc) (ctx : HttpContext) = task {
     let db_service = ctx.GetService<IDatabase>()
-    let! school = ctx.BindJsonAsync<Domain.CreateSchool>()
+    let! school = ctx.BindJsonAsync<Domain.School>()
     let! result = db_service.insert_school school
     let logger = ctx.GetLogger<Debug.DebugLogger>()
     match result with

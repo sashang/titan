@@ -19,23 +19,11 @@ let handleNotFound (model: SinglePageState) =
     Browser.console.error("Error parsing url: " + Browser.window.location.href)
     ( model, Navigation.modifyUrl (Client.Pages.to_path Client.Pages.PageType.Login) )
 
-/// The navigation logic of the application given a page identity parsed from the .../#info
-/// information in the URL. In cases where the session = None then we stay where we are for most pages
-/// Login, Home, SignUp are exempt
-/// 
-//let init _ : SinglePageState * Cmd<Msg> =
-  //  {page = HomeModel; session = None}, Cmd.none
-
 let print_claims (claims : TitanClaim list) =
     claims |>
     List.map (fun x -> "type = " + x.Type + " value = " + x.Value) |>
     List.iter (fun x -> Browser.console.info x)
     
-(*
-    have a look at the parent-child description at
-    https://elmish.github.io/elmish/parent-child.html to understand how update messages
-    propagate from the child to parent. It's more subtle than it appears from surface.
-*)
 (*
 let update (msg : Msg) (sps : SinglePageState) : SinglePageState * Cmd<Msg> =
     match msg, sps with    

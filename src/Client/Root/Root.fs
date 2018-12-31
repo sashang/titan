@@ -2,6 +2,7 @@
 /// processing is done. Messages to child pages are routed from here.
 module Root
 
+open Dashboard
 open Domain
 open Elmish
 open Elmish.Browser
@@ -15,7 +16,6 @@ open Fable.PowerPack
 open Elmish.Browser.Navigation
 open Fulma
 open Fulma.Extensions
-open Client.Style
 open Fable.Helpers.React
 
 
@@ -27,12 +27,14 @@ type RootMsg =
     | ClickTitle
     | SignOutMsg of SignOut.Msg
     | SignUpMsg of SignUp.Msg
+    | DashboardMsg of Dashboard.Msg
     | UrlUpdatedMsg of Client.Pages.PageType
     | ChildMsg
 
 type PageModel =
     | LoginModel of Login.Model
     | SignUpModel of SignUp.Model
+    | DashboardModel of Dashboard.Model
     | HomeModel
 and
     State = {
@@ -46,7 +48,7 @@ let url_update (result : Client.Pages.PageType option) (model : State) =
     | result, {Session = None} ->
         match result with
         | None ->
-            model, Cmd.none
+            model, Cmd.none //no page mapped from the given url, so leave it where it is.
 
         | Some Client.Pages.PageType.Home->
             { model with Child = HomeModel }, Cmd.none
@@ -56,6 +58,7 @@ let url_update (result : Client.Pages.PageType option) (model : State) =
 
         | _  ->
             model, Cmd.none
+
     // session token present so we can go to the page.
     | result, {Session = Some session} ->
         match result with
@@ -67,6 +70,9 @@ let url_update (result : Client.Pages.PageType option) (model : State) =
 
         | Some Client.Pages.PageType.Login ->
             { model with Child = LoginModel Login.init}, Cmd.none
+            
+        | Some Client.Pages.PageType.Dashboard ->
+            { model with Child = DashboardModel Dashboard.init}, Cmd.none
 
 
 let init _ : State * Cmd<RootMsg> =
@@ -103,14 +109,21 @@ let view model dispatch =
         Hero.body [ ] [
             (match model.Child with
             | LoginModel login_model -> 
-              Login.view login_model (LoginMsg >> dispatch)
+                Login.view login_model (LoginMsg >> dispatch)
             | SignUpModel sign_up_model ->
-              SignUp.view sign_up_model (SignUpMsg >> dispatch)
+                SignUp.view sign_up_model (SignUpMsg >> dispatch)
+            | DashboardModel model ->
+                Dashboard.view model (DashboardMsg >> dispatch) 
             | HomeModel ->
-              Home.view)
+                Home.view)
         ]
     ]
 
+(*
+    have a look at the parent-child description at
+    https://elmish.github.io/elmish/parent-child.html to understand how update messages
+    propagate from the child to parent. It's more subtle than it appears from surface.
+*)
 let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     match msg, state with    
     //here we have a login message and we are not logged in (no session)

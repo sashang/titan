@@ -39,9 +39,8 @@ type Model =
       user_info : Login
       Result : LoginResult option }
 
-/// Exception raised when the request to login is sent but the
-/// and processed on the server, but the return code denotes an
-/// error.
+/// Exception raised when the request to login is sent and processed on the
+/// server, but the return code denotes an error.
 exception LoginException of LoginResult
 let init =
     { login_state = LoggedOut; user_info = {username = ""; password = ""}; Result = None}
@@ -80,13 +79,14 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg>*ExternalMsg =
     match msg with
     | Success session ->
          {model with login_state = LoggedIn},
-         //Navigation.newUrl (Client.Pages.to_path Client.Pages.MainSchool),
-         Cmd.none,
+         Navigation.newUrl (Client.Pages.to_path Client.Pages.Dashboard),
          SignedIn session //return the session. the parent will see this and can store the session state.
     | GetLoginGoogle ->
         model, Cmd.ofPromise get_credentials () GotLoginGoogle Failure, Nop
     | GotLoginGoogle credentials ->
-        { model with login_state = LoggedOut}, Navigation.newUrl  (Client.Pages.to_path Client.Pages.MainSchool), Nop
+        { model with login_state = LoggedOut},
+        Navigation.newUrl (Client.Pages.to_path Client.Pages.MainSchool),
+        Nop
     //in the case wher ethe promise failed, it can fail for 2 reasons
     //1: The sumbission to the server didn't work. in that case SystemException is thrown vial failwith
     //2: The submission worked but the response contained an error code
@@ -103,6 +103,7 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg>*ExternalMsg =
         { model with user_info = {username = username; password = model.user_info.password }}, Cmd.none, Nop
     | ClickLogin ->
         model, Cmd.ofPromise login model.user_info Success Failure, Nop
+    
 
 
 let column (model : Model) (dispatch : Msg -> unit) =
