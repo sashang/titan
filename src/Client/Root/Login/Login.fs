@@ -84,7 +84,6 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg>*ExternalMsg =
          Cmd.none,
          SignedIn session //return the session. the parent will see this and can store the session state.
     | GetLoginGoogle ->
-        Browser.console.info ("requesing auth from Google ")
         model, Cmd.ofPromise get_credentials () GotLoginGoogle Failure, Nop
     | GotLoginGoogle credentials ->
         { model with login_state = LoggedOut}, Navigation.newUrl  (Client.Pages.to_path Client.Pages.MainSchool), Nop
@@ -92,7 +91,7 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg>*ExternalMsg =
     //1: The sumbission to the server didn't work. in that case SystemException is thrown vial failwith
     //2: The submission worked but the response contained an error code
     | Failure err ->
-        Browser.console.error ("Failed to login.")
+        Browser.console.info ("Failed to login.")
         match err with
         | :? LoginException as login_ex -> //TODO: check this with someone who knows more. the syntax is weird, and Data0??
             { model with login_state = LoggedOut; Result = Some login_ex.Data0 }, Cmd.none, Nop
@@ -103,7 +102,6 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg>*ExternalMsg =
     | SetUsername username ->
         { model with user_info = {username = username; password = model.user_info.password }}, Cmd.none, Nop
     | ClickLogin ->
-        Browser.console.info ("clicked login")
         model, Cmd.ofPromise login model.user_info Success Failure, Nop
 
 
