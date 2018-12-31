@@ -70,7 +70,7 @@ let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
     | SetEmail email ->
         {model with email = email}, Cmd.none
     | SignUpFailure err ->
-        Browser.console.info ("Failed to login: " + err.Message)
+        Browser.console.info ("Failed to sign up: " + err.Message)
         model, Cmd.none
     | SignUpSuccess result ->
         match result.code with

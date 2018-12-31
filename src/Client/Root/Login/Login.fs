@@ -18,8 +18,6 @@ type LoginState =
     | LoggedOut
     | LoggedIn
 
-type LoginEx(msg) =
-    inherit System.Exception(msg)
 
 /// Messages that go back to the parent. See https://medium.com/@MangelMaxime/my-tips-for-working-with-elmish-ab8d193d52fd.
 /// This basically obviates the need to hijack the session login message in the parent. 
@@ -28,20 +26,25 @@ type ExternalMsg =
     | SignedIn of Session
 
 type Msg =
-    | Response of Session
+    | Success of Session
     | GetLoginGoogle
     | GotLoginGoogle of UserCredentialsResponse
-    | SubmissionFailure of exn
+    | Failure of exn
     | SetPassword of string
     | SetUsername of string
     | ClickLogin
 
 type Model =
     { login_state : LoginState
-      user_info : Login }
+      user_info : Login
+      Result : LoginResult option }
 
+/// Exception raised when the request to login is sent but the
+/// and processed on the server, but the return code denotes an
+/// error.
+exception LoginException of LoginResult
 let init =
-    { login_state = LoggedOut; user_info = {username = ""; password = ""} }
+    { login_state = LoggedOut; user_info = {username = ""; password = ""}; Result = None}
 
 let get_credentials () =
     promise {
@@ -54,48 +57,60 @@ let get_credentials () =
             return! failwithf "Could not authenticate user: %s." exn.Message
     }
 
+
 let login (user_info : Login) =
     promise {
         //2 in toString means 2 fields in the record. in this case it's username and password
         let body = Encode.Auto.toString (2, user_info)
-        let! response = post_record "/api/login" body []
-        let! text = response.text()
+        let props =
+            [ RequestProperties.Method HttpMethod.POST
+              RequestProperties.Credentials RequestCredentials.Include
+              requestHeaders [ HttpRequestHeaders.ContentType "application/json"
+                               HttpRequestHeaders.Accept "application/json" ]
+              RequestProperties.Body !^(body) ]
         let decoder = Decode.Auto.generateDecoder<LoginResult>()
-        let result = Decode.fromString decoder text
-        match result with
-        | Ok login ->
-            match login.code with
-            | LoginCode.Success :: _ ->
-                return { username = login.username; token = login.token}
-            | _ -> return raise (LoginEx "Failed to login")
-        | Error e -> return raise (LoginEx "Failed to dedcode login response")
+        let! response = Fetch.fetchAs<LoginResult> "/api/login" decoder props
+        match response.code with
+        | LoginCode.Success::_ ->
+            return { username = response.username; token = response.token}
+        | _  -> return (raise (LoginException response))
     }
 
 let update (msg : Msg) (model : Model) : Model*Cmd<Msg>*ExternalMsg =
     match msg with
-    | Response session ->
+    | Success session ->
          {model with login_state = LoggedIn},
          //Navigation.newUrl (Client.Pages.to_path Client.Pages.MainSchool),
          Cmd.none,
          SignedIn session //return the session. the parent will see this and can store the session state.
     | GetLoginGoogle ->
         Browser.console.info ("requesing auth from Google ")
-        model, Cmd.ofPromise get_credentials () GotLoginGoogle SubmissionFailure, Nop
+        model, Cmd.ofPromise get_credentials () GotLoginGoogle Failure, Nop
     | GotLoginGoogle credentials ->
         { model with login_state = LoggedOut}, Navigation.newUrl  (Client.Pages.to_path Client.Pages.MainSchool), Nop
-    | SubmissionFailure err ->
-        Browser.console.error ("Failed to login: " + err.Message)
-        { model with login_state = LoggedOut }, Cmd.none, Nop
+    //in the case wher ethe promise failed, it can fail for 2 reasons
+    //1: The sumbission to the server didn't work. in that case SystemException is thrown vial failwith
+    //2: The submission worked but the response contained an error code
+    | Failure err ->
+        Browser.console.error ("Failed to login.")
+        match err with
+        | :? LoginException as login_ex -> //TODO: check this with someone who knows more. the syntax is weird, and Data0??
+            { model with login_state = LoggedOut; Result = Some login_ex.Data0 }, Cmd.none, Nop
+        | _ ->
+            { model with login_state = LoggedOut; Result = None }, Cmd.none, Nop
     | SetPassword password ->
         { model with user_info = {username = model.user_info.username; password = password }}, Cmd.none, Nop
     | SetUsername username ->
         { model with user_info = {username = username; password = model.user_info.password }}, Cmd.none, Nop
     | ClickLogin ->
         Browser.console.info ("clicked login")
-        model, Cmd.ofPromise login model.user_info Response SubmissionFailure, Nop
+        model, Cmd.ofPromise login model.user_info Success Failure, Nop
 
 
-let column (dispatch : Msg -> unit) =
+let column (model : Model) (dispatch : Msg -> unit) =
+    let of_login_result (code : LoginCode) (result : LoginResult) =
+        List.fold2 (fun acc the_code the_message -> if code = the_code then acc + " " + the_message else acc) "" result.code result.message
+
     Column.column
         [ Column.Width (Screen.All, Column.Is4)
           Column.Offset (Screen.All, Column.Is4) ]
@@ -114,13 +129,26 @@ let column (dispatch : Msg -> unit) =
                               Input.Props [ 
                                 AutoFocus true
                                 OnChange (fun ev -> dispatch (SetUsername ev.Value)) ] ] ] ]
-                Field.div [ ]
-                    [ Control.div [ ]
+                Field.div [ ] [
+                    Control.div [ ]
                         [ Input.password
                             [ Input.Size IsLarge
                               Input.Placeholder "Your Password"
                               Input.Props [
-                                OnChange (fun ev -> dispatch (SetPassword ev.Value)) ] ] ] ]
+                                OnChange (fun ev -> dispatch (SetPassword ev.Value)) ] ] ]
+                    (match model.Result with
+                    | Some result ->
+                        match List.contains LoginCode.Failure result.code with
+                        | true ->
+                            Help.help [
+                                Help.Color IsDanger
+                                Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5) ]
+                            ] [
+                                str (of_login_result LoginCode.Failure result)
+                            ]
+                        | false -> nothing 
+                    | _ ->  nothing)
+                ]
                 Field.div [ ]
                     [ Checkbox.checkbox [ ]
                         [ input [ Type "checkbox" ]
@@ -141,6 +169,6 @@ let view  (model : Model) (dispatch : Msg -> unit) =
             div [ Id "greeting"] [
                   h3 [ ClassName "text-center" ] [ str (sprintf "Hi %s!" model.user_info.username) ] ]
         | LoggedOut ->
-            column dispatch)
+            column model dispatch)
     ]
 

@@ -108,7 +108,7 @@ let validate_user (next : HttpFunc) (ctx : HttpContext) = task {
         let sign_in_manager = ctx.GetService<SignInManager<IdentityUser>>()
         let! result = sign_in_manager.PasswordSignInAsync(login.username, login.password, true, false)
         let logger = ctx.GetLogger<Debug.DebugLogger>()
-        logger.LogInformation("logging in....")
+        logger.LogInformation("attempting to login user " + login.username)
         match result.Succeeded with
         | true ->
             let token = generate_token login.username
