@@ -51,7 +51,7 @@ let string_to_role role =
     | "Admin" -> Some TitanRole.Admin
     | _ -> None
 
-let update (msg : Msg) (model : Model) : Model*Cmd<Msg> =
+let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     match msg with
     | ClickSignUp ->
         Browser.console.info (sprintf "clicked sign up: %s %s" model.email model.password)

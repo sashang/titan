@@ -15,7 +15,7 @@
     <Compile Include="Model/School.fs" />
     <Compile Include="ValueDeclarations.fs" />
     <Compile Include="Database.fs" />
-    <Compile Include="CreateSchool.fs" />
+    <Compile Include="API.fs" />
     <Compile Include="SignUp.fs" />
     <Compile Include="Auth.fs" />
     <Compile Include="Server.fs" />

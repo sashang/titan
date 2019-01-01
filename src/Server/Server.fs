@@ -130,11 +130,6 @@ let validate_user (next : HttpFunc) (ctx : HttpContext) = task {
 }
 
 ///endpoints that require authorization to reach
-let must_have_auth = router {
-    //pipe_through (pipeline { requires_authentication (json_auth_fail_message)})
-    get "/auth" (text "authorized")
-    post "/create-school" CreateSchool.create_school
-}
 let handleGetSecured =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let username = ctx.User.FindFirst ClaimTypes.Name
@@ -142,9 +137,10 @@ let handleGetSecured =
         json ("User " + username.Value + " has titan role " + role.Value) next ctx
 
 let secure_router = router {
-    //pipe_through (Auth.requireAuthentication JWT)
-    pipe_through (pipeline { requires_authentication (json_auth_fail_message)})
+    pipe_through (Auth.requireAuthentication JWT)
+    //pipe_through (pipeline { requires_authentication (json_auth_fail_message)})
     get "/validate" handleGetSecured
+    post "/create-school" API.create_school
 }
 
 let titan_api =  router {
@@ -157,7 +153,7 @@ let titan_api =  router {
         return! ctx.WriteJsonAsync { TitanClaims.Claims = claims }
     })
     post "/login" validate_user
-    post "/sign-up" SignUp.sign_up_user
+    post "/sign-up" API.sign_up_user
     forward "/sign-out" sign_out_router
     forward "/secure" secure_router
 }

@@ -81,8 +81,8 @@ type School =
 ///first creates the school
 [<CLIMutable>]
 type CreateSchoolResult =
-    { code : CreateSchoolCode list
-      message : string list }
+    { Codes : CreateSchoolCode list
+      Messages : string list }
 
 type UserData =
     { UserName : string

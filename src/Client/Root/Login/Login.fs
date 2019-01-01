@@ -75,7 +75,7 @@ let login (user_info : Login) =
         | _  -> return (raise (LoginException response))
     }
 
-let update (msg : Msg) (model : Model) : Model*Cmd<Msg>*ExternalMsg =
+let update  (model : Model) (msg : Msg): Model*Cmd<Msg>*ExternalMsg =
     match msg with
     | Success session ->
          {model with login_state = LoggedIn},

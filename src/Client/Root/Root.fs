@@ -29,7 +29,6 @@ type RootMsg =
     | SignUpMsg of SignUp.Msg
     | DashboardMsg of Dashboard.Msg
     | UrlUpdatedMsg of Client.Pages.PageType
-    | ChildMsg
 
 type PageModel =
     | LoginModel of Login.Model
@@ -128,7 +127,7 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     match msg, state with    
     //here we have a login message and we are not logged in (no session)
     | LoginMsg login_msg, {Child = LoginModel model; Session = None} ->
-        let next_model, cmd, ext = Login.update login_msg model
+        let next_model, cmd, ext = Login.update model login_msg
         match ext with
         | Login.ExternalMsg.SignedIn session ->
             {state with Child = LoginModel next_model; Session = Some session}, Cmd.map LoginMsg cmd
@@ -155,7 +154,7 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         {state with Child = LoginModel Login.init}, Cmd.none
 
     | SignUpMsg signup_msg, {Child = SignUpModel model; Session = None} ->
-        let new_model, cmd = SignUp.update signup_msg model
+        let new_model, cmd = SignUp.update model signup_msg 
         {state with Child = SignUpModel new_model}, Cmd.map SignUpMsg cmd 
 
     | _, {Session = None} ->
@@ -166,6 +165,6 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     | LoginMsg login_msg, {Session = Some session} ->
         state, Cmd.none
 
-    //pass these messages on to the children
-    | ChildMsg, {Session = Some session} ->
-        state, Cmd.none
+    | DashboardMsg msg, {Child = DashboardModel model; Session = Some session} ->
+        let new_model, cmd = Dashboard.update model msg
+        {state with Child = DashboardModel new_model}, Cmd.map DashboardMsg cmd
