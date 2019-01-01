@@ -60,7 +60,7 @@ let create_school (next : HttpFunc) (ctx : HttpContext) = task {
     let logger = ctx.GetLogger<Debug.DebugLogger>()
     match result with
     | Ok _ ->
-        return! ctx.WriteJsonAsync {CreateSchoolResult.Codes = []; CreateSchoolResult.Messages = []}
+        return! ctx.WriteJsonAsync {CreateSchoolResult.Codes = [CreateSchoolCode.Success]; CreateSchoolResult.Messages = [""]}
     | Error message ->
         logger.LogWarning("Failed to create school")
         return! ctx.WriteJsonAsync {CreateSchoolResult.Codes = [CreateSchoolCode.DatabaseError]; CreateSchoolResult.Messages = [message]}

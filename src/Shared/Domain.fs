@@ -69,7 +69,7 @@ type SignOutResult =
 ///Return codes to the create school request.
 type CreateSchoolCode = 
     Success = 0 | SchoolNameInUse = 1 | DatabaseError = 2
-    | Unknown = 3
+    | Unknown = 3 | FetchError = 4
 
 ///The data submitted with the create school request
 [<CLIMutable>]

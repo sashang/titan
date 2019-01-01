@@ -35,10 +35,14 @@ let private submit (school : School) = promise {
                            HttpRequestHeaders.Accept "application/json" ]
           RequestProperties.Body !^(body) ]
     let decoder = Decode.Auto.generateDecoder<CreateSchoolResult>()
-    let! response = Fetch.fetchAs<CreateSchoolResult> "/api/create-school" decoder props
-    match response.Codes with
-    | CreateSchoolCode.Success::_ -> return response
-    | _  -> return (raise (CreateSchoolException response))
+    let! response = Fetch.tryFetchAs "/api/secure/create-school" decoder props
+    match response with
+    | Ok result ->
+        match result.Codes with
+        | CreateSchoolCode.Success::_ -> return result
+        | _  -> return (raise (CreateSchoolException result))
+    | Error e ->
+        return (raise (CreateSchoolException {Codes = [CreateSchoolCode.FetchError]; Messages = [e]}))
 }
 
 let init () =
@@ -71,10 +75,11 @@ let view  (model : Model) (dispatch : Msg -> unit) =
             [ Column.Width (Screen.All, Column.Is4)
               Column.Offset (Screen.All, Column.Is4) ]
             [ Heading.h3
-                [ Heading.Modifiers [ Modifier.TextColor IsGrey ] ]
+                [ Heading.Modifiers [ Modifier.TextColor IsGreyDark ] ]
                 [ str "Create School" ]
-              Heading.p
-                [ Heading.Modifiers [ Modifier.TextColor IsGrey ] ]
+              Heading.h4
+                [ Heading.IsSubtitle
+                  Heading.Modifiers [ Modifier.TextColor IsInfo ] ]
                 [ str "Please enter your name and the name you want to give to your school." ]
               Box.box' [ ] [
                     Field.div [ ]
@@ -91,14 +96,12 @@ let view  (model : Model) (dispatch : Msg -> unit) =
                                 [ Input.Size IsLarge
                                   Input.Placeholder "Your School Name"
                                   Input.Props [
-                                    OnChange (fun ev -> dispatch (SetSchoolName ev.Value)) ] ] ]
-                    ]
+                                    OnChange (fun ev -> dispatch (SetSchoolName ev.Value)) ] ] ] ]
                     make_error_from_result model.Result CreateSchoolCode.SchoolNameInUse
-                    Field.div [] [
-                        Client.Style.button dispatch ClickSubmit "Submit"
-                    ]
+                    Field.div [] [ Client.Style.button dispatch ClickSubmit "Submit" ]
                     make_error_from_result model.Result CreateSchoolCode.DatabaseError
                     make_error_from_result model.Result CreateSchoolCode.Unknown
+                    make_error_from_result model.Result CreateSchoolCode.FetchError
               ] 
         ]
     ]
