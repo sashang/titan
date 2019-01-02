@@ -95,31 +95,31 @@ environment variables are not set the server will not start.
 
 ### Database
 
-Using postgres at the moment. The filesystem database is gone.
+Using Postgres at the moment. The filesystem database is gone.
 
 #### Migrations
 
-Using Fluentmigrator at the moment. 
+Migrations are handled using Fluentmigrator. 
 
 * Listing migrations
 ```
 mono ./packages/FluentMigrator.Console/net461/any/Migrate.exe -c
 "Host=localhost;Database=titan_dev;Username=titan_dev;Password=1234"
---provider Postgres -a src/Server/bin/Debug/netcoreapp2.1/Server.dll -p
+--provider Postgres -a src/Server/bin/Debug/netcoreapp2.1/Server.dll
 --task listmigrations
 ```
 * Migrating down
 ```
 mono ./packages/FluentMigrator.Console/net461/any/Migrate.exe -c
 "Host=localhost;Database=titan_dev;Username=titan_dev;Password=1234"
---provider Postgres -a src/Server/bin/Debug/netcoreapp2.1/Server.dll -p
+--provider Postgres -a src/Server/bin/Debug/netcoreapp2.1/Server.dll
 --task migrate:down
 ```
 * Migrating up
 ```
 mono ./packages/FluentMigrator.Console/net461/any/Migrate.exe -c
 "Host=localhost;Database=titan_dev;Username=titan_dev;Password=1234"
---provider Postgres -a src/Server/bin/Debug/netcoreapp2.1/Server.dll -p
+--provider Postgres -a src/Server/bin/Debug/netcoreapp2.1/Server.dll
 --task migrate:up
 ```
 
