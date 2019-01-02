@@ -209,10 +209,10 @@ let configure_services (services:IServiceCollection) =
         )
         .AddEntityFrameworkStores<IdentityDbContext<IdentityUser>>()
         .AddDefaultTokenProviders() |> ignore
-    //services.AddTransient<IEmailSender, AuthMessageSender>()
-    services.BuildServiceProvider(false)
-            .GetRequiredService<IMigrationRunner>()
-            .MigrateUp() |> ignore
+
+    //apparently putting this in a scope is the thing to do with asp.net...
+    let scope = services.BuildServiceProvider(false).CreateScope()
+    scope.ServiceProvider.GetRequiredService<IMigrationRunner>() .MigrateUp() |> ignore
     services
 
 let get_env_var var =

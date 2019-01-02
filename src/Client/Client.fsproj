@@ -4,7 +4,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Pages.fs" />
-    <Compile Include="Pupil.fs" />
     <Compile Include="../Shared/Domain.fs" />
     <Compile Include="../Shared/Shared.fs" />
     <Compile Include="ModifiedFableFetch.fs" />

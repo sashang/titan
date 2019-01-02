@@ -10,10 +10,14 @@ type AddSchool() =
 
     override this.Up() =
         this.Create.Table("Schools")
-            .WithColumn("Id").AsInt64().PrimaryKey().Identity()
+            .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable()
             .WithColumn("UserId").AsString().ForeignKey()
-            .WithColumn("Name").AsString().Unique()
-            .WithColumn("Principal").AsString() |> ignore
+            .WithColumn("Name").AsString().Unique().Nullable()
+            .WithColumn("Principal").AsString().Nullable() |> ignore
+
+        //create fk to the id column in the asp.net users table
+        this.Create.ForeignKey("FKUser").FromTable("Schools")
+            .ForeignColumn("UserId").ToTable("AspNetUsers").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
 
     override this.Down() =
         this.Delete.Table("Schools") |> ignore
