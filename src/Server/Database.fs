@@ -12,6 +12,7 @@ open ValueDeclarations
 
 type IDatabase =
     abstract member insert_school: Models.School -> Task<Result<bool, string>>
+    abstract member school_from_user_id: string -> Task<Result<Models.School, string>>
 
 type Database() = 
     interface IDatabase with
@@ -25,6 +26,20 @@ type Database() =
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
 
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
+
+        member this.school_from_user_id (user_id : string) : Task<Result<Models.School, string>> = task {
+            try 
+                use pg_connection = new NpgsqlConnection(PG_DEV_CON)
+                pg_connection.Open()
+                let sql = """select "Name", "Principal" from "Schools" where "UserId" = @UserId"""
+                let result = pg_connection.QueryFirst<Models.School>(sql, {Models.default_school with Models.School.UserId = user_id})
+                return Ok result
             with
             | :? Npgsql.PostgresException as e ->
                 return Error e.MessageText

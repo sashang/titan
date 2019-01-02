@@ -36,12 +36,13 @@ let sign_up_user (next : HttpFunc) (ctx : HttpContext) = task {
 
     let! login = ctx.BindJsonAsync<Domain.SignUp>()
     let user = IdentityUser(UserName = login.username, Email = login.email)
+    let logger = ctx.GetLogger<Debug.DebugLogger>()
     let user_manager = ctx.GetService<UserManager<IdentityUser>>()
     let sign_in_manager = ctx.GetService<SignInManager<IdentityUser>>()
     let! id_result = user_manager.CreateAsync(user, login.password)
     match id_result.Succeeded with
     | false ->
-        printfn "Failed to create user"
+        logger.LogWarning("Failed to create user")
         return! ctx.WriteJsonAsync (of_id_errors id_result.Errors)
     | true -> 
         let claim = Claim("TitanRole", role_to_string login.role)
@@ -51,14 +52,16 @@ let sign_up_user (next : HttpFunc) (ctx : HttpContext) = task {
             return! ctx.WriteJsonAsync {SignUpResult.code = []; SignUpResult.message = []}
         else
             return! ctx.WriteJsonAsync {SignUpResult.code = [SignUpCode.DatabaseError]; SignUpResult.message = ["failed to add claim"]}
-
 }
+
 let create_school (next : HttpFunc) (ctx : HttpContext) = task {
     let db_service = ctx.GetService<IDatabase>()
     let! school = ctx.BindJsonAsync<Domain.School>()
     //get the user id the asp.net way....
     let user_id = ctx.User.FindFirst(ClaimTypes.NameIdentifier).Value
-    let! result = db_service.insert_school {Models.School.Principal = school.Principal; Models.School.Name = school.Name; Models.School.UserId = user_id}
+    let! result = 
+        db_service.insert_school {Models.default_school with Models.School.Principal = school.Principal;
+                                                             Models.School.Name = school.Name; Models.School.UserId = user_id}
     let logger = ctx.GetLogger<Debug.DebugLogger>()
     match result with
     | Ok _ ->
@@ -66,4 +69,22 @@ let create_school (next : HttpFunc) (ctx : HttpContext) = task {
     | Error message ->
         logger.LogWarning("Failed to create school: " + message)
         return! ctx.WriteJsonAsync {CreateSchoolResult.Codes = [CreateSchoolCode.DatabaseError]; CreateSchoolResult.Messages = [message]}
+}
+
+/// Load the user's school.
+let load_school (next :HttpFunc) (ctx : HttpContext) = task {
+    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    let db_service = ctx.GetService<IDatabase>()
+    let user_id = ctx.User.FindFirst(ClaimTypes.NameIdentifier).Value
+    let! result = db_service.school_from_user_id user_id
+    match result with
+    | Ok db_school ->
+        let the_school = {Domain.School.Name = db_school.Name; Domain.School.Principal = db_school.Principal}
+        return! ctx.WriteJsonAsync {LoadSchoolResult.Codes = [LoadSchoolCode.Success];
+            LoadSchoolResult.Messages = [""]; TheSchool = the_school}
+    | Error message ->
+        logger.LogWarning("Failed to load school: " + message)
+        return! ctx.WriteJsonAsync {LoadSchoolResult.Codes = [LoadSchoolCode.DatabaseError]; LoadSchoolResult.Messages = [message];
+            TheSchool = {Domain.School.Principal = ""; Domain.School.Name = ""}}
+
 }

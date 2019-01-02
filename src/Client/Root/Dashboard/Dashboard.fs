@@ -41,7 +41,10 @@ let init =
 let menuItem label isActive dispatch msg =
     Menu.Item.li [ Menu.Item.IsActive isActive
                    Menu.Item.OnClick (fun e -> dispatch msg)]
-       [ str label ]
+       [ Text.p [ Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left)
+                              Modifier.TextSize (Screen.All, TextSize.Is4)
+                              Modifier.TextColor Color.IsGreyDark ] ]
+           [ str label ] ]
 // Helper to generate a sub menu
 let subMenu label isActive children =
     li [ ]
@@ -53,8 +56,9 @@ let subMenu label isActive children =
 let menu dispatch = 
     Menu.menu [ ]
         [ Menu.list [ ]
-            [ menuItem "Create School" false dispatch ClickCreateSchool
-              menuItem "Enroll" false dispatch ClickEnroll ] ] 
+            [ menuItem "School" false dispatch ClickCreateSchool
+              menuItem "Classes" false dispatch ClickCreateSchool
+              menuItem "Enrollments" false dispatch ClickEnroll ] ] 
 
 let main_dashboard (model : Model) (dispatch : Msg -> unit) =
     Tile.ancestor []
@@ -78,7 +82,8 @@ let view (model : Model) (dispatch : Msg -> unit) =
 let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     match msg,model with
     | ClickCreateSchool, _ ->
-        {model with Child = CreateSchoolModel (CreateSchool.init ())}, Cmd.none
+        let initial_state, cmd = CreateSchool.init ()
+        {model with Child = CreateSchoolModel initial_state}, Cmd.map CreateSchoolMsg cmd
     | CreateSchoolMsg msg, {Child = CreateSchoolModel cs_model}  ->
         let new_state, cmd = CreateSchool.update cs_model msg
         {model with Child = CreateSchoolModel new_state}, Cmd.map CreateSchoolMsg cmd

@@ -84,6 +84,17 @@ type CreateSchoolResult =
     { Codes : CreateSchoolCode list
       Messages : string list }
 
+type LoadSchoolCode =
+    Success = 0 | DatabaseError = 1 | FetchError = 2
+
+[<CLIMutable>]
+type LoadSchoolResult =
+    { Codes : LoadSchoolCode list
+      /// The error messages if there are error codes in Codes
+      Messages : string list
+      /// Valid if the first code in Codes is Success
+      TheSchool : School}
+
 type UserData =
     { UserName : string
       Token    : JWT }
