@@ -129,13 +129,13 @@ let validate_user (next : HttpFunc) (ctx : HttpContext) = task {
         return! failwith ("exception: could not validate user: " + ex.Message)
 }
 
-///endpoints that require authorization to reach
 let handleGetSecured =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let username = ctx.User.FindFirst ClaimTypes.Name
         let role = ctx.User.FindFirst "TitanRole"
         json ("User " + username.Value + " has titan role " + role.Value) next ctx
 
+///endpoints that require authorization to reach
 let secure_router = router {
     pipe_through (Auth.requireAuthentication JWT)
     //pipe_through (pipeline { requires_authentication (json_auth_fail_message)})

@@ -11,15 +11,15 @@ open ValueDeclarations
 
 
 type IDatabase =
-    abstract member insert_school: School -> Task<Result<bool, string>>
+    abstract member insert_school: Models.School -> Task<Result<bool, string>>
 
 type Database() = 
     interface IDatabase with
-        member this.insert_school (school : School) : Task<Result<bool, string>> = task {
+        member this.insert_school (school : Models.School) : Task<Result<bool, string>> = task {
             try 
                 use pg_connection = new NpgsqlConnection(PG_DEV_CON)
                 pg_connection.Open()
-                let cmd = """insert into "Schools"("Name","Principal") values(@Name,@Principal)"""
+                let cmd = """insert into "Schools"("Name","UserId", "Principal") values(@Name,@UserId,@Principal)"""
                 if pg_connection.Execute(cmd, school) = 1 then  
                     return (Ok true)
                 else

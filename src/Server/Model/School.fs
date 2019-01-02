@@ -1,9 +1,9 @@
 namespace Models
 
+//databse model of the school table.
 [<CLIMutable>]
 type School =
-    { Id : int64
-      UserId : string
+    { UserId : string
       Name : string 
       Principal : string }
 

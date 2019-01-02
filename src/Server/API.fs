@@ -56,12 +56,14 @@ let sign_up_user (next : HttpFunc) (ctx : HttpContext) = task {
 let create_school (next : HttpFunc) (ctx : HttpContext) = task {
     let db_service = ctx.GetService<IDatabase>()
     let! school = ctx.BindJsonAsync<Domain.School>()
-    let! result = db_service.insert_school school
+    //get the user id the asp.net way....
+    let user_id = ctx.User.FindFirst(ClaimTypes.NameIdentifier).Value
+    let! result = db_service.insert_school {Models.School.Principal = school.Principal; Models.School.Name = school.Name; Models.School.UserId = user_id}
     let logger = ctx.GetLogger<Debug.DebugLogger>()
     match result with
     | Ok _ ->
         return! ctx.WriteJsonAsync {CreateSchoolResult.Codes = [CreateSchoolCode.Success]; CreateSchoolResult.Messages = [""]}
     | Error message ->
-        logger.LogWarning("Failed to create school")
+        logger.LogWarning("Failed to create school: " + message)
         return! ctx.WriteJsonAsync {CreateSchoolResult.Codes = [CreateSchoolCode.DatabaseError]; CreateSchoolResult.Messages = [message]}
 }
