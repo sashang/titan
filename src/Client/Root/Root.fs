@@ -28,7 +28,7 @@ type RootMsg =
     | SignOutMsg of SignOut.Msg
     | SignUpMsg of SignUp.Msg
     | DashboardMsg of Dashboard.Msg
-    | UrlUpdatedMsg of Client.Pages.PageType
+    | UrlUpdatedMsg of Pages.PageType
 
 type PageModel =
     | LoginModel of Login.Model
@@ -41,18 +41,29 @@ and
         Session : Session option //who I am
     }
 
+exception ConversionException of string
+//helpers to help destructure some of these types
+let to_dashboard_model = function
+    | DashboardModel model -> model
+    | _ -> raise (ConversionException "Failed to convert model")
 
-let url_update (result : Client.Pages.PageType option) (model : State) =
+let to_dashboard_page_model = function
+    | {Dashboard.Model.Child = Dashboard.CreateSchoolModel model} -> model
+    | _ -> raise (ConversionException "Failed to convert model")
+
+let extract =  to_dashboard_model >> to_dashboard_page_model
+
+let url_update (result : Pages.PageType option) (model : State) =
     match result, model with
     | result, {Session = None} ->
         match result with
         | None ->
             model, Cmd.none //no page mapped from the given url, so leave it where it is.
 
-        | Some Client.Pages.PageType.Home->
+        | Some Pages.PageType.Home->
             { model with Child = HomeModel }, Cmd.none
 
-        | Some Client.Pages.PageType.Login ->
+        | Some Pages.PageType.Login ->
             { model with Child = LoginModel Login.init}, Cmd.none
 
         | _  ->
@@ -64,14 +75,19 @@ let url_update (result : Client.Pages.PageType option) (model : State) =
         | None ->
             model, Cmd.none
 
-        | Some Client.Pages.PageType.Home ->
+        | Some Pages.PageType.Home ->
             { model with Child = HomeModel }, Cmd.none
 
-        | Some Client.Pages.PageType.Login ->
+        | Some Pages.PageType.Login ->
             { model with Child = LoginModel Login.init}, Cmd.none
             
-        | Some Client.Pages.PageType.Dashboard ->
-            { model with Child = DashboardModel Dashboard.init}, Cmd.none
+        | Some (Pages.PageType.Dashboard Pages.DashboardPageType.School) ->
+            let new_model, cmd = Dashboard.url_update Pages.DashboardPageType.School
+            { model with Child = DashboardModel new_model}, Cmd.map DashboardMsg cmd
+
+        | Some (Pages.PageType.Dashboard Pages.DashboardPageType.Main) ->
+            let new_model, cmd = Dashboard.url_update Pages.DashboardPageType.Main
+            {model with Child = DashboardModel new_model}, Cmd.map DashboardMsg cmd
 
 
 let init _ : State * Cmd<RootMsg> =

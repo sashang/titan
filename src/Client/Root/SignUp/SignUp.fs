@@ -76,7 +76,7 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
         match result.code with
         | [] ->
             Browser.console.info ("Sign up success ")
-            model, Navigation.newUrl  (Client.Pages.to_path Client.Pages.Login)
+            model, Navigation.newUrl  (Pages.to_path Pages.Login)
         | _ ->
             Browser.console.info ("Sign up fail ")
             { model with sign_up_result = Some result }, Cmd.none

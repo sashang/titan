@@ -1,23 +1,31 @@
-module Client.Pages
+module Pages
 
 open Elmish.Browser.UrlParser
+
+[<RequireQualifiedAccess>]
+type DashboardPageType =
+    /// Main dashboard page
+    | Main
+    /// Page to create a school
+    | School
+
 /// The different pages of the application. If you add a new page, then add an entry here.
 type PageType =
     | Home
     | Login
-    | MainSchool
     | AddClass
     | SignUp
-    | Dashboard
+    | Dashboard of DashboardPageType
+
 
 let to_path =
     function
     | PageType.Home -> "#home"
     | PageType.Login -> "#login"
     | PageType.AddClass -> "#add-class"
-    | PageType.MainSchool -> "#main-school"
     | PageType.SignUp -> "#sign-up"
-    | PageType.Dashboard -> "#dashboard"
+    | PageType.Dashboard(DashboardPageType.Main) -> "#dashboard"
+    | PageType.Dashboard(DashboardPageType.School) -> "#school"
 
 
 /// The URL is turned into a Result.
@@ -27,7 +35,7 @@ let page_parser : Parser<PageType -> _,_> =
           map PageType.Login (s "login")
           map PageType.AddClass (s "add-class")
           map PageType.SignUp (s "sign-up")
-          map PageType.Dashboard (s "dashboard")
-          map PageType.MainSchool (s "main-school") ]
+          map (PageType.Dashboard DashboardPageType.School) (s "school")
+          map (PageType.Dashboard DashboardPageType.Main) (s "dashboard") ]
 
 let url_parser location = parseHash page_parser location

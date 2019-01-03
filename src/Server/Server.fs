@@ -57,7 +57,7 @@ let auth_google = pipeline {
     plug print_user_details
 }
 
-let auth_null : HttpHandler = 
+let auth_null : HttpHandler =
     fun next ctx ->
          next ctx
 
@@ -117,7 +117,7 @@ let validate_user (next : HttpFunc) (ctx : HttpContext) = task {
                   LoginResult.message = []
                   token = token
                   username = login.username }
-        | _ -> 
+        | _ ->
             let msg = sprintf "Failed to login user '%s'" login.username
             logger.LogWarning(msg)
             return! ctx.WriteJsonAsync
@@ -161,11 +161,11 @@ let titan_api =  router {
 
 ///Define the pipeline that http request headers will see
 let api_pipeline = pipeline {
-    //Ensure that the Accept: application/json header is present. This is probably just for 
+    //Ensure that the Accept: application/json header is present. This is probably just for
     //good practice. I don't fully understand why somoene would want this. Things work without it.
     //Just seems like a way for the api to deny clients who don't accept json, and for clients to tell
     //api's that they accept json.
-//    plug acceptJson 
+//    plug acceptJson
     set_header "x-pipeline-type" "Api"
 }
 let web_app = router {
@@ -236,8 +236,8 @@ let configure_app (builder : IApplicationBuilder) =
     builder.UseAuthentication()
     *)
 
-let app (startup_options : StartupOptions) = 
-    match startup_options.google_id, startup_options.google_secret with 
+let app (startup_options : StartupOptions) =
+    match startup_options.google_id, startup_options.google_secret with
     | Some id, Some secret ->
         application {
             url ("http://0.0.0.0:" + port.ToString() + "/")
@@ -246,7 +246,7 @@ let app (startup_options : StartupOptions) =
             use_static publicPath
             service_config configure_services
             use_gzip
-            use_google_oauth id secret "/oauth_callback_google" [] 
+            use_google_oauth id secret "/oauth_callback_google" []
             use_cors "CORSPolicy" configure_cors
         }
     | _ ->

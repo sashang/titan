@@ -27,8 +27,6 @@ type ExternalMsg =
 
 type Msg =
     | Success of Session
-    | GetLoginGoogle
-    | GotLoginGoogle of UserCredentialsResponse
     | Failure of exn
     | SetPassword of string
     | SetUsername of string
@@ -44,18 +42,6 @@ type Model =
 exception LoginException of LoginResult
 let init =
     { login_state = LoggedOut; user_info = {username = ""; password = ""}; Result = None}
-
-let get_credentials () =
-    promise {
-        let props =
-            [ RequestProperties.Mode RequestMode.Cors]
-        let decoder = Decode.Auto.generateDecoder<UserCredentialsResponse>()
-        try
-            return! Fetch.fetchAs<UserCredentialsResponse> "/api/user-credentials" decoder props
-        with exn ->
-            return! failwithf "Could not authenticate user: %s." exn.Message
-    }
-
 
 let login (user_info : Login) =
     promise {
@@ -78,19 +64,16 @@ let login (user_info : Login) =
 let update  (model : Model) (msg : Msg): Model*Cmd<Msg>*ExternalMsg =
     match msg with
     | Success session ->
-         {model with login_state = LoggedIn},
-         Navigation.newUrl (Client.Pages.to_path Client.Pages.Dashboard),
+        let new_path = Pages.to_path (Pages.Dashboard Pages.DashboardPageType.Main)
+        Browser.console.info new_path
+        {model with login_state = LoggedIn},
+         Navigation.newUrl new_path,
          SignedIn session //return the session. the parent will see this and can store the session state.
-    | GetLoginGoogle ->
-        model, Cmd.ofPromise get_credentials () GotLoginGoogle Failure, Nop
-    | GotLoginGoogle credentials ->
-        { model with login_state = LoggedOut},
-        Navigation.newUrl (Client.Pages.to_path Client.Pages.MainSchool),
-        Nop
-    //in the case wher ethe promise failed, it can fail for 2 reasons
-    //1: The sumbission to the server didn't work. in that case SystemException is thrown vial failwith
-    //2: The submission worked but the response contained an error code
+
     | Failure err ->
+        //in the case wher ethe promise failed, it can fail for 2 reasons
+        //1: The sumbission to the server didn't work. in that case SystemException is thrown vial failwith
+        //2: The submission worked but the response contained an error code
         Browser.console.info ("Failed to login.")
         match err with
         | :? LoginException as login_ex -> //TODO: check this with someone who knows more. the syntax is weird, and Data0??

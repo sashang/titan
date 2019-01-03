@@ -161,7 +161,8 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     | SetSchoolName school_name ->
         {model with TheSchool = {model.TheSchool with Name = school_name}}, Cmd.none
     | Success _ ->
-        model, Navigation.newUrl (Client.Pages.to_path Client.Pages.Dashboard)
+        //go back to the dashboard main page.
+        model, Navigation.newUrl (Pages.to_path (Pages.Dashboard Pages.DashboardPageType.Main))
     | LoadSchoolSuccess result ->
         {model with Model.TheSchool = result}, Cmd.none
     | Failure e ->

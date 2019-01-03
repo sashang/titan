@@ -15,15 +15,9 @@ open Fulma
 open Fulma.Extensions
 open Fable.Helpers.React
 
-type PageType =
-
-    /// Main dashboard page
-    | Main
-    /// Page to create a school
-    | CreateSchool
 
 type PageModel =
-    | Home
+    | MainModel
     | CreateSchoolModel of CreateSchool.Model
 
 and
@@ -35,8 +29,8 @@ type Msg =
     | ClickEnroll
     | CreateSchoolMsg of CreateSchool.Msg
 
-let init =
-    {Child = Home}
+let init () =
+    {Child = MainModel}
 // Helper to generate a menu item
 let menuItem label isActive dispatch msg =
     Menu.Item.li [ Menu.Item.IsActive isActive
@@ -76,7 +70,7 @@ let view (model : Model) (dispatch : Msg -> unit) =
             [ Column.column [ Column.Width (Screen.All, Column.Is2) ] [ aside [ Class "menu" ] [ menu dispatch ] ]
               Column.column [ ] 
                 [ (match model.Child with
-                  | Home -> main_dashboard model dispatch
+                  | MainModel -> main_dashboard model dispatch
                   | CreateSchoolModel model -> CreateSchool.view model (CreateSchoolMsg >> dispatch)) ] ] ]
 
 let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
@@ -87,5 +81,14 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | CreateSchoolMsg msg, {Child = CreateSchoolModel cs_model}  ->
         let new_state, cmd = CreateSchool.update cs_model msg
         {model with Child = CreateSchoolModel new_state}, Cmd.map CreateSchoolMsg cmd
-    | _, {Child = Home}  ->
+    | _, {Child = MainModel}  ->
         model, Cmd.none
+
+let url_update  (page : Pages.DashboardPageType) : Model*Cmd<Msg> =
+    match page with
+    | Pages.DashboardPageType.School ->
+        let new_state, cmd = CreateSchool.init ()
+        {Child = CreateSchoolModel new_state}, Cmd.map CreateSchoolMsg cmd
+
+    | Pages.DashboardPageType.Main ->
+        {Child = MainModel}, Cmd.none

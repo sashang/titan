@@ -1,6 +1,6 @@
 module Client.Main
 
-open Client.Pages
+open Client.Shared
 open Domain
 open Elmish
 open Elmish.Browser
@@ -9,6 +9,7 @@ open Elmish.React
 open Fable.Import
 open Fable.Import.Browser
 open Fable.PowerPack
+open Pages
 open Root
 open Shared
 
@@ -17,7 +18,7 @@ let issuer = "saturnframework.io"
 
 let handleNotFound (model: SinglePageState) =
     Browser.console.error("Error parsing url: " + Browser.window.location.href)
-    ( model, Navigation.modifyUrl (Client.Pages.to_path Client.Pages.PageType.Login) )
+    ( model, Navigation.modifyUrl (Pages.to_path Pages.PageType.Login) )
 
 let print_claims (claims : TitanClaim list) =
     claims |>
@@ -97,7 +98,7 @@ let url_sub appState : Cmd<_> =
 //Program.mkProgram init update view
 Program.mkProgram Root.init Root.update Root.view
 |> Program.withSubscription url_sub //detect changes typed into the address bar
-|> Program.toNavigable Client.Pages.url_parser url_update
+|> Program.toNavigable Pages.url_parser url_update
 #if DEBUG
 |> Program.withConsoleTrace
 |> Program.withHMR
