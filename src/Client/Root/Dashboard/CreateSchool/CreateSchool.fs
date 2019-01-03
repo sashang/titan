@@ -116,8 +116,8 @@ let private help_first_time_user (result : LoadSchoolResult option) =
                 [ Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is6) 
                                    Modifier.TextAlignment (Screen.All, TextAlignment.Left)] ]
                 [ str "Enter your name." ]
-        | false -> Label.label [ ] [ str "Name" ]
-    | _ -> Label.label [ ] [ str "Name" ]
+        | false -> Label.label [ Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [ str "Name" ]
+    | _ -> Label.label [ Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [ str "Name" ]
 
 let private school_name_help_first_time_user (result : LoadSchoolResult option) =
     match result with
@@ -128,8 +128,8 @@ let private school_name_help_first_time_user (result : LoadSchoolResult option) 
                 [ Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is6)
                                    Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
                 [ str "Enter the name of your school." ]
-        | false -> Label.label [ ] [ str "School Name" ]
-    | _ -> Label.label [ ] [ str "School Name" ]
+        | false -> Label.label [ Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [ str "School Name" ]
+    | _ -> Label.label [ Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [ str "School Name" ]
 
 let view  (model : Model) (dispatch : Msg -> unit) = 
 

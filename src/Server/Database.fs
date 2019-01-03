@@ -30,7 +30,7 @@ type IDatabase =
     abstract member user_has_school: string -> Task<Result<bool, string>>
 
     /// Update a school given the user id
-    abstract member update_school: string -> Models.School -> Task<Result<bool, string>>
+    abstract member update_school_by_user_id: Models.School -> Task<Result<bool, string>>
 
     abstract member school_from_user_id: string -> Task<Result<Models.School, string>>
 
@@ -54,16 +54,16 @@ type Database() =
                 return Error e.Message
         }
 
-        member this.update_school (user_id : string) (school : Models.School) : Task<Result<bool, string>> = task {
+        member this.update_school_by_user_id (school : Models.School) : Task<Result<bool, string>> = task {
 
             try 
                 use pg_connection = new NpgsqlConnection(PG_DEV_CON)
                 pg_connection.Open()
-                let cmd = """update "Schools" set "Name" = @Name, "Principal" = @Principal)"""
+                let cmd = """update "Schools" set "Name" = @Name, "Principal" = @Principal where "UserId" = @UserId"""
                 if pg_connection.Execute(cmd, school) = 1 then  
                     return (Ok true)
                 else
-                    return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+                    return Error ("Did not update the expected number of records. sql is \"" + cmd + "\"")
             with
             | :? Npgsql.PostgresException as e ->
                 return Error e.MessageText

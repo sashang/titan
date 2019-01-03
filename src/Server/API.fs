@@ -59,9 +59,19 @@ let create_school (next : HttpFunc) (ctx : HttpContext) = task {
     let! school = ctx.BindJsonAsync<Domain.School>()
     //get the user id the asp.net way....
     let user_id = ctx.User.FindFirst(ClaimTypes.NameIdentifier).Value
-    let! result = 
-        db_service.insert_school {Models.default_school with Models.School.Principal = school.Principal;
-                                                             Models.School.Name = school.Name; Models.School.UserId = user_id}
+    let! exists = db_service.user_has_school user_id
+    let school_info = {Models.default_school with Models.School.Principal = school.Principal
+                                                  Models.School.Name = school.Name; Models.School.UserId = user_id}
+
+    let! result =
+        match exists with
+        | Ok false ->
+            db_service.insert_school school_info    
+        | Ok true ->
+            db_service.update_school_by_user_id school_info
+        | Error error -> task { return Error error }
+
+
     let logger = ctx.GetLogger<Debug.DebugLogger>()
     match result with
     | Ok _ ->
