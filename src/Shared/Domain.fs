@@ -85,7 +85,7 @@ type CreateSchoolResult =
       Messages : string list }
 
 type LoadSchoolCode =
-    Success = 0 | DatabaseError = 1 | FetchError = 2
+    Success = 0 | DatabaseError = 1 | FetchError = 2 | NoSchool = 3
 
 [<CLIMutable>]
 type LoadSchoolResult =

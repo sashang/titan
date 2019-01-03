@@ -202,5 +202,5 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         state, Cmd.none
 
     | msg, state ->
-        Browser.console.info ("got unexpected msg " + string_of_root_msg msg)
+        Browser.console.error ("got unexpected msg " + string_of_root_msg msg)
         state, Cmd.none

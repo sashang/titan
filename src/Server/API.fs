@@ -76,15 +76,31 @@ let load_school (next :HttpFunc) (ctx : HttpContext) = task {
     let logger = ctx.GetLogger<Debug.DebugLogger>()
     let db_service = ctx.GetService<IDatabase>()
     let user_id = ctx.User.FindFirst(ClaimTypes.NameIdentifier).Value
-    let! result = db_service.school_from_user_id user_id
+    let! result = db_service.user_has_school user_id
     match result with
-    | Ok db_school ->
-        let the_school = {Domain.School.Name = db_school.Name; Domain.School.Principal = db_school.Principal}
-        return! ctx.WriteJsonAsync {LoadSchoolResult.Codes = [LoadSchoolCode.Success];
-            LoadSchoolResult.Messages = [""]; TheSchool = the_school}
-    | Error message ->
-        logger.LogWarning("Failed to load school: " + message)
-        return! ctx.WriteJsonAsync {LoadSchoolResult.Codes = [LoadSchoolCode.DatabaseError]; LoadSchoolResult.Messages = [message];
-            TheSchool = {Domain.School.Principal = ""; Domain.School.Name = ""}}
+        //has a school so look it up and return it.
+        | Ok true ->
+            let! result = db_service.school_from_user_id user_id
+            match result with
+            | Ok db_school ->
+                let the_school = {Domain.School.Name = db_school.Name; Domain.School.Principal = db_school.Principal}
+                return! ctx.WriteJsonAsync {LoadSchoolResult.Codes = [LoadSchoolCode.Success]
+                                            LoadSchoolResult.Messages = [""]; TheSchool = the_school}
+            | Error message ->
+                logger.LogWarning("Failed to load school: " + message)
+                return! ctx.WriteJsonAsync {LoadSchoolResult.Codes = [LoadSchoolCode.DatabaseError]
+                                            LoadSchoolResult.Messages = [message]
+                                            TheSchool = {Domain.School.Principal = ""; Domain.School.Name = ""}}
+        //no school
+        | Ok false -> 
+            return! ctx.WriteJsonAsync {LoadSchoolResult.Codes = [LoadSchoolCode.NoSchool]
+                                        LoadSchoolResult.Messages = ["No school associated with user."]
+                                        TheSchool = {Domain.School.Principal = ""; Domain.School.Name = ""}}
+        //something bad happened
+        | Error error ->
+            logger.LogWarning("Failed to check if user is associated with a school: " + error)
+            return! ctx.WriteJsonAsync {LoadSchoolResult.Codes = [LoadSchoolCode.DatabaseError]
+                                        LoadSchoolResult.Messages = [error]
+                                        TheSchool = {Domain.School.Principal = ""; Domain.School.Name = ""}}
 
 }

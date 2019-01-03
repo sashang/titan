@@ -107,6 +107,30 @@ let private make_error_from_result (result : CreateSchoolResult option) (code : 
         | false -> nothing 
     | _ ->  nothing
 
+let private help_first_time_user (result : LoadSchoolResult option) =
+    match result with
+    | Some result ->
+        match List.contains LoadSchoolCode.NoSchool result.Codes with
+        | true ->
+            Help.help
+                [ Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is6) 
+                                   Modifier.TextAlignment (Screen.All, TextAlignment.Left)] ]
+                [ str "Enter your name." ]
+        | false -> Label.label [ ] [ str "Name" ]
+    | _ -> Label.label [ ] [ str "Name" ]
+
+let private school_name_help_first_time_user (result : LoadSchoolResult option) =
+    match result with
+    | Some result ->
+        match List.contains LoadSchoolCode.NoSchool result.Codes with
+        | true ->
+            Help.help
+                [ Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is6)
+                                   Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
+                [ str "Enter the name of your school." ]
+        | false -> Label.label [ ] [ str "School Name" ]
+    | _ -> Label.label [ ] [ str "School Name" ]
+
 let view  (model : Model) (dispatch : Msg -> unit) = 
 
     Container.container [ Container.IsFullHD
@@ -118,8 +142,7 @@ let view  (model : Model) (dispatch : Msg -> unit) =
                 [ Heading.Modifiers [ Modifier.TextColor IsGreyDark ] ]
                 [ str "School" ]
               Box.box' [ ] [
-                    Label.label [ ]
-                        [ str "Name" ]
+                    help_first_time_user model.LoadSchoolResult
                     Field.div [ ]
                         [ Control.div [ ]
                             [ Input.text
@@ -129,8 +152,7 @@ let view  (model : Model) (dispatch : Msg -> unit) =
                                     AutoFocus true
                                     DefaultValue model.TheSchool.Principal
                                     OnChange (fun ev -> dispatch (SetPrincipalName ev.Value)) ] ] ] ]
-                    Label.label [ ]
-                        [ str "School Name" ]
+                    school_name_help_first_time_user model.LoadSchoolResult
                     Field.div [ ] [
                         Control.div [ ]
                             [ Input.text
