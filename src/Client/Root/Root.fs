@@ -30,6 +30,17 @@ type RootMsg =
     | DashboardMsg of Dashboard.Msg
     | UrlUpdatedMsg of Pages.PageType
 
+let string_of_root_msg = function
+    | LoginMsg _ -> "loginmsg"
+    | GotoSignUpPage -> "GotoSignUpPage"
+    | GotoLoginPage -> "GotoLoginPage"
+    | ClickSignOut -> "ClickSignOut"
+    | ClickTitle -> "ClickTitle"
+    | SignOutMsg _ -> "SignOutMsg"
+    | SignUpMsg _ -> "SignUpMsg"
+    | DashboardMsg _ -> "DashboardMsg"
+    | UrlUpdatedMsg _ -> "UrlUpdatedMsg"
+
 type PageModel =
     | LoginModel of Login.Model
     | SignUpModel of SignUp.Model
@@ -157,7 +168,7 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
 
     | ClickTitle, state ->
         //move to the home page
-        {state with Child = HomeModel}, Cmd.none
+        state, Navigation.newUrl (Pages.to_path Pages.Home)
 
     | ClickSignOut, state ->
         let cmd = SignOut.update SignOut.SignOut
@@ -182,5 +193,14 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         state, Cmd.none
 
     | DashboardMsg msg, {Child = DashboardModel model; Session = Some session} ->
+        Browser.console.info "got dashboardmsg"
         let new_model, cmd = Dashboard.update model msg
         {state with Child = DashboardModel new_model}, Cmd.map DashboardMsg cmd
+    
+    | UrlUpdatedMsg msg, {Child = some_child; Session = Some session} ->
+        Browser.console.info "got updatedurlmsg"
+        state, Cmd.none
+
+    | msg, state ->
+        Browser.console.info ("got unexpected msg " + string_of_root_msg msg)
+        state, Cmd.none

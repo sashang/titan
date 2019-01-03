@@ -65,7 +65,6 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg>*ExternalMsg =
     match msg with
     | Success session ->
         let new_path = Pages.to_path (Pages.Dashboard Pages.DashboardPageType.Main)
-        Browser.console.info new_path
         {model with login_state = LoggedIn},
          Navigation.newUrl new_path,
          SignedIn session //return the session. the parent will see this and can store the session state.
