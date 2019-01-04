@@ -1,4 +1,4 @@
-module CreateSchool
+module School
 
 open Domain
 open Elmish
@@ -82,6 +82,11 @@ let private of_load_school_result (code : LoadSchoolCode) (result : LoadSchoolRe
         (fun acc the_code the_message -> if code = the_code then acc + " " + the_message else acc)
         "" result.Codes result.Messages
 
+let private std_label text = 
+    Label.label 
+        [ Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
+        [ str text ]
+
 let private make_error_from_load_school_result (result : LoadSchoolResult option) (code : LoadSchoolCode) =
     match result with
     | Some result ->
@@ -100,7 +105,7 @@ let private make_error_from_result (result : CreateSchoolResult option) (code : 
         | true ->
             Help.help [
                 Help.Color IsDanger
-                Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5) ]
+                Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is6) ]
             ] [
                 str (of_create_school_result code result)
             ]
@@ -116,8 +121,8 @@ let private help_first_time_user (result : LoadSchoolResult option) =
                 [ Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is6) 
                                    Modifier.TextAlignment (Screen.All, TextAlignment.Left)] ]
                 [ str "Enter your name." ]
-        | false -> Label.label [ Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [ str "Name" ]
-    | _ -> Label.label [ Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [ str "Name" ]
+        | false -> std_label "Name"
+    | _ -> std_label "Name"
 
 let private school_name_help_first_time_user (result : LoadSchoolResult option) =
     match result with
@@ -128,8 +133,8 @@ let private school_name_help_first_time_user (result : LoadSchoolResult option) 
                 [ Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is6)
                                    Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
                 [ str "Enter the name of your school." ]
-        | false -> Label.label [ Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [ str "School Name" ]
-    | _ -> Label.label [ Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [ str "School Name" ]
+        | false -> std_label "School Name"
+    | _ -> std_label "School Name"
 
 let view  (model : Model) (dispatch : Msg -> unit) = 
 

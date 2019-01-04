@@ -18,16 +18,16 @@ open Fable.Helpers.React
 
 type PageModel =
     | MainModel
-    | CreateSchoolModel of CreateSchool.Model
+    | SchoolModel of School.Model
 
 and
     Model =
         { Child : PageModel }
 
 type Msg =
-    | ClickCreateSchool
+    | ClickSchool
     | ClickEnroll
-    | CreateSchoolMsg of CreateSchool.Msg
+    | SchoolMsg of School.Msg
 
 let init () =
     {Child = MainModel}
@@ -36,8 +36,9 @@ let menuItem label isActive dispatch msg =
     Menu.Item.li [ Menu.Item.IsActive isActive
                    Menu.Item.OnClick (fun e -> dispatch msg)]
        [ Text.p [ Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left)
-                              Modifier.TextSize (Screen.All, TextSize.Is4)
-                              Modifier.TextColor Color.IsGreyDark ] ]
+                              Modifier.TextSize (Screen.All, TextSize.Is5)
+                              Modifier.TextColor Color.IsWhite
+                              Modifier.TextTransform TextTransform.UpperCase ] ]
            [ str label ] ]
 // Helper to generate a sub menu
 let subMenu label isActive children =
@@ -48,11 +49,12 @@ let subMenu label isActive children =
             children ]
 
 let menu dispatch = 
-    Menu.menu [ ]
-        [ Menu.list [ ]
-            [ menuItem "School" false dispatch ClickCreateSchool
-              menuItem "Classes" false dispatch ClickCreateSchool
-              menuItem "Enrollments" false dispatch ClickEnroll ] ] 
+    Box.box' [ Common.Props [ Style [ Height "100%" ] ] ]
+         [ Menu.menu [ Modifiers [ Modifier.BackgroundColor IsPrimary ] ]
+            [ Menu.list [ ]
+                [ menuItem "School" false dispatch ClickSchool
+                  menuItem "Classes" false dispatch ClickSchool
+                  menuItem "Enrollment" false dispatch ClickEnroll ] ] ]
 
 let main_dashboard (model : Model) (dispatch : Msg -> unit) =
     Tile.ancestor []
@@ -71,24 +73,23 @@ let view (model : Model) (dispatch : Msg -> unit) =
               Column.column [ ] 
                 [ (match model.Child with
                   | MainModel -> main_dashboard model dispatch
-                  | CreateSchoolModel model -> CreateSchool.view model (CreateSchoolMsg >> dispatch)) ] ] ]
+                  | SchoolModel model -> School.view model (SchoolMsg >> dispatch)) ] ] ]
 
 let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     match msg,model with
-    | ClickCreateSchool, _ ->
-        let initial_state, cmd = CreateSchool.init ()
-        {model with Child = CreateSchoolModel initial_state}, Cmd.map CreateSchoolMsg cmd
-    | CreateSchoolMsg msg, {Child = CreateSchoolModel cs_model}  ->
-        let new_state, cmd = CreateSchool.update cs_model msg
-        {model with Child = CreateSchoolModel new_state}, Cmd.map CreateSchoolMsg cmd
+    | ClickSchool, _ ->
+        model, Navigation.newUrl (Pages.to_path (Pages.Dashboard Pages.DashboardPageType.School))
+    | SchoolMsg msg, {Child = SchoolModel cs_model}  ->
+        let new_state, cmd = School.update cs_model msg
+        {model with Child = SchoolModel new_state}, Cmd.map SchoolMsg cmd
     | _, {Child = MainModel}  ->
         model, Cmd.none
 
 let url_update  (page : Pages.DashboardPageType) : Model*Cmd<Msg> =
     match page with
     | Pages.DashboardPageType.School ->
-        let new_state, cmd = CreateSchool.init ()
-        {Child = CreateSchoolModel new_state}, Cmd.map CreateSchoolMsg cmd
+        let new_state, cmd = School.init ()
+        {Child = SchoolModel new_state}, Cmd.map SchoolMsg cmd
 
     | Pages.DashboardPageType.Main ->
         {Child = MainModel}, Cmd.none

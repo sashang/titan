@@ -59,7 +59,7 @@ let to_dashboard_model = function
     | _ -> raise (ConversionException "Failed to convert model")
 
 let to_dashboard_page_model = function
-    | {Dashboard.Model.Child = Dashboard.CreateSchoolModel model} -> model
+    | {Dashboard.Model.Child = Dashboard.SchoolModel model} -> model
     | _ -> raise (ConversionException "Failed to convert model")
 
 let extract =  to_dashboard_model >> to_dashboard_page_model
@@ -110,17 +110,18 @@ let private nav_item_button (text : string) (msg : RootMsg) dispatch =
 let view model dispatch =
     Hero.hero [
         Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Option.Centered) ]
-        Hero.Color IsWhite
-        Hero.IsHalfHeight ] [
+        Hero.Color IsWhite ] [
         Hero.head [ ] [
-            Navbar.navbar [ ] [
+            Navbar.navbar [ Navbar.Modifiers [ Modifier.BackgroundColor IsPrimary ] ] [
                 Container.container [ ] [
                     Navbar.Brand.div [ ] [
                         Navbar.Item.a [ Navbar.Item.Props [ Href "#" ] ] [
                             img [ Style [ Width "2.5em" ]
                                   Src "https://via.placeholder.com/350" ] ]
                         Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
-                            Heading.h3 [ Heading.IsSubtitle] [ str "The New Kid" ]
+                            Heading.h3 
+                                [ Heading.IsSubtitle
+                                  Heading.Modifiers [ Modifier.TextColor IsWhite ] ] [ str "The New Kid" ]
                         ]
                     ]
                     Navbar.End.div []
