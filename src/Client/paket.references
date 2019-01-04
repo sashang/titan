@@ -1,5 +1,4 @@
 jose-jwt
-Fable.MaterialUI
 group Client
 FSharp.Core
 Fable.Elmish.Browser

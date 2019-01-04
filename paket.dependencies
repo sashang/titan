@@ -1,5 +1,4 @@
 source https://www.nuget.org/api/v2
-nuget Fable.MaterialUI
 nuget jose-jwt
 clitool FluentMigrator.Console
 group Server
@@ -44,9 +43,6 @@ group Build
     framework: netstandard2.0
     storage: none
 
-    nuget FSharp.Core 4.3.4 // https://github.com/fsharp/FAKE/issues/2001
     nuget Fake.Core.Target
     nuget Fake.DotNet.Cli
-    nuget Fake.IO.FileSystem
-    nuget Fake.Core.Process
     nuget jose-jwt

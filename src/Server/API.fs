@@ -48,7 +48,6 @@ let sign_up_user (next : HttpFunc) (ctx : HttpContext) = task {
         let claim = Claim("TitanRole", role_to_string login.role)
         let! add_claim_result = user_manager.AddClaimAsync(user, claim)
         if add_claim_result.Succeeded then
-            do! sign_in_manager.SignInAsync(user, false)
             return! ctx.WriteJsonAsync {SignUpResult.code = []; SignUpResult.message = []}
         else
             return! ctx.WriteJsonAsync {SignUpResult.code = [SignUpCode.DatabaseError]; SignUpResult.message = ["failed to add claim"]}

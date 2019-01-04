@@ -19,6 +19,7 @@ open Microsoft.AspNetCore.Identity.EntityFrameworkCore
 open Microsoft.Extensions.Identity
 open Microsoft.EntityFrameworkCore
 open Microsoft.IdentityModel.Tokens
+open Npgsql
 open Saturn
 open Saturn.Auth
 open Shared
@@ -189,7 +190,7 @@ let configure_services (services:IServiceCollection) =
             .ConfigureRunner(fun rb ->
                 rb.AddPostgres()
                   .WithGlobalConnectionString(PG_DEV_CON)
-                  .ScanIn(typeof<TitanMigrations.AddSchool>.Assembly).For.Migrations() |> ignore)
+                  .ScanIn(typeof<TitanMigrations.Initial>.Assembly).For.Migrations() |> ignore)
             .AddLogging(fun lb -> lb.AddFluentMigratorConsole() |> ignore) |> ignore
 
     services.AddIdentity<IdentityUser, IdentityRole>(
@@ -213,7 +214,20 @@ let configure_services (services:IServiceCollection) =
 
     //apparently putting this in a scope is the thing to do with asp.net...
     let scope = services.BuildServiceProvider(false).CreateScope()
-    scope.ServiceProvider.GetRequiredService<IMigrationRunner>() .MigrateUp() |> ignore
+    scope.ServiceProvider.GetRequiredService<IMigrationRunner>().MigrateUp() |> ignore
+
+    //add me as titan 
+    let user_manager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>()
+    let add_admin = task {
+        let user = IdentityUser(UserName = "sashang", Email = "sashang@gmail.com")
+        let! result = user_manager.CreateAsync(user, "cronus1")
+        let claim = Claim("IsTitan", "yes")
+        let! claim_result = user_manager.AddClaimAsync(user, claim)
+        return claim_result
+    }
+    add_admin.Wait()
+
+    //return the list of servicesk
     services
 
 let get_env_var var =
