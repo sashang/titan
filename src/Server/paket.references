@@ -15,3 +15,5 @@ Dapper
 Npgsql
 System.Runtime.CompilerServices.Unsafe
 Microsoft.AspNetCore.Identity.UI
+Microsoft.Extensions.Configuration.Json
+Thoth.Json.Net

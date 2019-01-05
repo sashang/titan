@@ -4,12 +4,18 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
+
+ <ItemGroup>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
   <ItemGroup>
     <Compile Include="../Shared/Maybe.fs" />
     <Compile Include="../Shared/Shared.fs" />
     <Compile Include="../Shared/Domain.fs" />
     <Compile Include="./Migrations/20181221-CreateSchool.fs" />
-    <Compile Include="StartupOptions.fs" />
     <Compile Include="ServerTypes.fs" />
     <Compile Include="JsonWebToken.fs" />
     <Compile Include="../Shared/FableJson.fs" />

@@ -16,27 +16,29 @@ open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Identity
 open Microsoft.AspNetCore.Identity.UI.Services
 open Microsoft.AspNetCore.Identity.EntityFrameworkCore
-open Microsoft.Extensions.Identity
+open Microsoft.Extensions.Configuration  
 open Microsoft.EntityFrameworkCore
 open Microsoft.IdentityModel.Tokens
-open Npgsql
 open Saturn
 open Saturn.Auth
-open Shared
-open StartupOptions
 open System
-open System.Collections.Generic
 open System.IdentityModel.Tokens.Jwt
 open System.IO
 open System.Security.Claims
-open System.Text
-
+open Thoth.Json.Net
 open ValueDeclarations
 
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
 
 
+type RecStartupOptions = {
+    JWTSecret : string 
+    JWTIssuer : string 
+    AdminUsername : string
+    AdminEmail : string
+    AdminPassword : string
+}
 
 let print_user_details : HttpHandler =
     fun next ctx ->
@@ -101,11 +103,10 @@ let validate_user (next : HttpFunc) (ctx : HttpContext) = task {
         let sign_in_manager = ctx.GetService<SignInManager<IdentityUser>>()
         let! result = sign_in_manager.PasswordSignInAsync(login.username, login.password, true, false)
         let logger = ctx.GetLogger<Debug.DebugLogger>()
-        let options = ctx.GetService<IStartupOptions>()
-        logger.LogInformation("attempting to login user " + login.username)
+        let config = ctx.GetService<IConfiguration>()
         match result.Succeeded with
         | true ->
-            let token = generate_token login.username options.JWTSecret options.JWTIssuer
+            let token = generate_token login.username config.["JWTSecret"] config.["JWTIssuer"]
             return! ctx.WriteJsonAsync
                 { LoginResult.code = [LoginCode.Success]
                   LoginResult.message = []
@@ -172,7 +173,6 @@ let configure_services startup_options (services:IServiceCollection) =
     fableJsonSettings.Converters.Add(Fable.JsonConverter())
     services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
     services.AddSingleton<IDatabase>(Database()) |> ignore
-    services.AddSingleton<IStartupOptions>(StartupOptions(startup_options)) |> ignore
     services.AddEntityFrameworkNpgsql() |> ignore
     services.AddDbContext<IdentityDbContext<IdentityUser>>(
         fun options ->
@@ -213,8 +213,8 @@ let configure_services startup_options (services:IServiceCollection) =
     //add me as titan 
     let user_manager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>()
     let add_admin = task {
-        let user = IdentityUser(UserName = "sashang", Email = "sashang@gmail.com")
-        let! result = user_manager.CreateAsync(user, "cronus1")
+        let user = IdentityUser(UserName = startup_options.AdminUsername , Email = startup_options.AdminEmail)
+        let! result = user_manager.CreateAsync(user, startup_options.AdminPassword)
         let claim = Claim("IsTitan", "yes")
         let! claim_result = user_manager.AddClaimAsync(user, claim)
         return claim_result
@@ -238,48 +238,27 @@ let configure_cors (builder : CorsPolicyBuilder) =
 let configure_logging (builder : ILoggingBuilder) =
     builder.AddConsole()
         .AddDebug() |> ignore
-
-(*
-let configure_app (builder : IApplicationBuilder) =
-    builder.UseAuthentication()
-    *)
+let configure_host (builder : IWebHostBuilder) =
+    //turns out if you pass an anonymous function to a function that expects an Action<...> or
+    //Func<...> the type inference will work out the inner types....so you don't need to specify them.
+    builder.ConfigureAppConfiguration((fun ctx builder -> builder.AddJsonFile("appsettings.json") |> ignore))
 
 let app (startup_options : RecStartupOptions) =
-    match startup_options.GoogleId, startup_options.GoogleSecret with
-    | Some id, Some secret ->
-        application {
-            url ("http://0.0.0.0:" + port.ToString() + "/")
-            use_router web_app
-            memory_cache
-            use_static publicPath
-            service_config (configure_services startup_options)
-            use_gzip
-            use_google_oauth id secret "/oauth_callback_google" []
-            use_cors "CORSPolicy" configure_cors
-        }
-    | _ ->
-        application {
-            url ("http://0.0.0.0:" + port.ToString() + "/")
-            use_router web_app
-            memory_cache
-            use_static publicPath
-            service_config (configure_services startup_options)
-            //app_config configure_app
-            use_jwt_authentication startup_options.JWTSecret startup_options.JWTIssuer
-            //use_cookies_authentication "lambdafactory.io"
-            logging configure_logging
-            use_gzip
-        }
+    application {
+        url ("http://0.0.0.0:" + port.ToString() + "/")
+        use_router web_app
+        memory_cache
+        use_static publicPath
+        service_config (configure_services startup_options)
+        host_config configure_host
+        use_jwt_authentication startup_options.JWTSecret startup_options.JWTIssuer
+        logging configure_logging
+        use_gzip
+    }
 
-let startup_options = {
-    GoogleId = get_env_var "TITAN_GOOGLE_ID"
-    GoogleSecret = get_env_var "TITAN_GOOGLE_SECRET"
-    EnableTestUser = (get_env_var "TITAN_ENABLE_TEST_USER" = Some "yes")
-    JWTSecret = match get_env_var "TITAN_JWT_SECRET" with
-                | Some secret -> secret
-                | None -> failwith "No secret in environment variable TITAN_JWT_SECRET. This must be set."
-    JWTIssuer = match get_env_var "TITAN_JWT_ISSUER" with
-                | Some issuer -> issuer
-                | None -> failwith "No issuer in environment variable TITAN_JWT_ISSUER. This must be set."
-}
-run (app startup_options)
+let settings = System.IO.File.ReadAllText("appsettings.json")
+let decoder = Decode.Auto.generateDecoder<RecStartupOptions>()
+let result = Decode.fromString decoder settings
+match result with
+| Ok startup_options -> run (app startup_options)
+| Error e -> failwith ("failed to read appsettings.json: " + e)
