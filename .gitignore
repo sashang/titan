@@ -16,3 +16,4 @@ release.sh
 yarn-error.log
 .google-oauth-env
 paket
+.jwt-secret

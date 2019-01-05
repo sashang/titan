@@ -23,6 +23,7 @@ open Npgsql
 open Saturn
 open Saturn.Auth
 open Shared
+open StartupOptions
 open System
 open System.Collections.Generic
 open System.IdentityModel.Tokens.Jwt
@@ -35,13 +36,6 @@ open ValueDeclarations
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
 
-type StartupOptions = {
-    GoogleId : string option
-    GoogleSecret : string option
-    EnableTestUser : bool
-    JWTSecret : string
-    JWTIssuer : string
-}
 
 
 let print_user_details : HttpHandler =
@@ -88,11 +82,7 @@ let default_view = router {
         return! next ctx
     })
 }
-
-let secret = "spadR2dre#u-ruBrE@TepA&*Uf@U"
-let issuer = "saturnframework.io"
-
-let generate_token username =
+let generate_token username secret issuer =
     let claims = [|
         Claim(JwtRegisteredClaimNames.UniqueName, username);
         Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) |]
@@ -111,10 +101,11 @@ let validate_user (next : HttpFunc) (ctx : HttpContext) = task {
         let sign_in_manager = ctx.GetService<SignInManager<IdentityUser>>()
         let! result = sign_in_manager.PasswordSignInAsync(login.username, login.password, true, false)
         let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let options = ctx.GetService<IStartupOptions>()
         logger.LogInformation("attempting to login user " + login.username)
         match result.Succeeded with
         | true ->
-            let token = generate_token login.username
+            let token = generate_token login.username options.JWTSecret options.JWTIssuer
             return! ctx.WriteJsonAsync
                 { LoginResult.code = [LoginCode.Success]
                   LoginResult.message = []
@@ -176,11 +167,12 @@ let web_app = router {
     forward "/api" titan_api
 }
 
-let configure_services (services:IServiceCollection) =
+let configure_services startup_options (services:IServiceCollection) =
     let fableJsonSettings = Newtonsoft.Json.JsonSerializerSettings()
     fableJsonSettings.Converters.Add(Fable.JsonConverter())
     services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
     services.AddSingleton<IDatabase>(Database()) |> ignore
+    services.AddSingleton<IStartupOptions>(StartupOptions(startup_options)) |> ignore
     services.AddEntityFrameworkNpgsql() |> ignore
     services.AddDbContext<IdentityDbContext<IdentityUser>>(
         fun options ->
@@ -252,7 +244,7 @@ let configure_app (builder : IApplicationBuilder) =
     builder.UseAuthentication()
     *)
 
-let app (startup_options : StartupOptions) =
+let app (startup_options : RecStartupOptions) =
     match startup_options.GoogleId, startup_options.GoogleSecret with
     | Some id, Some secret ->
         application {
@@ -260,7 +252,7 @@ let app (startup_options : StartupOptions) =
             use_router web_app
             memory_cache
             use_static publicPath
-            service_config configure_services
+            service_config (configure_services startup_options)
             use_gzip
             use_google_oauth id secret "/oauth_callback_google" []
             use_cors "CORSPolicy" configure_cors
@@ -271,9 +263,9 @@ let app (startup_options : StartupOptions) =
             use_router web_app
             memory_cache
             use_static publicPath
-            service_config configure_services
+            service_config (configure_services startup_options)
             //app_config configure_app
-            use_jwt_authentication secret issuer
+            use_jwt_authentication startup_options.JWTSecret startup_options.JWTIssuer
             //use_cookies_authentication "lambdafactory.io"
             logging configure_logging
             use_gzip
