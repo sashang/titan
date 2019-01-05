@@ -36,9 +36,11 @@ let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
 
 type StartupOptions = {
-    google_id : string option
-    google_secret : string option
-    enable_test_user : bool
+    GoogleId : string option
+    GoogleSecret : string option
+    EnableTestUser : bool
+    JWTSecret : string
+    JWTIssuer : string
 }
 
 
@@ -251,7 +253,7 @@ let configure_app (builder : IApplicationBuilder) =
     *)
 
 let app (startup_options : StartupOptions) =
-    match startup_options.google_id, startup_options.google_secret with
+    match startup_options.GoogleId, startup_options.GoogleSecret with
     | Some id, Some secret ->
         application {
             url ("http://0.0.0.0:" + port.ToString() + "/")
@@ -278,8 +280,14 @@ let app (startup_options : StartupOptions) =
         }
 
 let startup_options = {
-    google_id = get_env_var "TITAN_GOOGLE_ID"
-    google_secret = get_env_var "TITAN_GOOGLE_SECRET"
-    enable_test_user = (get_env_var "TITAN_ENABLE_TEST_USER" = Some "yes")
+    GoogleId = get_env_var "TITAN_GOOGLE_ID"
+    GoogleSecret = get_env_var "TITAN_GOOGLE_SECRET"
+    EnableTestUser = (get_env_var "TITAN_ENABLE_TEST_USER" = Some "yes")
+    JWTSecret = match get_env_var "TITAN_JWT_SECRET" with
+                | Some secret -> secret
+                | None -> failwith "No secret in environment variable TITAN_JWT_SECRET. This must be set."
+    JWTIssuer = match get_env_var "TITAN_JWT_ISSUER" with
+                | Some issuer -> issuer
+                | None -> failwith "No issuer in environment variable TITAN_JWT_ISSUER. This must be set."
 }
 run (app startup_options)

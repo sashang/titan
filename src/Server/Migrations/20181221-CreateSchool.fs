@@ -18,16 +18,27 @@ type Initial() =
         //create fk to the id column in the asp.net users table
         this.Create.ForeignKey("FKUser").FromTable("School")
             .ForeignColumn("UserId").ToTable("AspNetUsers").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
-            
-        //Table to link a student with a school. A student can be part of more than one school
-        //So that userid fk is not unique
+        
+        //student table
         this.Create.Table("Student")
             .WithColumn("Id").AsInt32().PrimaryKey().Identity()
             .WithColumn("UserId").AsString().ForeignKey().NotNullable()
-            .WithColumn("SchoolId").AsInt32().ForeignKey().Nullable() |> ignore
+            .WithColumn("FirstName").AsString()
+            .WithColumn("LastName").AsString() |> ignore
 
         this.Create.ForeignKey("FKUser").FromTable("Student")
             .ForeignColumn("UserId").ToTable("AspNetUsers").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
+
+        //Table to link a student with a school.
+        this.Create.Table("StudentSchool")
+            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("SchoolId").AsInt32().ForeignKey().NotNullable()
+            .WithColumn("StudentId").AsInt32().ForeignKey().NotNullable() |> ignore
+
+        this.Create.ForeignKey("FKSchool").FromTable("StudentSchool")
+            .ForeignColumn("SchoolId").ToTable("School").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
+        this.Create.ForeignKey("FKStudent").FromTable("StudentSchool")
+            .ForeignColumn("StudentId").ToTable("Student").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
         
         //Class descriptions linked to a school.
         this.Create.Table("ClassType")
@@ -66,5 +77,6 @@ type Initial() =
         this.Delete.Table("ClassScheduleStudent") |> ignore
         this.Delete.Table("ClassSchedule") |> ignore
         this.Delete.Table("ClassType") |> ignore
+        this.Delete.Table("StudentSchool") |> ignore
         this.Delete.Table("Student") |> ignore
         this.Delete.Table("School") |> ignore

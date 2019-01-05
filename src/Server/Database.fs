@@ -42,7 +42,7 @@ type Database() =
             try
                 use pg_connection = new NpgsqlConnection(PG_DEV_CON)
                 pg_connection.Open()
-                let cmd = """select exists(select 1 from "Schools" where "UserId" = @UserId)"""
+                let cmd = """select exists(select 1 from "School" where "UserId" = @UserId)"""
                 let exists = pg_connection
                              |> dapper_map_param_query<bool> cmd (Map ["UserId", user_id])
                              |> Seq.head
@@ -59,7 +59,7 @@ type Database() =
             try 
                 use pg_connection = new NpgsqlConnection(PG_DEV_CON)
                 pg_connection.Open()
-                let cmd = """update "Schools" set "Name" = @Name, "Principal" = @Principal where "UserId" = @UserId"""
+                let cmd = """update "School" set "Name" = @Name, "Principal" = @Principal where "UserId" = @UserId"""
                 if pg_connection.Execute(cmd, school) = 1 then  
                     return (Ok true)
                 else
@@ -75,7 +75,7 @@ type Database() =
             try 
                 use pg_connection = new NpgsqlConnection(PG_DEV_CON)
                 pg_connection.Open()
-                let cmd = """insert into "Schools"("Name","UserId", "Principal") values(@Name,@UserId,@Principal)"""
+                let cmd = """insert into "School"("Name","UserId", "Principal") values(@Name,@UserId,@Principal)"""
                 if pg_connection.Execute(cmd, school) = 1 then  
                     return (Ok true)
                 else
@@ -92,7 +92,7 @@ type Database() =
             try 
                 use pg_connection = new NpgsqlConnection(PG_DEV_CON)
                 pg_connection.Open()
-                let sql = """select "Name", "Principal" from "Schools" where "UserId" = @UserId"""
+                let sql = """select "Name", "Principal" from "School" where "UserId" = @UserId"""
                 let result = pg_connection.QueryFirst<Models.School>(sql, {Models.default_school with Models.School.UserId = user_id})
                 return Ok result
             with
