@@ -6,6 +6,12 @@ https://safe-stack.github.io/
 
 Install that using the link above. Then see the next section to build and run.
 
+Then install the following from the root of the source code
+```
+yarn install node-sass --dev
+yarn install bulma --dev
+```
+
 ## Build
 
 Ensure you have the dotnet sdk 2.1.500 installed. I've found that exporting the
@@ -19,17 +25,13 @@ export PATH="<path to dotnet root>:$PATH"
 Then cd into the directory you downloaded this source code and run:
 
 ```
-fake build --target run
+fake build
 ```
 
-Then to build the custom stylesheet
+To run it:
 ```
-yarn install node-sass --dev
-yarn install bulma --dev
-yarn run css-build
+fake build --target run
 ```
-Changes to `mystyles.scss` aren't picked up by the watch variables in the
-fake process, so if you change anything here remember to restart fake.
 
 ### Note about .NET SDK and runtime versions
 
