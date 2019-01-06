@@ -5,8 +5,10 @@
   <ItemGroup>
     <Compile Include="../Shared/Domain.fs" />
     <Compile Include="../Shared/Shared.fs" />
+    <Compile Include="../Shared/ValueDeclarations.fs" />
     <Compile Include="ModifiedFableFetch.fs" />
     <Compile Include="Pages.fs" />
+    <Compile Include="CustomColours.fs" />
     <Compile Include="Style.fs" />
     <Compile Include="Root/SignUp/SignUp.fs" />
     <Compile Include="Root/Home/Home.fs" />

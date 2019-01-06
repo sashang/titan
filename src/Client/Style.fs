@@ -9,6 +9,7 @@ open Elmish.Browser.Navigation
 open Fulma
 open Fulma.Extensions
 module R = Fable.Helpers.React
+open CustomColours
 
 let goToUrl (e: React.MouseEvent) =
     e.preventDefault()
@@ -48,11 +49,14 @@ let buttonLink cssClass onClick elements =
 
 let button dispatch msg text = 
     Button.button [
-        Button.Color IsPrimary
+        Button.Color IsTitanPrimary
         Button.IsFullWidth
         Button.OnClick (fun _ -> (dispatch msg))
         Button.CustomClass "is-large is-block"
     ] [ R.str text ]
+
+ 
+
 
 
 let onEnter msg dispatch =

@@ -2,6 +2,7 @@
 /// processing is done. Messages to child pages are routed from here.
 module Root
 
+open CustomColours
 open Dashboard
 open Domain
 open Elmish
@@ -17,7 +18,7 @@ open Elmish.Browser.Navigation
 open Fulma
 open Fulma.Extensions
 open Fable.Helpers.React
-
+open ValueDeclarations
 
 type RootMsg =
     | LoginMsg of Login.Msg
@@ -112,16 +113,23 @@ let view model dispatch =
         Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Option.Centered) ]
         Hero.Color IsWhite ] [
         Hero.head [ ] [
-            Navbar.navbar [ Navbar.Modifiers [ Modifier.BackgroundColor IsPrimary ] ] [
-                Container.container [ ] [
+            Navbar.navbar [ Navbar.Modifiers [ Modifier.BackgroundColor IsTitanPrimary ] ] [
+                Container.container [ Container.Props [ Style [ ] ] ] [
                     Navbar.Brand.div [ ] [
                         Navbar.Item.a [ Navbar.Item.Props [ Href "#" ] ] [
                             img [ Style [ Width "2.5em" ]
-                                  Src "https://via.placeholder.com/350" ] ]
+                                  Src "https://via.placeholder.com/50" ] ]
                         Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
                             Heading.h3 
                                 [ Heading.IsSubtitle
-                                  Heading.Modifiers [ Modifier.TextColor IsWhite ] ] [ str "The New Kid" ]
+                                  Heading.Modifiers [ Modifier.TextColor IsWhite ]
+                                  Heading.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ] ] ] [ str MAIN_NAME ]
+                        ]
+                        Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
+                            Heading.h5 
+                                [ Heading.IsSubtitle
+                                  Heading.Modifiers [ Modifier.TextColor IsWhite ]
+                                  Heading.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ] ] ] [ str "putting tutors first" ]
                         ]
                     ]
                     Navbar.End.div []
@@ -133,17 +141,18 @@ let view model dispatch =
                 ]
             ]
         ]
-        Hero.body [ ] [
-            (match model.Child with
-            | LoginModel login_model -> 
-                Login.view login_model (LoginMsg >> dispatch)
-            | SignUpModel sign_up_model ->
-                SignUp.view sign_up_model (SignUpMsg >> dispatch)
-            | DashboardModel model ->
-                Dashboard.view model (DashboardMsg >> dispatch) 
-            | HomeModel ->
-                Home.view)
-        ]
+        Hero.body [ ] 
+            [ 
+                match model.Child with
+                | LoginModel login_model -> 
+                    yield Login.view login_model (LoginMsg >> dispatch)
+                | SignUpModel sign_up_model ->
+                    yield SignUp.view sign_up_model (SignUpMsg >> dispatch)
+                | DashboardModel model ->
+                    yield Dashboard.view model (DashboardMsg >> dispatch) 
+                | HomeModel ->
+                    yield! Home.view
+            ]
     ]
 
 (*

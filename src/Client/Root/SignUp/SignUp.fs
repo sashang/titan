@@ -1,5 +1,6 @@
 module SignUp
 
+open CustomColours
 open Domain
 open Elmish
 open Elmish.Browser.Navigation
@@ -91,11 +92,8 @@ let column (model : Model) (dispatch : Msg -> unit) =
         [ Column.Width (Screen.All, Column.Is4)
           Column.Offset (Screen.All, Column.Is4) ]
         [ Heading.h3
-            [ Heading.Modifiers [ Modifier.TextColor IsGrey ] ]
+            [ Heading.Modifiers [ Modifier.TextColor IsTitanPrimary ] ]
             [ str "Sign Up" ]
-          Heading.p
-            [ Heading.Modifiers [ Modifier.TextColor IsGrey ] ]
-            [ str "Please enter your details." ]
           Box.box' [ ] [
                 Field.div [ ] [
                     Control.div [ ] [

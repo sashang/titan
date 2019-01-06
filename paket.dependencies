@@ -1,4 +1,5 @@
 source https://www.nuget.org/api/v2
+nuget Fulma.Extensions.Wikiki.Divider
 nuget jose-jwt
 clitool FluentMigrator.Console
 group Server
@@ -18,7 +19,7 @@ group Server
     nuget Saturn
     nuget Fable.JsonConverter //fable.JsonConverter only works on the server. don't try it in the client.
     nuget Saturn.Extensions.Authorization 0.8.0
-nuget Thoth.Json.Net
+    nuget Thoth.Json.Net
 
 group Client
     source https://api.nuget.org/v3/index.json
@@ -35,7 +36,7 @@ group Client
     nuget Fable.FontAwesome.Free
     nuget Fable.React ~> 4
     nuget Fulma ~> 1
-    nuget Fulma.Extensions
+    nuget Fulma.Extensions.Wikiki.Divider
 
     clitool dotnet-fable ~> 2
 

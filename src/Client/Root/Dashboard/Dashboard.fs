@@ -6,13 +6,7 @@ open Elmish.Browser
 open Elmish.Browser.Navigation
 open Elmish.React
 open Fable.Helpers.React.Props
-open Fable.Core
-open Fable.Core.JsInterop
-open Fable.Import
-open Fable.PowerPack
-open Elmish.Browser.Navigation
 open Fulma
-open Fulma.Extensions
 open Fable.Helpers.React
 
 

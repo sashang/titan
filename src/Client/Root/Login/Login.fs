@@ -1,5 +1,6 @@
 module Login
 
+open CustomColours
 open Domain
 open Elmish
 open Elmish.Browser.Navigation
@@ -96,11 +97,8 @@ let column (model : Model) (dispatch : Msg -> unit) =
         [ Column.Width (Screen.All, Column.Is4)
           Column.Offset (Screen.All, Column.Is4) ]
         [ Heading.h3
-            [ Heading.Modifiers [ Modifier.TextColor IsGrey ] ]
+            [ Heading.Modifiers [ Modifier.TextColor IsTitanPrimary ] ]
             [ str "Login" ]
-          Heading.p
-            [ Heading.Modifiers [ Modifier.TextColor IsGrey ] ]
-            [ str "Please login to proceed." ]
           Box.box' [ ] [
                 Field.div [ ]
                     [ Control.div [ ]

@@ -21,6 +21,16 @@ Then cd into the directory you downloaded this source code and run:
 ```
 fake build --target run
 ```
+
+Then to build the custom stylesheet
+```
+yarn install node-sass --dev
+yarn install bulma --dev
+yarn run css-build
+```
+Changes to `mystyles.scss` aren't picked up by the watch variables in the
+fake process, so if you change anything here remember to restart fake.
+
 ### Note about .NET SDK and runtime versions
 
 * There's no correlation between the runtime version number and the sdk version number
@@ -210,7 +220,7 @@ it's way down to the component that triggered the message. Along the way down
 this chain you (probably shouldn't [1]) be altering the model of the
 components the message passes through until you get to the component the
 message was intended for. So what is a child component then? It is any
-component whose `update` function we call from the parent becuase only that
+component whose `update` function we call from the parent because only that
 component knows how to change it's model. We can't do it from the parent when
 processing a message.
 

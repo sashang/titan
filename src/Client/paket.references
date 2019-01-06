@@ -1,4 +1,5 @@
 jose-jwt
+Fulma.Extensions.Wikiki.Divider
 group Client
 FSharp.Core
 Fable.Elmish.Browser
@@ -8,6 +9,5 @@ Fable.Elmish.HMR
 Fable.Core
 dotnet-fable
 Fulma
-Fulma.Extensions
 Fable.FontAwesome
 Fable.FontAwesome.Free

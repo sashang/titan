@@ -141,13 +141,6 @@ let secure_router = router {
 
 let titan_api =  router {
     not_found_handler (text "resource not found")
-    get "/user-claims" (fun next ctx -> task {
-        let claims = ctx.User.Claims |>
-                     List.ofSeq |>
-                     List.map (fun (c : Claim) -> {TitanClaim.Value = c.Value; TitanClaim.Type = c.Type})
-        print_claims claims |> ignore
-        return! ctx.WriteJsonAsync { TitanClaims.Claims = claims }
-    })
     post "/login" validate_user
     post "/sign-up" API.sign_up_user
     forward "/sign-out" sign_out_router
@@ -156,11 +149,6 @@ let titan_api =  router {
 
 ///Define the pipeline that http request headers will see
 let api_pipeline = pipeline {
-    //Ensure that the Accept: application/json header is present. This is probably just for
-    //good practice. I don't fully understand why somoene would want this. Things work without it.
-    //Just seems like a way for the api to deny clients who don't accept json, and for clients to tell
-    //api's that they accept json.
-//    plug acceptJson
     set_header "x-pipeline-type" "Api"
 }
 let web_app = router {
