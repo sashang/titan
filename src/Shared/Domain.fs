@@ -95,13 +95,12 @@ type LoadSchoolResult =
       /// Valid if the first code in Codes is Success
       TheSchool : School}
 
-type UserData =
-    { UserName : string
-      Token    : JWT }
+type BetaRegistrationCode =
+    | Success = 0
+    | Failure = 1
+    | BadEmail = 2
 
-type Pupil =
-    { uuid : string }
-
-type Class =
-    { uuid : string
-      date : string }
+[<CLIMutable>]
+type BetaRegistrationResult =
+    { Codes : BetaRegistrationCode list
+      Messages : string list }

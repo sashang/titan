@@ -227,3 +227,26 @@ component knows how to change it's model. We can't do it from the parent when
 processing a message.
 
 [1] I say "probably should't" but there's no hard and fast rule against this.
+
+## Notes about the stack
+
+Notes and hints I need to remember because I keep forgetting.
+
+### Fulma
+
+Fulma is an F# wrapper around the Bulma CSS framework. It's follows the React
+DSL for React components. This means That there each component, like a
+button, has 2 list arguments. The 1st is a list of properties (props) the the
+2nd is the content of the component. You can access any CSS property from
+here, or any property that is part of React, and in doing so modify the
+behaviour of the component. For example to add an event handler to a button
+one adds a callback to the OnClick handler in the 1st list.
+
+```
+Button.button [ Button.OnClick (fun _ -> (dispatch msg)) ] [ str "ClickMe" ]
+```
+
+To access the CSS specific properties use
+```
+Button.button [ Button.Props [ Props.Style Props.CSSProps.<property> "<value>" ] ] [ str "ClickMe" ]
+```

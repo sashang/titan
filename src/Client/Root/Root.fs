@@ -30,6 +30,7 @@ type RootMsg =
     | SignUpMsg of SignUp.Msg
     | DashboardMsg of Dashboard.Msg
     | UrlUpdatedMsg of Pages.PageType
+    | HomeMsg of Home.Msg
 
 let string_of_root_msg = function
     | LoginMsg _ -> "loginmsg"
@@ -46,7 +47,7 @@ type PageModel =
     | LoginModel of Login.Model
     | SignUpModel of SignUp.Model
     | DashboardModel of Dashboard.Model
-    | HomeModel
+    | HomeModel of Home.Model
 and
     State = {
         Child : PageModel //which child page I'm at
@@ -73,7 +74,7 @@ let url_update (result : Pages.PageType option) (model : State) =
             model, Cmd.none //no page mapped from the given url, so leave it where it is.
 
         | Some Pages.PageType.Home->
-            { model with Child = HomeModel }, Cmd.none
+            { model with Child = HomeModel (Home.init ()) }, Cmd.none
 
         | Some Pages.PageType.Login ->
             { model with Child = LoginModel Login.init}, Cmd.none
@@ -88,7 +89,7 @@ let url_update (result : Pages.PageType option) (model : State) =
             model, Cmd.none
 
         | Some Pages.PageType.Home ->
-            { model with Child = HomeModel }, Cmd.none
+            { model with Child = HomeModel (Home.init ())}, Cmd.none
 
         | Some Pages.PageType.Login ->
             { model with Child = LoginModel Login.init}, Cmd.none
@@ -103,10 +104,13 @@ let url_update (result : Pages.PageType option) (model : State) =
 
 
 let init _ : State * Cmd<RootMsg> =
-    {Child = HomeModel; Session = None}, Cmd.none
+    {Child = HomeModel (Home.init ()); Session = None}, Cmd.none
 
 let private nav_item_button (text : string) (msg : RootMsg) dispatch =
-    Navbar.Item.div [ ] [ Button.button [ Button.OnClick (fun _ -> (dispatch msg)) ] [ str text ] ]
+    Navbar.Item.div [ ]
+        [ Button.button 
+            [ Button.OnClick (fun _ -> (dispatch msg)) ]
+            [ str text ] ]
 
 let view model dispatch =
     Hero.hero [
@@ -150,9 +154,10 @@ let view model dispatch =
                     yield SignUp.view sign_up_model (SignUpMsg >> dispatch)
                 | DashboardModel model ->
                     yield Dashboard.view model (DashboardMsg >> dispatch) 
-                | HomeModel ->
-                    yield! Home.view
+                | HomeModel model ->
+                    yield! (Home.view model (HomeMsg  >> dispatch))
             ]
+        Hero.foot [ ] [ Home.footer ]
     ]
 
 (*
@@ -174,7 +179,7 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     | SignOutMsg sign_out, state ->
         let cmd = SignOut.update sign_out
         //assume that signing out worked so we delete the sesison
-        { Child = HomeModel; Session = None}, Cmd.map SignOutMsg cmd
+        { Child = HomeModel (Home.init ()); Session = None}, Cmd.map SignOutMsg cmd
 
     | ClickTitle, state ->
         //move to the home page
@@ -193,6 +198,10 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     | SignUpMsg signup_msg, {Child = SignUpModel model; Session = None} ->
         let new_model, cmd = SignUp.update model signup_msg 
         {state with Child = SignUpModel new_model}, Cmd.map SignUpMsg cmd 
+
+    | HomeMsg home_msg, {Child = HomeModel model; Session = None} ->
+        let new_model, cmd = Home.update model home_msg
+        {state with Child = HomeModel new_model}, Cmd.map HomeMsg cmd
 
     | _, {Session = None} ->
         //we don't pass these on, user is not logged in

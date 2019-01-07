@@ -23,8 +23,6 @@
     <Compile Include="Model/School.fs" />
     <Compile Include="Database.fs" />
     <Compile Include="API.fs" />
-    <Compile Include="SignUp.fs" />
-    <Compile Include="Auth.fs" />
     <Compile Include="Server.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
