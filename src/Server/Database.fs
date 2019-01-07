@@ -34,10 +34,28 @@ type IDatabase =
 
     abstract member school_from_user_id: string -> Task<Result<Models.School, string>>
 
+    ///register interested partys
+    abstract member register_punters: Models.Punter -> Task<Result<bool, string>>
+
 
 type Database() = 
     interface IDatabase with
-        
+
+        member this.register_punters (punter : Models.Punter) : Task<Result<bool, string>> = task {
+            try
+                use pg_connection = new NpgsqlConnection(PG_DEV_CON)
+                pg_connection.Open()
+                let cmd = """insert into "Punter"("Email") values(@Email)"""
+                if pg_connection.Execute(cmd, punter) = 1 then  
+                    return (Ok true)
+                else
+                    return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
         member this.user_has_school (user_id : string) : Task<Result<bool, string>> = task {
             try
                 use pg_connection = new NpgsqlConnection(PG_DEV_CON)

@@ -22,8 +22,6 @@ open ValueDeclarations
 
 type RootMsg =
     | LoginMsg of Login.Msg
-    | GotoSignUpPage
-    | GotoLoginPage
     | ClickSignOut
     | ClickTitle
     | SignOutMsg of SignOut.Msg
@@ -34,11 +32,10 @@ type RootMsg =
 
 let string_of_root_msg = function
     | LoginMsg _ -> "loginmsg"
-    | GotoSignUpPage -> "GotoSignUpPage"
-    | GotoLoginPage -> "GotoLoginPage"
     | ClickSignOut -> "ClickSignOut"
     | ClickTitle -> "ClickTitle"
     | SignOutMsg _ -> "SignOutMsg"
+    | HomeMsg _ -> "HomeMsg"
     | SignUpMsg _ -> "SignUpMsg"
     | DashboardMsg _ -> "DashboardMsg"
     | UrlUpdatedMsg _ -> "UrlUpdatedMsg"
@@ -54,62 +51,53 @@ and
         Session : Session option //who I am
     }
 
-exception ConversionException of string
-//helpers to help destructure some of these types
-let to_dashboard_model = function
-    | DashboardModel model -> model
-    | _ -> raise (ConversionException "Failed to convert model")
+let url_update (page : Pages.PageType option) (model : State) =
+    match page with
+    //no page type for some reason (maybe the url to page parser didn't work or the user entered and invalid url)
+    //so we just change nothing.
+    | None -> model, Cmd.none
 
-let to_dashboard_page_model = function
-    | {Dashboard.Model.Child = Dashboard.SchoolModel model} -> model
-    | _ -> raise (ConversionException "Failed to convert model")
-
-let extract =  to_dashboard_model >> to_dashboard_page_model
-
-let url_update (result : Pages.PageType option) (model : State) =
-    match result, model with
-    | result, {Session = None} ->
-        match result with
-        | None ->
-            model, Cmd.none //no page mapped from the given url, so leave it where it is.
-
-        | Some Pages.PageType.Home->
-            { model with Child = HomeModel (Home.init ()) }, Cmd.none
-
-        | Some Pages.PageType.Login ->
-            { model with Child = LoginModel Login.init}, Cmd.none
-
-        | _  ->
-            model, Cmd.none
-
-    // session token present so we can go to the page.
-    | result, {Session = Some session} ->
-        match result with
-        | None ->
-            model, Cmd.none
-
-        | Some Pages.PageType.Home ->
-            { model with Child = HomeModel (Home.init ())}, Cmd.none
-
-        | Some Pages.PageType.Login ->
-            { model with Child = LoginModel Login.init}, Cmd.none
-            
-        | Some (Pages.PageType.Dashboard Pages.DashboardPageType.School) ->
+    // the following pages require a session token
+    | Some (Pages.Dashboard Pages.DashboardPageType.School) ->
+        match model with
+        | {Session = Some session} ->
             let new_model, cmd = Dashboard.url_update Pages.DashboardPageType.School
             { model with Child = DashboardModel new_model}, Cmd.map DashboardMsg cmd
+        | {Session = None} ->
+            model, Cmd.none
 
-        | Some (Pages.PageType.Dashboard Pages.DashboardPageType.Main) ->
+
+    | Some (Pages.Dashboard Pages.DashboardPageType.Main) ->
+        match model with
+        | {Session = Some session} ->
             let new_model, cmd = Dashboard.url_update Pages.DashboardPageType.Main
             {model with Child = DashboardModel new_model}, Cmd.map DashboardMsg cmd
+        | {Session = None} ->
+            model, Cmd.none
 
+    //these pages we don't care about the token. We can go to them with or without one.
+    | Some Pages.PageType.Home ->
+        { model with Child = HomeModel (Home.init ()) }, Cmd.none
+
+    | Some Pages.PageType.Login ->
+        let new_model, cmd = Login.init ()
+        { model with Child = LoginModel new_model}, Cmd.map LoginMsg cmd
+
+    | Some Pages.PageType.SignUp ->
+        let new_model, cmd = SignUp.init ()
+        { model with Child = SignUpModel new_model}, Cmd.map LoginMsg cmd
 
 let init _ : State * Cmd<RootMsg> =
     {Child = HomeModel (Home.init ()); Session = None}, Cmd.none
 
-let private nav_item_button (text : string) (msg : RootMsg) dispatch =
+let private nav_button_onclick page e =
+    Navigation.newUrl (Pages.to_path page) |> List.map (fun f -> f ignore) |> ignore
+
+let private nav_item_button page (text : string) =
     Navbar.Item.div [ ]
         [ Button.button 
-            [ Button.OnClick (fun _ -> (dispatch msg)) ]
+            [ Button.Color IsTitanInfo
+              Button.OnClick (nav_button_onclick page) ]
             [ str text ] ]
 
 let view model dispatch =
@@ -139,9 +127,9 @@ let view model dispatch =
                     Navbar.End.div []
                         [ match model.Session with
                           | None ->
-                                yield! [nav_item_button "Login" GotoLoginPage dispatch
-                                        nav_item_button "Sign Up" GotoSignUpPage dispatch]
-                          | Some session -> yield nav_item_button "Logout" ClickSignOut dispatch ]
+                                yield! [nav_item_button Pages.Login "Login"
+                                        nav_item_button Pages.SignUp "Sign Up" ]
+                          | Some session -> yield nav_item_button Pages.Home "Logout" ]
                 ]
             ]
         ]
@@ -188,12 +176,6 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     | ClickSignOut, state ->
         let cmd = SignOut.update SignOut.SignOut
         state, Cmd.map SignOutMsg cmd
-
-    | GotoSignUpPage, state ->
-        {state with Child = SignUpModel (SignUp.init ())}, Cmd.none
-
-    | GotoLoginPage, state ->
-        {state with Child = LoginModel Login.init}, Cmd.none
 
     | SignUpMsg signup_msg, {Child = SignUpModel model; Session = None} ->
         let new_model, cmd = SignUp.update model signup_msg 

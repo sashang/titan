@@ -73,6 +73,11 @@ type Initial() =
         this.Create.UniqueConstraint("ConStudentClassSchedule").OnTable("ClassScheduleStudent")
             .Columns([|"ClassScheduleId"; "StudentId"|]) |> ignore
 
+        //table for those registering interest in the app.
+        this.Create.Table("Punter")
+            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("Email").AsString() |> ignore
+
     override this.Down() =
         this.Delete.Table("ClassScheduleStudent") |> ignore
         this.Delete.Table("ClassSchedule") |> ignore
@@ -80,3 +85,4 @@ type Initial() =
         this.Delete.Table("StudentSchool") |> ignore
         this.Delete.Table("Student") |> ignore
         this.Delete.Table("School") |> ignore
+        this.Delete.Table("Punter") |> ignore

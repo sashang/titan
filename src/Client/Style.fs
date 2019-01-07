@@ -14,6 +14,7 @@ open CustomColours
 let goToUrl (e: React.MouseEvent) =
     e.preventDefault()
     let href = !!e.target?href
+    Browser.console.info ("href = " + href)
     Navigation.newUrl href |> List.map (fun f -> f ignore) |> ignore
 
 (*for documentation about these react properties and styles see for example

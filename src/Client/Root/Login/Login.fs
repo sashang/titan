@@ -41,8 +41,8 @@ type Model =
 /// Exception raised when the request to login is sent and processed on the
 /// server, but the return code denotes an error.
 exception LoginException of LoginResult
-let init =
-    { login_state = LoggedOut; user_info = {username = ""; password = ""}; Result = None}
+let init () =
+    { login_state = LoggedOut; user_info = {username = ""; password = ""}; Result = None}, Cmd.none
 
 let login (user_info : Login) =
     promise {

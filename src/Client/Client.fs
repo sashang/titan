@@ -38,7 +38,6 @@ let url_sub appState : Cmd<_> =
         // listen to custom navigation events published by `Urls.navigate [ . . .  ]`
         window.addEventListener(nav_event, unbox on_change) ]  
 
-//Program.mkProgram init update view
 Program.mkProgram Root.init Root.update Root.view
 |> Program.withSubscription url_sub //detect changes typed into the address bar
 |> Program.toNavigable Pages.url_parser url_update

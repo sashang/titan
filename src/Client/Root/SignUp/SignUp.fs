@@ -32,7 +32,7 @@ type Model =
       sign_up_result : SignUpResult option}
 
 let init () =
-    { email = ""; password = ""; username = ""; role = None ; sign_up_result = None }
+    { email = ""; password = ""; username = ""; role = None ; sign_up_result = None }, Cmd.none
 
 let sign_up (user_info : Domain.SignUp) = promise {
     let body = Encode.Auto.toString (2, user_info)

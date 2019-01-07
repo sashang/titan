@@ -9,3 +9,9 @@ type School =
       Principal : string }
 
 let default_school = {Id = 0; UserId = ""; Name = ""; Principal = ""}
+
+[<CLIMutable>]
+type Punter =
+    { Id : int32
+      Email : string }
+  let default_punter = {Id = 0; Email = ""}

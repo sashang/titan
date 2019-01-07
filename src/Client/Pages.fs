@@ -13,7 +13,6 @@ type DashboardPageType =
 type PageType =
     | Home
     | Login
-    | AddClass
     | SignUp
     | Dashboard of DashboardPageType
 
@@ -22,7 +21,6 @@ let to_path =
     function
     | PageType.Home -> "#home"
     | PageType.Login -> "#login"
-    | PageType.AddClass -> "#add-class"
     | PageType.SignUp -> "#sign-up"
     | PageType.Dashboard(DashboardPageType.Main) -> "#dashboard"
     | PageType.Dashboard(DashboardPageType.School) -> "#school"
@@ -33,7 +31,6 @@ let page_parser : Parser<PageType -> _,_> =
     oneOf
         [ map PageType.Home (s "home")
           map PageType.Login (s "login")
-          map PageType.AddClass (s "add-class")
           map PageType.SignUp (s "sign-up")
           map (PageType.Dashboard DashboardPageType.School) (s "school")
           map (PageType.Dashboard DashboardPageType.Main) (s "dashboard") ]

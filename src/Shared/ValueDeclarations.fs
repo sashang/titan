@@ -5,4 +5,4 @@ let PG_DEV_CON = "Host=localhost;Database=titan_dev;Username=titan_dev;Password=
 
 ///commercial name of the product/service 
 [<Literal>]
-let MAIN_NAME = "shuudin"
+let MAIN_NAME = "tewtin"

@@ -95,10 +95,12 @@ type LoadSchoolResult =
       /// Valid if the first code in Codes is Success
       TheSchool : School}
 
+[<CLIMutable>]
+type BetaRegistration =
+    { Email : string }
+
 type BetaRegistrationCode =
-    | Success = 0
-    | Failure = 1
-    | BadEmail = 2
+    | Success = 0 | Failure = 1 | BadEmail = 2 | DatabaseError = 3
 
 [<CLIMutable>]
 type BetaRegistrationResult =

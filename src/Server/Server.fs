@@ -143,6 +143,7 @@ let titan_api =  router {
     not_found_handler (text "resource not found")
     post "/login" validate_user
     post "/sign-up" API.sign_up_user
+    post "/register-punter" API.register_punter
     forward "/sign-out" sign_out_router
     forward "/secure" secure_router
 }
