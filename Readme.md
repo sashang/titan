@@ -228,6 +228,32 @@ processing a message.
 
 [1] I say "probably should't" but there's no hard and fast rule against this.
 
+### Walkthrough of the sign out process
+This describes the flow of messages under elmish. Again it can be can be
+confusing how the flow *really* works and it's advised to read
+https://elmish.github.io/elmish/parent-child.html.
+
+1. The user clicks the Sign Out button
+2. A message ClickSignOut is dispatched. This message goes straight to the toplevel Elmish message pump.
+3. The message ClickSignOut comes back to the application at the toplevel update function Root.update
+4. Root.update routes it to SignOut.update
+5. SignOut.update calls the function that tells the server to sign out.
+6. The sign_out function makes a POST request to the api on the server
+7. The return from the request can either be a Success or Failure message. We'll only describe the Success flow here for the sake of brevity.
+8. The Success message is dispatched to the top level elmish message pump.
+9. The Success message is routed via Root.update to SignOut.update
+10. SignOut.update handles the success message. In this case it tells the browser to go to the home page url.
+
+Things to notice:
+1. There are 2 messages eventually sent when the user clicks the button, ClickSignOut and SignOutSuccess.
+2. Messages come from the top and are routed down. They pass through from parent to child.
+3. The Root component doesn't sign out the user. It doesn't make a request to the server to sign out. This is
+delegated to the SignOut module.
+
+
+
+
+
 ## Notes about the stack
 
 Notes and hints I need to remember because I keep forgetting.

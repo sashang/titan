@@ -148,7 +148,7 @@ let private beta_program model dispatch =
                                         Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is6) ] ] 
                                       [ str (of_beta_result BetaRegistrationCode.BadEmail result) ]
                         | false -> nothing 
-                  | _ -> nothing) ] ] ]
+                  | _ -> nothing)] ] ]
 
 let footer = 
     Footer.footer [ Common.Modifiers [ Modifier.BackgroundColor IsTitanPrimary ] ]

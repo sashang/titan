@@ -31,7 +31,7 @@ let sign_out () = promise {
         | SignOutCode.Success :: _ ->
             Fable.Import.Browser.console.info "Successfully called /api/sign-out"
             return sign_out_result
-        | _ -> return raise (SignOutEx "Failed to login")
+        | _ -> return raise (SignOutEx "Failed to logout")
     | Error e -> return failwithf "fail: %s" e
 }
 
@@ -45,13 +45,4 @@ let update (msg : Msg) : Cmd<Msg> =
         Navigation.newUrl (Pages.to_path Pages.Home)
     | Failure ex -> failwith ("Failed to sign out " + ex.Message)
 
-let view dispatch = 
-    R.a [
-        Style [
-            CSSProp.Padding "0 20px"
-            CSSProp.TextDecorationLine "underline"
-            CSSProp.FontSize 25
-        ]
-        OnClick (fun e -> dispatch SignOut)
-    ] [ R.str "Sign Out"]
 

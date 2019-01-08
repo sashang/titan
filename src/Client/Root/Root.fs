@@ -90,14 +90,21 @@ let url_update (page : Pages.PageType option) (model : State) =
 let init _ : State * Cmd<RootMsg> =
     {Child = HomeModel (Home.init ()); Session = None}, Cmd.none
 
-let private nav_button_onclick page e =
+let private goto_url page e =
     Navigation.newUrl (Pages.to_path page) |> List.map (fun f -> f ignore) |> ignore
 
-let private nav_item_button page (text : string) =
+let private  nav_item_button (dispatch : RootMsg -> unit) (msg : RootMsg) (text : string) =
     Navbar.Item.div [ ]
         [ Button.button 
             [ Button.Color IsTitanInfo
-              Button.OnClick (nav_button_onclick page) ]
+              Button.OnClick (fun e -> dispatch msg)  ]
+            [ str text ] ]
+
+let private nav_item_button_url page (text : string) =
+    Navbar.Item.div [ ]
+        [ Button.button 
+            [ Button.Color IsTitanInfo
+              Button.OnClick (goto_url page) ]
             [ str text ] ]
 
 let view model dispatch =
@@ -126,10 +133,10 @@ let view model dispatch =
                     ]
                     Navbar.End.div []
                         [ match model.Session with
-                          | None ->
-                                yield! [nav_item_button Pages.Login "Login"
-                                        nav_item_button Pages.SignUp "Sign Up" ]
-                          | Some session -> yield nav_item_button Pages.Home "Logout" ]
+                          | None -> 
+                                yield nav_item_button_url Pages.Login "Login"
+                          | Some session ->
+                                yield nav_item_button dispatch ClickSignOut "Sign Out" ]
                 ]
             ]
         ]
