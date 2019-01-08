@@ -150,7 +150,7 @@ let view model dispatch =
                 | DashboardModel model ->
                     yield Dashboard.view model (DashboardMsg >> dispatch) 
                 | HomeModel model ->
-                    yield! (Home.view model (HomeMsg  >> dispatch))
+                    yield! Home.view model (HomeMsg  >> dispatch)
             ]
         Hero.foot [ ] [ Home.footer ]
     ]

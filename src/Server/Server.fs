@@ -38,6 +38,7 @@ type RecStartupOptions = {
     AdminUsername : string
     AdminEmail : string
     AdminPassword : string
+    ConnectionString : string
 }
 
 let print_user_details : HttpHandler =
@@ -161,18 +162,18 @@ let configure_services startup_options (services:IServiceCollection) =
     let fableJsonSettings = Newtonsoft.Json.JsonSerializerSettings()
     fableJsonSettings.Converters.Add(Fable.JsonConverter())
     services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
-    services.AddSingleton<IDatabase>(Database()) |> ignore
+    services.AddSingleton<IDatabase>(Database(startup_options.ConnectionString)) |> ignore
     services.AddEntityFrameworkNpgsql() |> ignore
     services.AddDbContext<IdentityDbContext<IdentityUser>>(
         fun options ->
             //options.UseInMemoryDatabase("NameOfDatabase") |> ignore
-            options.UseNpgsql(PG_DEV_CON) |> ignore
+            options.UseNpgsql(startup_options.ConnectionString) |> ignore
         ) |> ignore
 
     services.AddFluentMigratorCore()
             .ConfigureRunner(fun rb ->
                 rb.AddPostgres()
-                  .WithGlobalConnectionString(PG_DEV_CON)
+                  .WithGlobalConnectionString(startup_options.ConnectionString)
                   .ScanIn(typeof<TitanMigrations.Initial>.Assembly).For.Migrations() |> ignore)
             .AddLogging(fun lb -> lb.AddFluentMigratorConsole() |> ignore) |> ignore
 

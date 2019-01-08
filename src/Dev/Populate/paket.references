@@ -1,0 +1,8 @@
+group Populate
+TaskBuilder.fs
+Dapper
+Npgsql
+Microsoft.Extensions.DependencyInjection
+Microsoft.AspNetCore.Identity
+Npgsql.EntityFrameworkCore.PostgreSQL
+Microsoft.AspNetCore.Identity.EntityFrameworkCore

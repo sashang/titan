@@ -1,12 +1,13 @@
 jose-jwt
-Fulma.Extensions.Wikiki.Divider
+
 group Client
 FSharp.Core
+Fulma.Extensions.Wikiki.Divider
+Fable.Core
 Fable.Elmish.Browser
 Fable.Elmish.Debugger
 Fable.Elmish.React
 Fable.Elmish.HMR
-Fable.Core
 dotnet-fable
 Fulma
 Fable.FontAwesome

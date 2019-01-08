@@ -10,7 +10,7 @@ type Initial() =
 
     override this.Up() =
         this.Create.Table("School")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable()
             .WithColumn("UserId").AsString().ForeignKey().Unique()
             .WithColumn("Name").AsString().Unique().Nullable()
             .WithColumn("Principal").AsString().Nullable() |> ignore
@@ -19,19 +19,16 @@ type Initial() =
         this.Create.ForeignKey("FKUser").FromTable("School")
             .ForeignColumn("UserId").ToTable("AspNetUsers").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
         
-        //student table
+        //student table. They can't login so there's no entry for them in he aspnetusers table and hence no fk pointing there
         this.Create.Table("Student")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("UserId").AsString().ForeignKey().NotNullable()
+            .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable()
+            .WithColumn("Email").AsString().Unique()
             .WithColumn("FirstName").AsString()
             .WithColumn("LastName").AsString() |> ignore
 
-        this.Create.ForeignKey("FKUser").FromTable("Student")
-            .ForeignColumn("UserId").ToTable("AspNetUsers").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
-
         //Table to link a student with a school.
         this.Create.Table("StudentSchool")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable()
             .WithColumn("SchoolId").AsInt32().ForeignKey().NotNullable()
             .WithColumn("StudentId").AsInt32().ForeignKey().NotNullable() |> ignore
 
@@ -42,7 +39,7 @@ type Initial() =
         
         //Class descriptions linked to a school.
         this.Create.Table("ClassType")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable()
             .WithColumn("SchoolId").AsInt32().ForeignKey().NotNullable()
             .WithColumn("Name").AsString().Nullable()
             .WithColumn("Description").AsString().Nullable() |> ignore
@@ -52,7 +49,7 @@ type Initial() =
 
         //Time a class starts and ends
         this.Create.Table("ClassSchedule")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable()
             .WithColumn("ClassTypeId").AsInt32().ForeignKey()
             .WithColumn("StartTime").AsDateTimeOffset()
             .WithColumn("EndTime").AsDateTimeOffset() |> ignore
@@ -62,7 +59,7 @@ type Initial() =
         
         //table to link student with class schedule
         this.Create.Table("ClassScheduleStudent")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable()
             .WithColumn("ClassScheduleId").AsInt32().ForeignKey()
             .WithColumn("StudentId").AsInt32().ForeignKey() |> ignore
 
@@ -75,7 +72,7 @@ type Initial() =
 
         //table for those registering interest in the app.
         this.Create.Table("Punter")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable()
             .WithColumn("Email").AsString() |> ignore
 
     override this.Down() =

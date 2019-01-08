@@ -7,7 +7,6 @@ open Npgsql
 open System.Collections.Generic
 open System.Dynamic
 open System.Threading.Tasks
-open ValueDeclarations
 
 let private dapper_query<'Result> (query:string) (connection:NpgsqlConnection) =
     connection.Query<'Result>(query)
@@ -29,6 +28,8 @@ type IDatabase =
     /// Query the database to see if a school is linked to a user
     abstract member user_has_school: string -> Task<Result<bool, string>>
 
+    abstract member query_id: string -> Task<Result<string, string>>
+
     /// Update a school given the user id
     abstract member update_school_by_user_id: Models.School -> Task<Result<bool, string>>
 
@@ -37,13 +38,50 @@ type IDatabase =
     ///register interested partys
     abstract member register_punters: Models.Punter -> Task<Result<bool, string>>
 
+    /// add student to Student table
+    abstract member insert_student : Models.Student -> Task<Result<bool, string>>
 
-type Database() = 
+
+type Database(c : string) = 
+    member this.connection = c
+
     interface IDatabase with
+
+        member this.insert_student (student : Models.Student) : Task<Result<bool, string>> = task {
+            try
+                use pg_connection = new NpgsqlConnection(this.connection)
+                pg_connection.Open()
+                let cmd = """insert into "Student"("Email", "FirstName", "LastName") values(@Email, @FirstName, @LastName)"""
+                if pg_connection.Execute(cmd, student) = 1 then  
+                    return (Ok true)
+                else
+                    return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+                with
+                | :? Npgsql.PostgresException as e ->
+                    return Error e.MessageText
+                |  e ->
+                    return Error e.Message
+        }
+
+        member this.query_id (username : string) : Task<Result<string, string>> = task {
+            try
+                use pg_connection = new NpgsqlConnection(this.connection)
+                pg_connection.Open()
+                let sql = """select "Id" from "AspNetUsers" where "UserName" = @UserName"""
+                let result = pg_connection
+                             |> dapper_map_param_query<string> sql (Map ["UserName", username])
+                             |> Seq.head
+                return Ok result
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
 
         member this.register_punters (punter : Models.Punter) : Task<Result<bool, string>> = task {
             try
-                use pg_connection = new NpgsqlConnection(PG_DEV_CON)
+                use pg_connection = new NpgsqlConnection(this.connection)
                 pg_connection.Open()
                 let cmd = """insert into "Punter"("Email") values(@Email)"""
                 if pg_connection.Execute(cmd, punter) = 1 then  
@@ -58,7 +96,7 @@ type Database() =
         }
         member this.user_has_school (user_id : string) : Task<Result<bool, string>> = task {
             try
-                use pg_connection = new NpgsqlConnection(PG_DEV_CON)
+                use pg_connection = new NpgsqlConnection(this.connection)
                 pg_connection.Open()
                 let cmd = """select exists(select 1 from "School" where "UserId" = @UserId)"""
                 let exists = pg_connection
@@ -75,7 +113,7 @@ type Database() =
         member this.update_school_by_user_id (school : Models.School) : Task<Result<bool, string>> = task {
 
             try 
-                use pg_connection = new NpgsqlConnection(PG_DEV_CON)
+                use pg_connection = new NpgsqlConnection(this.connection)
                 pg_connection.Open()
                 let cmd = """update "School" set "Name" = @Name, "Principal" = @Principal where "UserId" = @UserId"""
                 if pg_connection.Execute(cmd, school) = 1 then  
@@ -91,7 +129,7 @@ type Database() =
 
         member this.insert_school (school : Models.School) : Task<Result<bool, string>> = task {
             try 
-                use pg_connection = new NpgsqlConnection(PG_DEV_CON)
+                use pg_connection = new NpgsqlConnection(this.connection)
                 pg_connection.Open()
                 let cmd = """insert into "School"("Name","UserId", "Principal") values(@Name,@UserId,@Principal)"""
                 if pg_connection.Execute(cmd, school) = 1 then  
@@ -108,7 +146,7 @@ type Database() =
 
         member this.school_from_user_id (user_id : string) : Task<Result<Models.School, string>> = task {
             try 
-                use pg_connection = new NpgsqlConnection(PG_DEV_CON)
+                use pg_connection = new NpgsqlConnection(this.connection)
                 pg_connection.Open()
                 let sql = """select "Name", "Principal" from "School" where "UserId" = @UserId"""
                 let result = pg_connection.QueryFirst<Models.School>(sql, {Models.default_school with Models.School.UserId = user_id})
