@@ -29,8 +29,10 @@ type RootMsg =
     | DashboardMsg of Dashboard.Msg
     | UrlUpdatedMsg of Pages.PageType
     | HomeMsg of Home.Msg
+    | EnrolMsg of Enrol.Msg
 
 let string_of_root_msg = function
+    | EnrolMsg _ -> "EnrolMsg"
     | LoginMsg _ -> "loginmsg"
     | ClickSignOut -> "ClickSignOut"
     | ClickTitle -> "ClickTitle"
@@ -44,6 +46,7 @@ type PageModel =
     | LoginModel of Login.Model
     | SignUpModel of SignUp.Model
     | DashboardModel of Dashboard.Model
+    | EnrolModel of Enrol.Model
     | HomeModel of Home.Model
 and
     State = {
@@ -77,6 +80,10 @@ let url_update (page : Pages.PageType option) (model : State) =
     | Some Pages.PageType.SignUp ->
         let new_model, cmd = SignUp.init ()
         { model with Child = SignUpModel new_model}, Cmd.map LoginMsg cmd
+
+    | Some Pages.PageType.Enrol ->
+        let new_model, cmd = Enrol.init ()
+        { model with Child = EnrolModel new_model}, Cmd.map EnrolMsg cmd
 
 let init _ : State * Cmd<RootMsg> =
     {Child = HomeModel (Home.init ()); Session = None}, Cmd.none
@@ -125,6 +132,7 @@ let view model dispatch =
                     Navbar.End.div []
                         [ match model.Session with
                           | None -> 
+                                yield nav_item_button_url Pages.Enrol "Enrol"
                                 yield nav_item_button_url Pages.Login "Login"
                           | Some session ->
                                 yield nav_item_button dispatch ClickSignOut "Sign Out" ]
@@ -142,6 +150,8 @@ let view model dispatch =
                     yield Dashboard.view model (DashboardMsg >> dispatch) 
                 | HomeModel model ->
                     yield! Home.view model (HomeMsg  >> dispatch)
+                | EnrolModel model ->
+                    yield! Enrol.view model (EnrolMsg  >> dispatch)
             ]
         Hero.foot [ ] [ Home.footer ]
     ]

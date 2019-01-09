@@ -120,8 +120,40 @@ type Student =
       LastName : string
       Email : string }
 
+      static member init =
+        {FirstName = ""; LastName = ""; Email = ""}
+
+
 [<CLIMutable>]
 type GetAllStudentsResult =
     { Codes : APICode list
       Messages : string list
       Students : Student list}
+
+[<CLIMutableAttribute>]
+type AddStudentSchool = 
+    { Codes : APICode list
+      Messages : string list }
+
+
+/// Students who have applied to enrol and are waiting for approval
+[<CLIMutableAttribute>]
+type PendingResult = 
+    { Codes : APICode list
+      Messages : string list
+      Students : Student list }
+
+[<CLIMutableAttribute>]
+type Enrol =
+    { FirstName : string 
+      LastName : string 
+      Email : string
+      SchoolName : string }
+    static member init = {FirstName = ""; LastName = ""; Email = ""; SchoolName = ""}
+
+
+[<CLIMutableAttribute>]
+type EnrolResult = 
+    { Codes : APICode list
+      Messages : string list }
+

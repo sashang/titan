@@ -66,23 +66,18 @@ let update (model : Model) (msg : Msg) =
 
 
 let private student_content (student : Student) =
-    [ Label.label [ ] [ str "First Name" ]
-      Label.label [ ] [ str student.FirstName ]
-      Label.label [ ] [ str "Last Name" ]
-      Label.label [ ] [ str student.LastName]
-      Label.label [ ] [ str "Email" ]
-      Label.label [ ] [ str student.Email ] ]
+      [ Text.div [ Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [ str student.Email ] ]
 
-let private single_student model dispatch student = 
-    Columns.columns [ ] 
-        [ Column.column [ Column.Width (Screen.All, Column.Is3) ]
-            [ Card.card [ ] 
-                [ ]
-              Card.header [ ]
-                [ Card.Header.title [ ] [ str "Name" ] ]
-              Card.content [  ]
-                [ yield! student_content student ] ] ] 
+let private single_student model dispatch (student : Domain.Student) = 
+    Column.column [ Column.Width (Screen.All, Column.Is3) ]
+        [ Card.card [ ] 
+            [ ]
+          Card.header [ Modifiers [ Modifier.BackgroundColor IsTitanSecondary ] ]
+            [ Card.Header.title [ Card.Header.Title.Modifiers [ Modifier.TextColor IsWhite ] ]  [ str (student.FirstName + " " + student.LastName) ] ]
+          Card.content [  ]
+            [ yield! student_content student ] ] 
 
 let view (model : Model) (dispatch : Msg -> unit) =
     [ Box.box' [ ] 
-        [ yield! (model.Students |> List.map (single_student model dispatch))] ]
+        [ Columns.columns [ ]
+            [ yield! (model.Students |> List.map (single_student model dispatch))] ] ]

@@ -17,6 +17,69 @@ let private role_to_string = function
 | Some TitanRole.Principal -> "principal"
 | None -> "unknown"
 
+let enroll (next : HttpFunc) (ctx : HttpContext) = task {
+    let! info = ctx.BindJsonAsync<Domain.Enrol>()
+    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    let db = ctx.GetService<IDatabase>()
+    let user_id = ctx.User.FindFirst(ClaimTypes.NameIdentifier).Value
+    let m = { Models.Student.init with Email = info.Email; LastName = info.LastName; FirstName = info.FirstName }
+    let! result = db.insert_pending m info.SchoolName
+    match result with
+    | Ok () ->
+        return! ctx.WriteJsonAsync {EnrolResult.Codes = [APICode.Success]; EnrolResult.Messages = []}
+    | Error e -> 
+        return! ctx.WriteJsonAsync 
+            {EnrolResult.Codes = [APICode.DatabaseError]; EnrolResult.Messages = [e]}
+}
+
+let get_schools (next : HttpFunc) (ctx : HttpContext) = task {
+    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    logger.LogInformation("get schools")
+    let db = ctx.GetService<IDatabase>()
+    let! result = db.query_all_schools
+    match result with
+    | Ok schools ->
+        return! ctx.WriteJsonAsync (schools |> List.map (fun x -> {School.Name = x.Name; School.Principal = x.Principal}))
+    | Error err ->
+        logger.LogInformation("Could not get students: " + err)
+        return! ctx.WriteJsonAsync []
+}
+
+let get_pending (next : HttpFunc) (ctx : HttpContext) = task {
+    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    let db = ctx.GetService<IDatabase>()
+    let! result = db.query_pending
+    match result with
+    | Ok students ->
+        return! ctx.WriteJsonAsync 
+            {GetAllStudentsResult.Codes = [APICode.Success]
+             GetAllStudentsResult.Messages = []
+             Students = students |> List.map (fun x -> {FirstName = x.FirstName; LastName = x.LastName; Email = x.Email})}
+    | Error err ->
+        logger.LogInformation("Could not get students")
+        return! ctx.WriteJsonAsync 
+            {GetAllStudentsResult.Codes = [APICode.DatabaseError]
+             GetAllStudentsResult.Messages = ["Failed to get students from database"]
+             Students = []}
+}
+
+let add_student_to_school (next : HttpFunc) (ctx : HttpContext) = task {
+    let! student = ctx.BindJsonAsync<Domain.Student>()
+    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    let db = ctx.GetService<IDatabase>()
+    //get the user id of the tutor
+    let user_id = ctx.User.FindFirst(ClaimTypes.NameIdentifier).Value
+    let! result = db.insert_student_school student.Email user_id
+    match result with
+    | Ok () ->
+        return! ctx.WriteJsonAsync {AddStudentSchool.Codes = [APICode.Success];
+            AddStudentSchool.Messages = [""]}
+    | Error e ->
+        logger.LogWarning e
+        return! ctx.WriteJsonAsync {AddStudentSchool.Codes = [APICode.DatabaseError]; AddStudentSchool.Messages = [e]}
+
+}
+ 
 let get_all_students (next : HttpFunc) (ctx : HttpContext) = task {
     let logger = ctx.GetLogger<Debug.DebugLogger>()
     let db = ctx.GetService<IDatabase>()

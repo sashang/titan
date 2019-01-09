@@ -104,7 +104,7 @@ let column (model : Model) (dispatch : Msg -> unit) =
         [ Column.Width (Screen.All, Column.Is4)
           Column.Offset (Screen.All, Column.Is4) ]
         [ Heading.h3
-            [ Heading.Modifiers [ Modifier.TextColor IsTitanPrimary ] ]
+            [ Heading.Modifiers [ Modifier.TextColor IsBlack ] ]
             [ str "Login" ]
           Box.box' [ ] [
                 Field.div [ ]
@@ -135,10 +135,6 @@ let column (model : Model) (dispatch : Msg -> unit) =
                         | false -> nothing 
                     | _ ->  nothing)
                 ]
-                Field.div [ ]
-                    [ Checkbox.checkbox [ ]
-                        [ input [ Type "checkbox" ]
-                          str "Remember me" ] ] 
                 Field.div [] [
                     login_button dispatch ClickLogin "Login"
                 ]

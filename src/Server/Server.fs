@@ -138,13 +138,17 @@ let secure_router = router {
     get "/validate" handleGetSecured
     get "/load-school" API.load_school
     get "/get-all-students" API.get_all_students
+    get "/get-pending" API.get_pending
     post "/create-school" API.create_school
+    post "/add-student-school" API.add_student_to_school
 }
 
 let titan_api =  router {
     not_found_handler (text "resource not found")
     post "/login" validate_user
     post "/sign-up" API.sign_up_user
+    post "/enroll" API.enroll
+    get "/get-schools" API.get_schools
     post "/register-punter" API.register_punter
     forward "/sign-out" sign_out_router
     forward "/secure" secure_router
@@ -152,6 +156,7 @@ let titan_api =  router {
 
 ///Define the pipeline that http request headers will see
 let api_pipeline = pipeline {
+    plug acceptJson 
     set_header "x-pipeline-type" "Api"
 }
 let web_app = router {

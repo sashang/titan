@@ -7,6 +7,7 @@ type PageType =
     | Home
     | Login
     | SignUp
+    | Enrol
     | Dashboard
 
 
@@ -16,6 +17,7 @@ let to_path =
     | PageType.Login -> "#login"
     | PageType.SignUp -> "#sign-up"
     | PageType.Dashboard -> "#dashboard"
+    | PageType.Enrol -> "#enroll"
 
 
 /// The URL is turned into a Result.
@@ -24,6 +26,7 @@ let page_parser : Parser<PageType -> _,_> =
         [ map PageType.Home (s "home")
           map PageType.Login (s "login")
           map PageType.SignUp (s "sign-up")
+          map PageType.Enrol (s "enroll")
           map (PageType.Dashboard) (s "dashboard") ]
 
 let url_parser location = parseHash page_parser location

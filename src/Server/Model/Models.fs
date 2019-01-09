@@ -16,6 +16,7 @@ type Punter =
       Email : string }
 let default_punter = {Id = 0; Email = ""}
 
+[<RequireQualifiedAccessAttribute>]
 [<CLIMutable>]
 type Student =
     { Id : int32

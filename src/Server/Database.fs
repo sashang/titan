@@ -23,6 +23,14 @@ let private dapper_map_param_query<'Result> (query:string) (param : Map<string,_
 
     connection |> dapper_param_query query expando
 
+let private dapper_map_param_exec(sql : string) (param : Map<string,_>) (connection : NpgsqlConnection) : int =
+    let expando = ExpandoObject()
+    let dict = expando :> IDictionary<string,obj>
+    for value in param do
+        dict.Add(value.Key, value.Value :> obj)
+
+    connection.Execute(sql, expando)
+
 type IDatabase =
     abstract member insert_school: Models.School -> Task<Result<bool, string>>
 
@@ -45,11 +53,89 @@ type IDatabase =
     /// query to get all students
     abstract member query_all_students : Task<Result<Models.Student list, string>>
 
+    abstract member query_all_schools : Task<Result<Models.School list, string>>
 
+    /// query to get all pending students
+    abstract member query_pending : Task<Result<Models.Student list, string>>
+
+    /// insert student school mapping
+    abstract member insert_student_school : string -> string -> Task<Result<unit, string>>
+
+    /// insert student into pending table for enrollement approval 
+    abstract member insert_pending : Models.Student -> string -> Task<Result<unit, string>>
+
+    
 type Database(c : string) = 
     member this.connection = c
 
     interface IDatabase with
+        member this.insert_student_school student_email tutor_user_id : Task<Result<unit, string>> = task {
+            try
+                use pg_connection = new NpgsqlConnection(this.connection)
+                pg_connection.Open()
+                let cmd = """insert into "StudentSchool" ("StudentId","SchoolId") VALUES ((select "Id" from "Student" where "Email" = @Email),(select "School"."Id" from "School" inner join "AspNetUsers" on "School"."UserId" = @Id")"""
+                let m = (Map ["Email", student_email; "Id", tutor_user_id])
+                if pg_connection.Execute(cmd, m) = 1 then  
+                    return Ok ()
+                else
+                    return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
+
+        member this.insert_pending (student : Models.Student) (school_name : string) : Task<Result<unit, string>> = task {
+            try
+                use pg_connection = new NpgsqlConnection(this.connection)
+                pg_connection.Open()
+                let cmd = """insert into "Pending" ("FirstName","LastName","Email","SchoolId") VALUES (@FirstName, @LastName, @Email,(select "School"."Id" from "School" where "School"."Name" = @SchoolName"))"""
+                let m = (Map ["Email", student.Email; "FirstName", student.FirstName; "LastName", student.FirstName; "SchoolName", school_name ])
+                if dapper_map_param_exec cmd m pg_connection = 1 then  
+                    return Ok ()
+                else
+                    return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
+
+
+        member this.query_pending : Task<Result<Models.Student list, string>> = task {
+            try
+                use pg_connection = new NpgsqlConnection(this.connection)
+                pg_connection.Open()
+                let sql = """select "FirstName", "LastName", "Email" from "Pending";"""
+                let result = pg_connection
+                             |> dapper_query<Models.Student> sql
+                             |> Seq.toList
+                return Ok result
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
+
+
+        member this.query_all_schools : Task<Result<Models.School list, string>> = task {
+            try
+                use pg_connection = new NpgsqlConnection(this.connection)
+                pg_connection.Open()
+                let sql = """select * from "School";"""
+                let result = pg_connection
+                             |> dapper_query<Models.School> sql
+                             |> Seq.toList
+                return Ok result
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
 
         member this.query_all_students : Task<Result<Models.Student list, string>> = task {
             try

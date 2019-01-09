@@ -75,6 +75,17 @@ type Initial() =
             .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable()
             .WithColumn("Email").AsString() |> ignore
 
+        //students wanting to enrol at a school
+        this.Create.Table("Pending")
+            .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable()
+            .WithColumn("Email").AsString().NotNullable()
+            .WithColumn("FirstName").AsString().NotNullable()
+            .WithColumn("LastName").AsString().NotNullable()
+            .WithColumn("SchoolId").AsInt32().NotNullable() |> ignore
+        
+        this.Create.ForeignKey("FKPendingSchool").FromTable("Pending")
+            .ForeignColumn("SchoolId").ToTable("School").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
+
     override this.Down() =
         this.Delete.Table("ClassScheduleStudent") |> ignore
         this.Delete.Table("ClassSchedule") |> ignore
@@ -83,3 +94,4 @@ type Initial() =
         this.Delete.Table("Student") |> ignore
         this.Delete.Table("School") |> ignore
         this.Delete.Table("Punter") |> ignore
+        this.Delete.Table("Pending") |> ignore
