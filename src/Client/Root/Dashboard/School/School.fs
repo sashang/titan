@@ -1,5 +1,6 @@
 module School
 
+open CustomColours
 open Domain
 open Elmish
 open Elmish.Browser.Navigation
@@ -24,7 +25,7 @@ type Model =
 type Msg =
     | SetPrincipalName of string
     | SetSchoolName of string
-    | ClickSubmit
+    | ClickSave
     | Success of CreateSchoolResult
     | LoadSchoolSuccess of Domain.School
     | Failure of exn
@@ -136,60 +137,55 @@ let private school_name_help_first_time_user (result : LoadSchoolResult option) 
         | false -> std_label "School Name"
     | _ -> std_label "School Name"
 
+let private field label placeholder =
+    [ Field.div [ ] 
+        [ Field.label [ Field.Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
+            [ Field.p [ ] [ str label ] ]
+          Control.div [ ]
+            [ Input.text [Input.Placeholder placeholder ] ] ] ]
+
+let private image_holder url =
+    [ Image.image [ ]
+        [ img [ Src url ] ] ]
+
+let school_content = 
+    [ Columns.columns [ ]
+        [ Column.column [ ]
+            [ yield! field "Headmaster" "eg: Mr Skinner"
+              yield! field "School Name" "eg: Sunnydale High" ] ] ]
+
+
+let private save_button dispatch msg text =
+    Button.button [
+        Button.Color IsTitanInfo
+        Button.OnClick (fun _ -> (dispatch msg))
+    ] [ str text ]
+
 let view  (model : Model) (dispatch : Msg -> unit) = 
-
-    Container.container [ Container.IsFullHD
-                          Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ] [
-        Column.column
-            [ Column.Width (Screen.All, Column.Is4)
-              Column.Offset (Screen.All, Column.Is4) ]
-            [ Heading.h3
-                [ Heading.Modifiers [ Modifier.TextColor IsGreyDark ] ]
-                [ str "School" ]
-              Box.box' [ ] [
-                    help_first_time_user model.LoadSchoolResult
-                    Field.div [ ]
-                        [ Control.div [ ]
-                            [ Input.text
-                                [ Input.Size IsLarge
-                                  Input.Placeholder "Your Name"
-                                  Input.Props [ 
-                                    AutoFocus true
-                                    DefaultValue model.TheSchool.Principal
-                                    OnChange (fun ev -> dispatch (SetPrincipalName ev.Value)) ] ] ] ]
-                    school_name_help_first_time_user model.LoadSchoolResult
-                    Field.div [ ] [
-                        Control.div [ ]
-                            [ Input.text
-                                [ Input.Size IsLarge
-                                  Input.Placeholder "Your School Name"
-                                  Input.Props [
-                                    DefaultValue model.TheSchool.Name
-                                    OnChange (fun ev -> dispatch (SetSchoolName ev.Value)) ] ] ] ]
-                    make_error_from_result model.Result CreateSchoolCode.SchoolNameInUse
-
-                    Field.div [] [ Client.Style.button dispatch ClickSubmit "Submit" ]
-
-                    make_error_from_result model.Result CreateSchoolCode.DatabaseError
-                    make_error_from_result model.Result CreateSchoolCode.Unknown
-                    make_error_from_result model.Result CreateSchoolCode.FetchError
-                    make_error_from_load_school_result model.LoadSchoolResult LoadSchoolCode.FetchError
-                    make_error_from_load_school_result model.LoadSchoolResult LoadSchoolCode.DatabaseError
-              ] 
-        ]
-    ]
+    [ Card.card [ ] 
+        [ Card.header [ ]
+            [ Card.Header.title [ ] [ ] ]
+          Card.image [ ]
+            [ yield! image_holder "Images/school.png" ]
+          Card.content [ ]
+            [ yield! school_content ] 
+          Card.footer [ ] 
+            [ Card.Footer.div [ ] 
+                [ Level.level [ ]
+                    [ Level.left [ ]
+                        [ Level.item [ ]
+                            [ save_button dispatch ClickSave "Save" ] ] ] ] ] ] ]
 
 let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     match msg with
-    | ClickSubmit ->
+    | ClickSave ->
         model, Cmd.ofPromise submit model.TheSchool Success Failure
     | SetPrincipalName principal_name ->
         {model with TheSchool = {model.TheSchool with Principal = principal_name}}, Cmd.none
     | SetSchoolName school_name ->
         {model with TheSchool = {model.TheSchool with Name = school_name}}, Cmd.none
     | Success _ ->
-        //go back to the dashboard main page.
-        model, Navigation.newUrl (Pages.to_path (Pages.Dashboard Pages.DashboardPageType.Main))
+        model, Cmd.none
     | LoadSchoolSuccess result ->
         {model with Model.TheSchool = result}, Cmd.none
     | Failure e ->

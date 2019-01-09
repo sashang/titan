@@ -1,6 +1,5 @@
 module API
 
-
 open Database
 open Domain
 open FSharp.Control.Tasks.ContextInsensitive
@@ -17,6 +16,24 @@ let private role_to_string = function
 | Some TitanRole.Student -> "student"
 | Some TitanRole.Principal -> "principal"
 | None -> "unknown"
+
+let get_all_students (next : HttpFunc) (ctx : HttpContext) = task {
+    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    let db = ctx.GetService<IDatabase>()
+    let! result = db.query_all_students
+    match result with
+    | Ok students ->
+        return! ctx.WriteJsonAsync 
+            {GetAllStudentsResult.Codes = [APICode.Success]
+             GetAllStudentsResult.Messages = []
+             Students = students |> List.map (fun x -> {FirstName = x.FirstName; LastName = x.LastName; Email = x.Email})}
+    | Error err ->
+        logger.LogInformation("Could not get students")
+        return! ctx.WriteJsonAsync 
+            {GetAllStudentsResult.Codes = [APICode.DatabaseError]
+             GetAllStudentsResult.Messages = ["Failed to get students from database"]
+             Students = []}
+}
 
 let register_punter (next : HttpFunc) (ctx : HttpContext) = task {
     let! punter = ctx.BindJsonAsync<Domain.BetaRegistration>()

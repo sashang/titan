@@ -4,6 +4,12 @@ namespace Domain
 // Json web token type.
 type JWT = string
 
+type APICode = 
+    | Success = 0
+    | Failure = 1
+    | DatabaseError = 2
+    | FetchError = 2
+
 // Login credentials.
 [<CLIMutable>] //needed for BindJsonAync to work
 type Login =
@@ -14,6 +20,7 @@ type Login =
         not (this.username <> "test@test"  || this.password <> "test")
 
 type LoginCode = Success = 0 | Failure = 1
+
 
 [<CLIMutable>]
 type TitanClaim =
@@ -106,3 +113,15 @@ type BetaRegistrationCode =
 type BetaRegistrationResult =
     { Codes : BetaRegistrationCode list
       Messages : string list }
+
+[<CLIMutable>]
+type Student =
+    { FirstName : string
+      LastName : string
+      Email : string }
+
+[<CLIMutable>]
+type GetAllStudentsResult =
+    { Codes : APICode list
+      Messages : string list
+      Students : Student list}

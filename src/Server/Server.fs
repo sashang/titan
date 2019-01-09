@@ -137,6 +137,7 @@ let secure_router = router {
     //pipe_through (pipeline { requires_authentication (json_auth_fail_message)})
     get "/validate" handleGetSecured
     get "/load-school" API.load_school
+    get "/get-all-students" API.get_all_students
     post "/create-school" API.create_school
 }
 

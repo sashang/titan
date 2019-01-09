@@ -50,10 +50,8 @@ let buttonLink cssClass onClick elements =
 
 let button dispatch msg text = 
     Button.button [
-        Button.Color IsTitanPrimary
-        Button.IsFullWidth
+        Button.Color IsTitanInfo
         Button.OnClick (fun _ -> (dispatch msg))
-        Button.CustomClass "is-large is-block"
     ] [ R.str text ]
 
  

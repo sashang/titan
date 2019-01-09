@@ -15,6 +15,8 @@
     <Compile Include="Root/SignOut/SignOut.fs" />
     <Compile Include="Root/Login/Login.fs" />
     <Compile Include="Root/Dashboard/School/School.fs" />
+    <Compile Include="Root/Dashboard/Students/StudentsComponent.fs" />
+    <Compile Include="Root/Dashboard/Class/Class.fs" />
     <Compile Include="Root/Dashboard/Dashboard.fs" />
     <Compile Include="Root/Root.fs" />
     <Compile Include="Shared.fs" />

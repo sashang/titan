@@ -65,7 +65,7 @@ let login (user_info : Login) =
 let update  (model : Model) (msg : Msg): Model*Cmd<Msg>*ExternalMsg =
     match msg with
     | Success session ->
-        let new_path = Pages.to_path (Pages.Dashboard Pages.DashboardPageType.Main)
+        let new_path = Pages.to_path Pages.Dashboard
         {model with login_state = LoggedIn},
          Navigation.newUrl new_path,
          SignedIn session //return the session. the parent will see this and can store the session state.
@@ -88,6 +88,13 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg>*ExternalMsg =
         model, Cmd.ofPromise login model.user_info Success Failure, Nop
     
 
+
+let login_button dispatch msg text = 
+    Button.button [
+        Button.Color IsTitanInfo
+        Button.OnClick (fun _ -> (dispatch msg))
+        Button.CustomClass "is-large"
+    ] [ str text ]
 
 let column (model : Model) (dispatch : Msg -> unit) =
     let of_login_result (code : LoginCode) (result : LoginResult) =
@@ -133,7 +140,7 @@ let column (model : Model) (dispatch : Msg -> unit) =
                         [ input [ Type "checkbox" ]
                           str "Remember me" ] ] 
                 Field.div [] [
-                    Client.Style.button dispatch ClickLogin "Login"
+                    login_button dispatch ClickLogin "Login"
                 ]
           ] 
     ]

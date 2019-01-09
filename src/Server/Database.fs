@@ -3,6 +3,7 @@ module Database
 
 open Dapper
 open FSharp.Control.Tasks.ContextInsensitive
+open Microsoft.Extensions.Logging
 open Npgsql
 open System.Collections.Generic
 open System.Dynamic
@@ -16,9 +17,9 @@ let private dapper_param_query<'Result> (query:string) (param:obj) (connection:N
     
 let private dapper_map_param_query<'Result> (query:string) (param : Map<string,_>) (connection:NpgsqlConnection) : 'Result seq =
     let expando = ExpandoObject()
-    let expandoDictionary = expando :> IDictionary<string,obj>
-    for paramValue in param do
-        expandoDictionary.Add(paramValue.Key, paramValue.Value :> obj)
+    let dict = expando :> IDictionary<string,obj>
+    for value in param do
+        dict.Add(value.Key, value.Value :> obj)
 
     connection |> dapper_param_query query expando
 
@@ -40,12 +41,31 @@ type IDatabase =
 
     /// add student to Student table
     abstract member insert_student : Models.Student -> Task<Result<bool, string>>
+    
+    /// query to get all students
+    abstract member query_all_students : Task<Result<Models.Student list, string>>
 
 
 type Database(c : string) = 
     member this.connection = c
 
     interface IDatabase with
+
+        member this.query_all_students : Task<Result<Models.Student list, string>> = task {
+            try
+                use pg_connection = new NpgsqlConnection(this.connection)
+                pg_connection.Open()
+                let sql = """select "FirstName", "LastName", "Email" from "Student";"""
+                let result = pg_connection
+                             |> dapper_query<Models.Student> sql
+                             |> Seq.toList
+                return Ok result
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
 
         member this.insert_student (student : Models.Student) : Task<Result<bool, string>> = task {
             try

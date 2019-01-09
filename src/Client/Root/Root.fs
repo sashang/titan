@@ -58,20 +58,11 @@ let url_update (page : Pages.PageType option) (model : State) =
     | None -> model, Cmd.none
 
     // the following pages require a session token
-    | Some (Pages.Dashboard Pages.DashboardPageType.School) ->
+    | Some Pages.Dashboard ->
         match model with
         | {Session = Some session} ->
-            let new_model, cmd = Dashboard.url_update Pages.DashboardPageType.School
+            let new_model, cmd = Dashboard.init ()
             { model with Child = DashboardModel new_model}, Cmd.map DashboardMsg cmd
-        | {Session = None} ->
-            model, Cmd.none
-
-
-    | Some (Pages.Dashboard Pages.DashboardPageType.Main) ->
-        match model with
-        | {Session = Some session} ->
-            let new_model, cmd = Dashboard.url_update Pages.DashboardPageType.Main
-            {model with Child = DashboardModel new_model}, Cmd.map DashboardMsg cmd
         | {Session = None} ->
             model, Cmd.none
 
