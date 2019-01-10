@@ -137,22 +137,27 @@ let private school_name_help_first_time_user (result : LoadSchoolResult option) 
         | false -> std_label "School Name"
     | _ -> std_label "School Name"
 
-let private field label placeholder =
+let private input_field label placeholder text on_change =
     [ Field.div [ ] 
         [ Field.label [ Field.Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
-            [ Field.p [ ] [ str label ] ]
+            [ Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ str label ] ]
           Control.div [ ]
-            [ Input.text [Input.Placeholder placeholder ] ] ] ]
+            [ Input.text 
+                [ Input.Value text
+                  Input.Placeholder placeholder
+                  Input.OnChange on_change ] ] ] ]
 
 let private image_holder url =
     [ Image.image [ ]
         [ img [ Src url ] ] ]
 
-let school_content = 
+let school_content (model : Model) (dispatch : Msg->unit) = 
     [ Columns.columns [ ]
         [ Column.column [ ]
-            [ yield! field "Headmaster" "eg: Mr Skinner"
-              yield! field "School Name" "eg: Sunnydale High" ] ] ]
+            [ yield! input_field "Headmaster" "eg: Mr Skinner"
+                 model.TheSchool.Principal (fun e -> dispatch (SetPrincipalName e.Value))
+              yield! input_field "School Name" "eg: Sunnydale High"
+                model.TheSchool.Name (fun e -> dispatch (SetSchoolName e.Value)) ] ] ]
 
 
 let private save_button dispatch msg text =
@@ -161,14 +166,14 @@ let private save_button dispatch msg text =
         Button.OnClick (fun _ -> (dispatch msg))
     ] [ str text ]
 
-let view  (model : Model) (dispatch : Msg -> unit) = 
+let view (model : Model) (dispatch : Msg -> unit) = 
     [ Card.card [ ] 
         [ Card.header [ ]
             [ Card.Header.title [ ] [ ] ]
           Card.image [ ]
             [ yield! image_holder "Images/school.png" ]
           Card.content [ ]
-            [ yield! school_content ] 
+            [ yield! school_content model dispatch ] 
           Card.footer [ ] 
             [ Card.Footer.div [ ] 
                 [ Level.level [ ]

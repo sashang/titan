@@ -64,6 +64,12 @@ type IDatabase =
     /// insert student into pending table for enrollement approval 
     abstract member insert_pending : Models.Student -> string -> Task<Result<unit, string>>
 
+    /// delete pending student with given email
+    abstract member delete_pending : string -> Task<Result<unit, string>>
+
+    /// delete pending for a tutor
+    abstract member delete_pending_for_tutor : string -> string -> Task<Result<unit, string>>
+
     
 type Database(c : string) = 
     member this.connection = c
@@ -73,12 +79,49 @@ type Database(c : string) =
             try
                 use pg_connection = new NpgsqlConnection(this.connection)
                 pg_connection.Open()
-                let cmd = """insert into "StudentSchool" ("StudentId","SchoolId") VALUES ((select "Id" from "Student" where "Email" = @Email),(select "School"."Id" from "School" inner join "AspNetUsers" on "School"."UserId" = @Id")"""
+                let cmd = """insert into "StudentSchool" ("StudentId","SchoolId") VALUES ((select "Id" from "Student" where "Student"."Email" = @Email),(select "School"."Id" from "School" inner join "AspNetUsers" on "AspNetUsers"."Id" = @Id))"""
                 let m = (Map ["Email", student_email; "Id", tutor_user_id])
-                if pg_connection.Execute(cmd, m) = 1 then  
+                if dapper_map_param_exec cmd m pg_connection = 1 then  
                     return Ok ()
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
+
+        member this.delete_pending_for_tutor email user_id : Task<Result<unit, string>> = task {
+            try
+                use pg_connection = new NpgsqlConnection(this.connection)
+                pg_connection.Open()
+                let cmd = """delete from "Pending" where ("Pending"."Email" = @Email and "SchoolId" = (select "School"."Id" from "School" where "School"."UserId" = @UserID))"""
+                let m = (Map ["Email", email; "UserId", user_id])
+                if dapper_map_param_exec cmd m pg_connection = 1 then  
+                    return Ok ()
+                else
+                    return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
+        member this.delete_pending email : Task<Result<unit, string>> = task {
+            try
+                //normally we validate the email address using asp.net but incase that doesn't happen
+                //and we call this function with an empty email then this will trigger.
+                if email = "" then
+                    raise (failwith "Email cannot be empty")
+                use pg_connection = new NpgsqlConnection(this.connection)
+                pg_connection.Open()
+                let cmd = """delete from "Pending" where "Email" = @Email"""
+                let m = (Map ["Email", email])
+                if dapper_map_param_exec cmd m pg_connection = 1 then  
+                    return Ok ()
+                else
+                    return Error ("Did not delete the expected number of records. sql is \"" + cmd + "\"")
             with
             | :? Npgsql.PostgresException as e ->
                 return Error e.MessageText

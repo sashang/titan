@@ -13,10 +13,12 @@ open Fable.Helpers.React
 type Model =
     { School : School.Model
       Class : Class.Model
+      Pending : PendingStudents.Model
       Students : StudentsComponent.Model }
 
 type Msg =
     | SchoolMsg of School.Msg
+    | PendingMsg of PendingStudents.Msg
     | ClassMsg of Class.Msg
     | StudentMsg of StudentsComponent.Msg
 
@@ -24,35 +26,14 @@ let init () : Model*Cmd<Msg> =
     let school_model, school_cmd = School.init ()
     let class_model, class_cmd = Class.init ()
     let student_model, student_cmd = StudentsComponent.init ()
+    let pending_model, pending_cmd = PendingStudents.init ()
     { School = school_model
       Class = class_model
+      Pending = pending_model
       Students = student_model }, Cmd.batch [ Cmd.map SchoolMsg school_cmd
                                               Cmd.map ClassMsg class_cmd
+                                              Cmd.map PendingMsg pending_cmd
                                               Cmd.map StudentMsg student_cmd ]
-// Helper to generate a menu item
-let menuItem label isActive dispatch msg =
-    Menu.Item.li [ Menu.Item.IsActive isActive
-                   Menu.Item.OnClick (fun e -> dispatch msg)]
-       [ Text.p [ Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left)
-                              Modifier.TextSize (Screen.All, TextSize.Is5)
-                              Modifier.TextColor Color.IsWhite
-                              Modifier.TextTransform TextTransform.UpperCase ] ]
-           [ str label ] ]
-// Helper to generate a sub menu
-let subMenu label isActive children =
-    li [ ]
-       [ Menu.Item.a [ Menu.Item.IsActive isActive ]
-            [ str label ]
-         ul [ ]
-            children ]
-
-// let menu dispatch = 
-//     Box.box' [ Common.Props [ Style [ Height "100%" ] ] ]
-//          [ Menu.menu [ Modifiers [ Modifier.BackgroundColor IsPrimary ] ]
-//             [ Menu.list [ ]
-//                 [ menuItem "School" false dispatch ClickSchool
-//                   menuItem "Classes" false dispatch ClickSchool
-//                   menuItem "Enrollment" false dispatch ClickEnroll ] ] ]
 
 let main_dashboard (model : Model) (dispatch : Msg -> unit) =
     Tile.ancestor []
@@ -75,7 +56,8 @@ let view (model : Model) (dispatch : Msg -> unit) =
                 [ yield! Class.view model.Class (ClassMsg >> dispatch) ] ]
           Columns.columns [ ]
             [ Column.column [ ] 
-                [ yield! StudentsComponent.view model.Students (StudentMsg >> dispatch) ] ] ]
+                [ yield! PendingStudents.view model.Pending (PendingMsg >> dispatch) 
+                  yield! StudentsComponent.view model.Students (StudentMsg >> dispatch) ] ] ]
 
 let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     match msg with
@@ -88,4 +70,7 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | StudentMsg msg ->
         let new_state, cmd = StudentsComponent.update model.Students msg
         {model with Students = new_state}, Cmd.map ClassMsg cmd
+    | PendingMsg msg ->
+        let new_state, cmd = PendingStudents.update model.Pending msg
+        {model with Pending = new_state}, Cmd.map PendingMsg cmd
 

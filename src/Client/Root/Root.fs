@@ -201,7 +201,6 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         state, Cmd.none
 
     | DashboardMsg msg, {Child = DashboardModel model; Session = Some session} ->
-        Browser.console.info "got dashboardmsg"
         let new_model, cmd = Dashboard.update model msg
         {state with Child = DashboardModel new_model}, Cmd.map DashboardMsg cmd
     

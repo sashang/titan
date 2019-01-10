@@ -32,6 +32,7 @@ type Msg =
     | SetPassword of string
     | SetUsername of string
     | ClickLogin
+    | ClickDelNot
 
 type Model =
     { login_state : LoginState
@@ -84,10 +85,27 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg>*ExternalMsg =
         { model with user_info = {username = model.user_info.username; password = password }}, Cmd.none, Nop
     | SetUsername username ->
         { model with user_info = {username = username; password = model.user_info.password }}, Cmd.none, Nop
+    | ClickDelNot ->
+        {model with Result = None }, Cmd.none, Nop
     | ClickLogin ->
         model, Cmd.ofPromise login model.user_info Success Failure, Nop
     
+let private of_login_result (code : LoginCode) (result : LoginResult) =
+        List.fold2 (fun acc the_code the_message -> if code = the_code then acc + " " + the_message else acc) "" result.code result.message
 
+let private render_error (model : Model) dispatch =
+    match model.Result with
+    | Some result ->
+        match List.contains LoginCode.Failure result.code with
+        | true ->
+            Notification.notification 
+                [ Notification.Modifiers 
+                    [ Modifier.TextColor IsWhite  
+                      Modifier.BackgroundColor IsTitanError ]] 
+                [ str (of_login_result LoginCode.Failure result)
+                  Notification.delete [ Common.Props [ OnClick (fun _ -> dispatch ClickDelNot) ] ] [ ] ]
+        | false -> nothing 
+    | _ ->  nothing
 
 let login_button dispatch msg text = 
     Button.button [
@@ -97,8 +115,6 @@ let login_button dispatch msg text =
     ] [ str text ]
 
 let column (model : Model) (dispatch : Msg -> unit) =
-    let of_login_result (code : LoginCode) (result : LoginResult) =
-        List.fold2 (fun acc the_code the_message -> if code = the_code then acc + " " + the_message else acc) "" result.code result.message
 
     Column.column
         [ Column.Width (Screen.All, Column.Is4)
@@ -121,23 +137,11 @@ let column (model : Model) (dispatch : Msg -> unit) =
                             [ Input.Size IsLarge
                               Input.Placeholder "Your Password"
                               Input.Props [
-                                OnChange (fun ev -> dispatch (SetPassword ev.Value)) ] ] ]
-                    (match model.Result with
-                    | Some result ->
-                        match List.contains LoginCode.Failure result.code with
-                        | true ->
-                            Help.help [
-                                Help.Color IsDanger
-                                Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5) ]
-                            ] [
-                                str (of_login_result LoginCode.Failure result)
-                            ]
-                        | false -> nothing 
-                    | _ ->  nothing)
-                ]
+                                OnChange (fun ev -> dispatch (SetPassword ev.Value)) ] ] ] ]
                 Field.div [] [
                     login_button dispatch ClickLogin "Login"
                 ]
+                render_error model dispatch
           ] 
     ]
 

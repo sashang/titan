@@ -61,6 +61,52 @@ let get_schools (next : HttpFunc) (ctx : HttpContext) = task {
         return! ctx.WriteJsonAsync []
 }
 
+let dismiss_pending (next :HttpFunc) (ctx : HttpContext) = task {
+    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    let db = ctx.GetService<IDatabase>()
+    let! info = ctx.BindJsonAsync<DismissPendingRequest>()
+    //get the user id of the tutor
+    let user_id = ctx.User.FindFirst(ClaimTypes.NameIdentifier).Value
+    let! result = db.delete_pending_for_tutor info.Email user_id
+    match result with
+    | Error e ->
+        logger.LogInformation("failed to delete pending student: " + e)
+        let api_error = {DismissPendingResult.Error = Some (APIError.init [APICode.DatabaseError] [e])}
+        return! ctx.WriteJsonAsync api_error
+    | Ok _ ->
+        return! ctx.WriteJsonAsync {DismissPendingResult.Error = None}
+}
+
+let approve_pending (next :HttpFunc) (ctx : HttpContext) = task {
+    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    let db = ctx.GetService<IDatabase>()
+    let! info = ctx.BindJsonAsync<Domain.ApprovePendingRequest>()
+    //get the user id of the tutor
+    let user_id = ctx.User.FindFirst(ClaimTypes.NameIdentifier).Value
+    let! result = db.insert_student {Models.Student.init with Email = info.Email; FirstName = info.FirstName; LastName = info.LastName}
+    match result with
+    | Error e ->
+        logger.LogInformation("failed to insert pending student: " + e)
+        let api_error = {ApprovePendingResult.Error = Some (APIError.init [APICode.DatabaseError] [e])}
+        return! ctx.WriteJsonAsync api_error
+    | Ok _ ->
+        let! result = db.insert_student_school info.Email user_id
+        match result with
+        | Error e ->
+            logger.LogInformation("failed to insert new student: " + e)
+            let api_error = {ApprovePendingResult.Error = Some (APIError.init [APICode.DatabaseError] [e])}
+            return! ctx.WriteJsonAsync api_error
+        | Ok _ ->
+            let! result = db.delete_pending info.Email
+            match result with
+            | Error e ->
+                logger.LogInformation("failed delete pending student: " + e)
+                let api_error = {ApprovePendingResult.Error = Some (APIError.init [APICode.DatabaseError] [e])}
+                return! ctx.WriteJsonAsync api_error
+            | Ok _ ->
+                return! ctx.WriteJsonAsync {ApprovePendingResult.Error = None}
+}
+
 let get_pending (next : HttpFunc) (ctx : HttpContext) = task {
     let logger = ctx.GetLogger<Debug.DebugLogger>()
     let db = ctx.GetService<IDatabase>()
@@ -245,3 +291,4 @@ let load_school (next :HttpFunc) (ctx : HttpContext) = task {
                                         TheSchool = {Domain.School.Principal = ""; Domain.School.Name = ""}}
 
 }
+

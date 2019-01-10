@@ -141,6 +141,8 @@ let secure_router = router {
     get "/get-pending" API.get_pending
     post "/create-school" API.create_school
     post "/add-student-school" API.add_student_to_school
+    post "/approve-pending" API.approve_pending
+    post "/dismiss-pending" API.dismiss_pending
 }
 
 let titan_api =  router {

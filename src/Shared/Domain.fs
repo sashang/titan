@@ -162,3 +162,27 @@ type Enrol =
 [<CLIMutableAttribute>]
 type EnrolResult =
     { Error : APIError option}
+
+
+[<CLIMutableAttribute>]
+type ApprovePendingRequest =
+    { Email : string
+      FirstName : string
+      LastName : string }
+    static member init = {FirstName = ""; LastName = ""; Email = ""}
+    static member of_student (student : Student) = {FirstName = student.FirstName; LastName = student.LastName; Email = student.Email}
+
+[<CLIMutableAttribute>]
+type ApprovePendingResult =
+    { Error : APIError option}
+
+type DismissPendingRequest =
+    { Email : string
+      FirstName : string
+      LastName : string }
+    static member init = {FirstName = ""; LastName = ""; Email = ""}
+    static member of_student (student : Student) = {FirstName = student.FirstName; LastName = student.LastName; Email = student.Email}
+
+[<CLIMutableAttribute>]
+type DismissPendingResult =
+    { Error : APIError option}
