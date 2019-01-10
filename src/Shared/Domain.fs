@@ -10,6 +10,13 @@ type APICode =
     | DatabaseError = 2
     | FetchError = 2
 
+[<CLIMutableAttribute>]
+type APIError = 
+    { Codes : APICode list
+      Messages : string list }
+    
+    static member init codes messages =
+        {Codes = codes; Messages = messages}
 // Login credentials.
 [<CLIMutable>] //needed for BindJsonAync to work
 type Login =
@@ -153,7 +160,5 @@ type Enrol =
 
 
 [<CLIMutableAttribute>]
-type EnrolResult = 
-    { Codes : APICode list
-      Messages : string list }
-
+type EnrolResult =
+    { Error : APIError option}

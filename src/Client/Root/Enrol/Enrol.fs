@@ -19,9 +19,12 @@ open Shared
 open Thoth.Json
 
 type Model =
-    { Info : Enrol
+    { FirstName : string
+      LastName : string
+      Email : string
       Schools : School list
-      Result : EnrolResult option  }
+      ActiveSchool : string option
+      Error : APIError option  }
 
 type Msg =
     | EnrolSuccess of unit
@@ -31,9 +34,10 @@ type Msg =
     | SetFirstName of string
     | SetLastName of string
     | SetEmail of string
+    | SetSchool of string
     | ClickSubmit
 
-exception EnrolEx of EnrolResult
+exception EnrolEx of APIError
 
 let private get_schools () = promise {
     Browser.console.info "get_schools promise"
@@ -45,62 +49,79 @@ let private get_schools () = promise {
     let! response = Fetch.tryFetchAs "/api/get-schools" decoder props
     match response with
     | Ok result ->
+        Browser.console.info "got response with schools"
         return result
     | Error e ->
         return failwith e
 }
 
-let private enroll (info : Enrol) = promise {
-    let body = Encode.Auto.toString (4, info)
-    let props =
-        [ RequestProperties.Method HttpMethod.POST
-          RequestProperties.Credentials RequestCredentials.Include
-          requestHeaders [ HttpRequestHeaders.ContentType "application/json"
-                           HttpRequestHeaders.Accept "application/json" ]
-          RequestProperties.Body !^(body) ]
-    let decoder = Decode.Auto.generateDecoder<Domain.EnrolResult>()
-    let! response = Fetch.tryFetchAs "/api/enroll" decoder props
-    match response with
-    | Ok result ->
-        match result.Codes with
-        | APICode.Success::_ -> 
-            return ()
-        | _ ->
-            return (raise (EnrolEx result))
-    | Error e ->
-        return (raise (EnrolEx {Codes = [APICode.FetchError]; Messages = [e]}))
+let private enroll (model : Model) = promise {
+    match model.ActiveSchool with
+    | Some schoolname ->
+        let data = { Domain.Enrol.init with SchoolName = schoolname; FirstName = model.FirstName; LastName = model.LastName; Email = model.Email}
+        let body = Encode.Auto.toString (4, data)
+        let props =
+            [ RequestProperties.Method HttpMethod.POST
+              requestHeaders [ HttpRequestHeaders.ContentType "application/json"
+                               HttpRequestHeaders.Accept "application/json" ]
+              RequestProperties.Body !^(body) ]
+        let decoder = Decode.Auto.generateDecoder<Domain.EnrolResult>()
+        let! response = Fetch.tryFetchAs "/api/enroll" decoder props
+        match response with
+        | Ok result ->
+            match result.Error with
+            | Some error -> 
+                Browser.console.info ("got some error: " + (List.head error.Messages))
+                return (raise (EnrolEx error))
+            | _ ->
+                return ()
+        | Error e ->
+            Browser.console.info ("got generic error: " + e)
+            return (raise (EnrolEx (APIError.init [APICode.FetchError] [e])))
+    | None ->
+        let message = "Choose a school from the dropdown"
+        Browser.console.info message
+        return (raise (EnrolEx (APIError.init [APICode.FetchError] [message])))
+
 }
 let init () =
     Browser.console.info "Enrol.init"
-    { Info = Enrol.init; Schools = []; Result = None},
+    { LastName = ""; FirstName = ""; Email = ""; Schools = []; Error = None; ActiveSchool = None},
     Cmd.ofPromise get_schools () GetSchoolsSuccess GetSchoolsFailure
 
 let update (model : Model) (msg : Msg) =
 
     match msg with
+    | SetSchool school ->
+        {model with ActiveSchool = Some school}, Cmd.none
     | ClickSubmit ->
-        model, Cmd.ofPromise enroll model.Info EnrolSuccess EnrolFailure
+        model, Cmd.ofPromise enroll model EnrolSuccess EnrolFailure
     | SetEmail email ->
-        { model with Info = {model.Info with Email = email}}, Cmd.none
+        { model with Email = email}, Cmd.none
     | SetFirstName name ->
-        { model with Info = {model.Info with FirstName = name}}, Cmd.none
+        { model with FirstName = name}, Cmd.none
     | SetLastName name ->
-        { model with Info = {model.Info with LastName = name}}, Cmd.none
+        { model with LastName = name}, Cmd.none
     | EnrolSuccess () ->
-         model, Cmd.none
+         { model with Error = None}, Cmd.none
     | GetSchoolsSuccess schools ->
         Browser.console.info ("Got schools")
         { model with Schools = schools }, Cmd.none
     | GetSchoolsFailure e ->
         Browser.console.info ("Failed to get schools: " + e.Message)
-        { model with Result = None }, Cmd.none
+        match e with
+        | :? EnrolEx as enroll_ex ->
+            { model with Error = Some enroll_ex.Data0 }, Cmd.none
+        | _ ->
+            { model with Error = Some (APIError.init [APICode.Failure] [e.Message]) }, Cmd.none
+
     | EnrolFailure e ->
         Browser.console.info ("Failed to enroll.")
         match e with
         | :? EnrolEx as enroll_ex -> 
-            { model with Result = Some enroll_ex.Data0 }, Cmd.none
+            { model with Error = Some enroll_ex.Data0 }, Cmd.none
         | _ ->
-            { model with Result = None }, Cmd.none
+            { model with Error = Some (APIError.init [APICode.Failure] [e.Message]) }, Cmd.none
 
 let enroll_button dispatch msg text = 
     Button.button [
@@ -109,17 +130,24 @@ let enroll_button dispatch msg text =
         Button.CustomClass "is-large"
     ] [ str text ]
 
-let field autofocus placeholder dispatch msg = 
+let field autofocus placeholder input_type dispatch msg = 
     Field.div [ ]
         [ Control.div [ ]
             [ Input.text
                 [ Input.Size IsLarge
                   Input.Placeholder placeholder
+                  Input.Type input_type
                   Input.Props [ 
                     AutoFocus autofocus
                     OnChange (fun ev -> dispatch (msg ev.Value)) ] ] ] ]
 
-let private dropdown (model : Model) = 
+let private school_dd_item (school : School) (current_active : string option) (dispatch : Msg -> unit) =
+    Dropdown.Item.a [ (match current_active with
+                      | Some s -> Dropdown.Item.IsActive (s = school.Name)
+                      | None -> Dropdown.Item.IsActive false) ]
+        [ Text.div [ Common.Props [ OnClick (fun _ ->  dispatch (SetSchool school.Name) ) ]  ]  [ str school.Name  ] ]
+
+let private dropdown (model : Model) (dispatch : Msg -> unit) = 
     Dropdown.dropdown [ Dropdown.IsHoverable ]
         [ div [ ]
             [ Button.button [ Button.CustomClass "is-large"  ]
@@ -130,13 +158,20 @@ let private dropdown (model : Model) =
                         [ ] ] ] ]
           Dropdown.menu [ ]
             [ Dropdown.content [ ]
-               [ Dropdown.Item.a [ ]
-                   [ str "Item n°1" ] ] ] ]
+               [ yield! model.Schools |> List.map (fun x -> school_dd_item x model.ActiveSchool dispatch)  ] ] ]
 
+let private of_api_result (result : APIError) =
+    List.fold (fun acc the_message -> acc + ":" + the_message + ":" ) "" result.Messages
+
+let private render_error (model : Model) =
+    match model.Error with
+    | Some api_error ->
+        Help.help [ Help.Color IsDanger
+                    Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5) ] ]
+                  [ str (of_api_result api_error) ]
+    | None -> nothing
 
 let private column (model : Model) (dispatch : Msg -> unit) =
-    let of_api_result (code : APICode) (result : EnrolResult) =
-        List.fold2 (fun acc the_code the_message -> if code = the_code then acc + " " + the_message else acc) "" result.Codes result.Messages
 
     Column.column
         [ Column.Width (Screen.All, Column.Is4)
@@ -145,14 +180,13 @@ let private column (model : Model) (dispatch : Msg -> unit) =
             [ Heading.Modifiers [ Modifier.TextColor IsBlack ] ]
             [ str "Enrol" ]
           Box.box' [ ] [
-            field true "First Name" dispatch SetFirstName
-            field false "Last Name" dispatch SetLastName
-            field true "Email" dispatch SetEmail
-            dropdown model
+            field true "First Name" Input.Text dispatch SetFirstName
+            field false "Last Name" Input.Text dispatch SetLastName
+            field true "Email" Input.Email dispatch SetEmail
+            dropdown model dispatch
           ]
-          Field.div [] [
-            enroll_button dispatch ClickSubmit "Submit"
-          ]
+          enroll_button dispatch ClickSubmit "Submit"
+          render_error model
     ]
 
 

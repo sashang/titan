@@ -20,7 +20,9 @@ type SignOutEx(msg : string) =
 let sign_out () = promise {
     let props =
       [ RequestProperties.Method HttpMethod.POST
-        RequestProperties.Credentials RequestCredentials.Include ]
+        RequestProperties.Credentials RequestCredentials.Include
+        requestHeaders [ HttpRequestHeaders.ContentType "application/json"
+                         HttpRequestHeaders.Accept "application/json" ] ]
     let! response = Fetch.fetch "/api/sign-out/sign-out" props
     let decoder = Decode.Auto.generateDecoder<SignOutResult>()
     let! text = response.text ()

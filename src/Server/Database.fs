@@ -90,9 +90,10 @@ type Database(c : string) =
             try
                 use pg_connection = new NpgsqlConnection(this.connection)
                 pg_connection.Open()
-                let cmd = """insert into "Pending" ("FirstName","LastName","Email","SchoolId") VALUES (@FirstName, @LastName, @Email,(select "School"."Id" from "School" where "School"."Name" = @SchoolName"))"""
+                let cmd = """insert into "Pending" ("FirstName","LastName","Email","SchoolId") VALUES (@FirstName, @LastName, @Email,(select "School"."Id" from "School" where "School"."Name" = @SchoolName))"""
                 let m = (Map ["Email", student.Email; "FirstName", student.FirstName; "LastName", student.FirstName; "SchoolName", school_name ])
                 if dapper_map_param_exec cmd m pg_connection = 1 then  
+                //if pg_connection.Execute(cmd, m) = 1 then  
                     return Ok ()
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")

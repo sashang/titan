@@ -193,10 +193,9 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         let new_model, cmd = Home.update model home_msg
         {state with Child = HomeModel new_model}, Cmd.map HomeMsg cmd
 
-    | _, {Session = None} ->
-        //we don't pass these on, user is not logged in
-        state, Cmd.none
-        
+    | EnrolMsg enrol_msg, {Child = EnrolModel model; Session = None} ->
+        let new_model, cmd = Enrol.update model enrol_msg
+        {state with Child = EnrolModel new_model}, Cmd.map EnrolMsg cmd
     //here we are logging in and we are already logged in
     | LoginMsg login_msg, {Session = Some session} ->
         state, Cmd.none

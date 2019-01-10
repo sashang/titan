@@ -21,15 +21,16 @@ let enroll (next : HttpFunc) (ctx : HttpContext) = task {
     let! info = ctx.BindJsonAsync<Domain.Enrol>()
     let logger = ctx.GetLogger<Debug.DebugLogger>()
     let db = ctx.GetService<IDatabase>()
-    let user_id = ctx.User.FindFirst(ClaimTypes.NameIdentifier).Value
     let m = { Models.Student.init with Email = info.Email; LastName = info.LastName; FirstName = info.FirstName }
+    logger.LogInformation("enrolling " + m.FirstName + " in school " + info.SchoolName)
     let! result = db.insert_pending m info.SchoolName
     match result with
     | Ok () ->
-        return! ctx.WriteJsonAsync {EnrolResult.Codes = [APICode.Success]; EnrolResult.Messages = []}
+        return! ctx.WriteJsonAsync {EnrolResult.Error = None}
     | Error e -> 
-        return! ctx.WriteJsonAsync 
-            {EnrolResult.Codes = [APICode.DatabaseError]; EnrolResult.Messages = [e]}
+        logger.LogInformation("Enrolment failed: " + e)
+        let api_error = {EnrolResult.Error = Some (APIError.init [APICode.DatabaseError] [e])}
+        return! ctx.WriteJsonAsync api_error
 }
 
 let get_schools (next : HttpFunc) (ctx : HttpContext) = task {
