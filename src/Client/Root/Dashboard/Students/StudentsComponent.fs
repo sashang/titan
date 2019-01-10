@@ -68,16 +68,34 @@ let update (model : Model) (msg : Msg) =
 let private student_content (student : Student) =
       [ Text.div [ Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [ str student.Email ] ]
 
+//make a list that breaks the original list into one that contains 4 elem list
+//of the original value
+let list_4 input =
+    input
+    |> List.fold
+         (fun (count,result) value ->
+            match result with
+            | [[]] -> count+1,[[value]]
+            | inner::[] ->
+                match count, inner with
+                | 4, ys -> 0,[ys;[value]]
+                | _, ys -> count+1,[List.append ys [value]] 
+            | _ -> failwith "Invalid initial state. Should be (0,[[]])") (0,[[]])
+    |> (fun (count, result) -> result) //only interested in result
+
 let private single_student model dispatch (student : Domain.Student) = 
     Column.column [ Column.Width (Screen.All, Column.Is3) ]
-        [ Card.card [ ] 
-            [ ]
-          Card.header [ Modifiers [ Modifier.BackgroundColor IsTitanSecondary ] ]
-            [ Card.Header.title [ Card.Header.Title.Modifiers [ Modifier.TextColor IsWhite ] ]  [ str (student.FirstName + " " + student.LastName) ] ]
-          Card.content [  ]
-            [ yield! student_content student ] ] 
+      [ Card.card [ ] 
+          [ Card.header [ Modifiers [ Modifier.BackgroundColor IsTitanSecondary ] ]
+              [ Card.Header.title 
+                    [ Card.Header.Title.Modifiers [ Modifier.TextColor IsWhite ] ] 
+                    [ str (student.FirstName + " " + student.LastName) ] ]
+            Card.content [  ] [ yield! student_content student ] ] ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
     [ Box.box' [ ] 
-        [ Columns.columns [ ]
-            [ yield! (model.Students |> List.map (single_student model dispatch))] ] ]
+        [ yield! (let l4 = model.Students |> list_4
+                  [for l in l4 do
+                        yield Columns.columns [ ]
+                            [ for x in l do
+                                yield single_student model dispatch x] ]) ] ]
