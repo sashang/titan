@@ -18,19 +18,34 @@ let private role_to_string = function
 | None -> "unknown"
 
 let enroll (next : HttpFunc) (ctx : HttpContext) = task {
-    let! info = ctx.BindJsonAsync<Domain.Enrol>()
     let logger = ctx.GetLogger<Debug.DebugLogger>()
-    let db = ctx.GetService<IDatabase>()
-    let m = { Models.Student.init with Email = info.Email; LastName = info.LastName; FirstName = info.FirstName }
-    logger.LogInformation("enrolling " + m.FirstName + " in school " + info.SchoolName)
-    let! result = db.insert_pending m info.SchoolName
-    match result with
-    | Ok () ->
-        return! ctx.WriteJsonAsync {EnrolResult.Error = None}
-    | Error e -> 
-        logger.LogInformation("Enrolment failed: " + e)
-        let api_error = {EnrolResult.Error = Some (APIError.init [APICode.DatabaseError] [e])}
-        return! ctx.WriteJsonAsync api_error
+    try
+        let! info = ctx.BindJsonAsync<Domain.Enrol>()
+        let _ = MailAddress(info.Email)//test that the email is valid.
+        let db = ctx.GetService<IDatabase>()
+        let m = { Models.Student.init with Email = info.Email; LastName = info.LastName; FirstName = info.FirstName }
+        logger.LogInformation("enrolling " + m.FirstName + " in school " + info.SchoolName)
+        let! result = db.insert_pending m info.SchoolName
+        match result with
+        | Ok () ->
+            return! ctx.WriteJsonAsync {EnrolResult.Error = None}
+        | Error e -> 
+            logger.LogInformation("Enrolment failed: " + e)
+            let api_error = {EnrolResult.Error = Some (APIError.init [APICode.DatabaseError] [e])}
+            return! ctx.WriteJsonAsync api_error
+    with
+        | :? FormatException as e ->
+            logger.LogInformation("enrolee has bad email")
+            let api_error = {EnrolResult.Error = Some (APIError.init [APICode.Failure] [e.Message])}
+            return! ctx.WriteJsonAsync api_error
+        | :? ArgumentException as e ->
+            logger.LogInformation("enrolee has bad email")
+            let api_error = {EnrolResult.Error = Some (APIError.init [APICode.Failure] [e.Message])}
+            return! ctx.WriteJsonAsync api_error
+        | e ->
+            logger.LogInformation("failed to enrol")
+            let api_error = {EnrolResult.Error = Some (APIError.init [APICode.Failure] [e.Message])}
+            return! ctx.WriteJsonAsync api_error
 }
 
 let get_schools (next : HttpFunc) (ctx : HttpContext) = task {

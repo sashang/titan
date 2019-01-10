@@ -2,6 +2,8 @@
 @import "../../../../node_modules/bulma/sass/utilities/initial-variables";
 @import "../../../../node_modules/bulma/sass/utilities/functions";
 // Setup custom Colors
+// all these colours harmonize except the error colour.
+// it's meant to be a little discontinuous.
 $custom-titan-primary: #351c4d;
 $custom-titan-primary-invert: findColorInvert($custom-titan-primary);
 $custom-titan-secondary: #765285;
@@ -9,9 +11,13 @@ $custom-titan-secondary-invert: findColorInvert($custom-titan-secondary);
 $custom-titan-info: #ff7e5f;
 $custom-titan-info1: #feb47b;
 $custom-titan-info2: #f5ab99;
+$custom-titan-success: #ffd659;
+$custom-titan-error: #c4211c;
 $custom-titan-info-invert: findColorInvert($custom-titan-info);
 $custom-titan-info1-invert: findColorInvert($custom-titan-info1);
 $custom-titan-info2-invert: findColorInvert($custom-titan-info2);
+$custom-titan-success-invert: findColorInvert($custom-titan-success);
+$custom-titan-error-invert: findColorInvert($custom-titan-error);
 
 // Since bulma 7.0 we have `custom-colors` and `custom-shades`
 $custom-colors: (
@@ -20,6 +26,8 @@ $custom-colors: (
   "custom-titan-info": ($custom-titan-info, $custom-titan-info-invert),
   "custom-titan-info1": ($custom-titan-info1, $custom-titan-info1-invert),
   "custom-titan-info2": ($custom-titan-info2, $custom-titan-info2-invert),
+  "custom-titan-success": ($custom-titan-success, $custom-titan-success-invert),
+  "custom-titan-error": ($custom-titan-error, $custom-titan-error-invert),
 );
 
 // Import the derived variables from Bulma

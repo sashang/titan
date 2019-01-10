@@ -17,6 +17,7 @@ open Fulma
 open ModifiedFableFetch
 open Shared
 open Thoth.Json
+open ValueDeclarations
 
 type Model =
     { FirstName : string
@@ -24,9 +25,11 @@ type Model =
       Email : string
       Schools : School list
       ActiveSchool : string option
-      Error : APIError option  }
+      Error : APIError option
+      GoodNotification : string option  }
 
 type Msg =
+    | ClickDelNot
     | EnrolSuccess of unit
     | EnrolFailure of exn
     | GetSchoolsSuccess of School list
@@ -80,18 +83,19 @@ let private enroll (model : Model) = promise {
             return (raise (EnrolEx (APIError.init [APICode.FetchError] [e])))
     | None ->
         let message = "Choose a school from the dropdown"
-        Browser.console.info message
         return (raise (EnrolEx (APIError.init [APICode.FetchError] [message])))
 
 }
 let init () =
-    Browser.console.info "Enrol.init"
-    { LastName = ""; FirstName = ""; Email = ""; Schools = []; Error = None; ActiveSchool = None},
+    { LastName = ""; FirstName = ""; Email = ""; Schools = [];
+      GoodNotification = None; Error = None; ActiveSchool = None},
     Cmd.ofPromise get_schools () GetSchoolsSuccess GetSchoolsFailure
 
 let update (model : Model) (msg : Msg) =
 
     match msg with
+    | ClickDelNot ->
+        {model with Error = None; GoodNotification = None}, Cmd.none
     | SetSchool school ->
         {model with ActiveSchool = Some school}, Cmd.none
     | ClickSubmit ->
@@ -103,7 +107,7 @@ let update (model : Model) (msg : Msg) =
     | SetLastName name ->
         { model with LastName = name}, Cmd.none
     | EnrolSuccess () ->
-         { model with Error = None}, Cmd.none
+         { model with Error = None; GoodNotification = Some ENROL_SUCCESS}, Cmd.none
     | GetSchoolsSuccess schools ->
         Browser.console.info ("Got schools")
         { model with Schools = schools }, Cmd.none
@@ -163,12 +167,25 @@ let private dropdown (model : Model) (dispatch : Msg -> unit) =
 let private of_api_result (result : APIError) =
     List.fold (fun acc the_message -> acc + ":" + the_message + ":" ) "" result.Messages
 
-let private render_error (model : Model) =
+let private render_notification (model : Model) dispatch =
+    match model.GoodNotification with
+    | Some message ->
+        Notification.notification 
+            [ Notification.Modifiers 
+                [ Modifier.BackgroundColor IsTitanSuccess ]] 
+            [ str message
+              Notification.delete [ Common.Props [ OnClick (fun _ -> dispatch ClickDelNot) ] ] [ ] ]
+    | None ->
+        nothing
+let private render_error (model : Model) dispatch =
     match model.Error with
     | Some api_error ->
-        Help.help [ Help.Color IsDanger
-                    Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5) ] ]
-                  [ str (of_api_result api_error) ]
+        Notification.notification 
+            [ Notification.Modifiers 
+                [ Modifier.TextColor IsWhite  
+                  Modifier.BackgroundColor IsTitanError ]] 
+            [ str (of_api_result api_error)
+              Notification.delete [ Common.Props [ OnClick (fun _ -> dispatch ClickDelNot) ] ] [ ] ]
     | None -> nothing
 
 let private column (model : Model) (dispatch : Msg -> unit) =
@@ -183,10 +200,11 @@ let private column (model : Model) (dispatch : Msg -> unit) =
             field true "First Name" Input.Text dispatch SetFirstName
             field false "Last Name" Input.Text dispatch SetLastName
             field true "Email" Input.Email dispatch SetEmail
-            dropdown model dispatch
+            Field.div [ ] [ dropdown model dispatch ]
+            enroll_button dispatch ClickSubmit "Submit"
           ]
-          enroll_button dispatch ClickSubmit "Submit"
-          render_error model
+          render_error model dispatch
+          render_notification model dispatch
     ]
 
 

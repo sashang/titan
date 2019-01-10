@@ -88,6 +88,15 @@ type Database(c : string) =
 
         member this.insert_pending (student : Models.Student) (school_name : string) : Task<Result<unit, string>> = task {
             try
+                //postgres treats empty strings and null as different. AN empty string is a value in postgres
+                //so we have to explicity check this here.
+                if student.FirstName = "" || student.LastName = "" then 
+                    raise (failwith "First name or last name cannot be empty")
+
+                //normally we validate the email address using asp.net but incase that doesn't happen
+                //and we call this function with an empty email then this will trigger.
+                if student.Email = "" then
+                    raise (failwith "Email cannot be empty")
                 use pg_connection = new NpgsqlConnection(this.connection)
                 pg_connection.Open()
                 let cmd = """insert into "Pending" ("FirstName","LastName","Email","SchoolId") VALUES (@FirstName, @LastName, @Email,(select "School"."Id" from "School" where "School"."Name" = @SchoolName))"""

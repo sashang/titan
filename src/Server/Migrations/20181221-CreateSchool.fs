@@ -83,6 +83,8 @@ type Initial() =
             .WithColumn("LastName").AsString().NotNullable()
             .WithColumn("SchoolId").AsInt32().NotNullable() |> ignore
         
+        this.Create.UniqueConstraint("ConPending").OnTable("Pending")
+            .Columns([|"Email"; "SchoolId"|]) |> ignore
         this.Create.ForeignKey("FKPendingSchool").FromTable("Pending")
             .ForeignColumn("SchoolId").ToTable("School").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
 
@@ -92,6 +94,6 @@ type Initial() =
         this.Delete.Table("ClassType") |> ignore
         this.Delete.Table("StudentSchool") |> ignore
         this.Delete.Table("Student") |> ignore
+        this.Delete.Table("Pending") |> ignore
         this.Delete.Table("School") |> ignore
         this.Delete.Table("Punter") |> ignore
-        this.Delete.Table("Pending") |> ignore

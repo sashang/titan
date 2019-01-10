@@ -276,3 +276,12 @@ To access the CSS specific properties use
 ```
 Button.button [ Button.Props [ Props.Style Props.CSSProps.<property> "<value>" ] ] [ str "ClickMe" ]
 ```
+### Colour scheme
+
+The colours have been choosed to harmonise. To this I went to canva.com and
+they have a good article (https://www.canva.com/learn/brand-color-palette/)
+that got me started. However when playing with the canva website to try and
+modify the pallete but keep harmony, it didn't give me the tools I needed.
+It's too dumbed down. So I went here
+(https://www.sessions.edu/color-calculator/) to pick more colors and did some
+research on colour theory.
