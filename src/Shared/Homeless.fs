@@ -1,7 +1,7 @@
 /// I have no idea where these functions should go...
 module Homeless
 
-//make a list that breaks the original list into one that contains 4 elem list
+//make a list that breaks the original list into one that contains x elem list
 //of the original value
 let list_x x input =
     input

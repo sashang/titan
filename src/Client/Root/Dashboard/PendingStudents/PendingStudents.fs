@@ -195,7 +195,7 @@ let private students_level =
         [ Level.left [ ]
             [ Level.title [ Common.Modifiers [ Modifier.TextTransform TextTransform.UpperCase
                                                Modifier.TextSize (Screen.All, TextSize.Is5) ]
-                            Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "students" ] ] ]
+                            Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "pending" ] ] ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
     [ Box.box' [ ] 

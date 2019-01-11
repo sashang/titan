@@ -113,9 +113,6 @@ let view model dispatch =
             Navbar.navbar [ Navbar.Modifiers [ Modifier.BackgroundColor IsTitanPrimary ] ] [
                 Container.container [ Container.Props [ Style [ ] ] ] [
                     Navbar.Brand.div [ ] [
-                        Navbar.Item.a [ Navbar.Item.Props [ Href "#" ] ] [
-                            img [ Style [ Width "2.5em" ]
-                                  Src "https://via.placeholder.com/50" ] ]
                         Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
                             Heading.h3 
                                 [ Heading.IsSubtitle
