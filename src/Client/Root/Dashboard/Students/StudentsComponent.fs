@@ -81,7 +81,7 @@ let list_4 input =
                 | 4, ys -> 0,[ys;[value]]
                 | _, ys -> count+1,[List.append ys [value]] 
             | _ -> failwith "Invalid initial state. Should be (0,[[]])") (0,[[]])
-    |> (fun (count, result) -> result) //only interested in result
+    |> (fun (count, result) -> result) //only interested in the result which is a list of lists
 
 let private single_student model dispatch (student : Domain.Student) = 
     Column.column [ Column.Width (Screen.All, Column.Is3) ]
@@ -92,10 +92,17 @@ let private single_student model dispatch (student : Domain.Student) =
                     [ str (student.FirstName + " " + student.LastName) ] ]
             Card.content [  ] [ yield! student_content student ] ] ]
 
+let private render_all_students (model : Model) (dispatch : Msg->unit) =
+    let l4 = model.Students |> list_4
+    [for l in l4 do
+        yield Columns.columns [ ]
+            [ for x in l do
+                yield single_student model dispatch x] ]
+
+let private students_level =
+    Level.level [ ] 
+        [ Level.title  [ ] [ str "student" ] ]
+
 let view (model : Model) (dispatch : Msg -> unit) =
     [ Box.box' [ ] 
-        [ yield! (let l4 = model.Students |> list_4
-                  [for l in l4 do
-                        yield Columns.columns [ ]
-                            [ for x in l do
-                                yield single_student model dispatch x] ]) ] ]
+        [ yield! List.append [students_level] [yield! render_all_students model dispatch] ] ] 
