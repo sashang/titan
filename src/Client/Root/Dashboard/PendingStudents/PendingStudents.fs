@@ -171,6 +171,7 @@ let private card_footer (student : Student) (dispatch : Msg -> unit) =
                 [ Fa.i [ Fa.Solid.Trash ]
                     [ ] ] ] ] ]
 
+
 let private single_student (dispatch : Msg -> unit) (student : Student) = 
     Column.column [ Column.Width (Screen.All, Column.Is3) ]
         [ Card.card [ ] 
@@ -182,7 +183,20 @@ let private single_student (dispatch : Msg -> unit) (student : Student) =
           Card.footer [ ]
             [ yield! card_footer student dispatch ] ]
 
+let private render_all_students (model : Model) (dispatch : Msg->unit) =
+    let l4 = model.Pending |> Homeless.list_x 4
+    [for l in l4 do
+        yield Columns.columns [ ]
+            [ for x in l do
+                yield single_student dispatch x] ]
+
+let private students_level =
+    Level.level [ ] 
+        [ Level.left [ ]
+            [ Level.title [ Common.Modifiers [ Modifier.TextTransform TextTransform.UpperCase
+                                               Modifier.TextSize (Screen.All, TextSize.Is5) ]
+                            Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "students" ] ] ]
+
 let view (model : Model) (dispatch : Msg -> unit) =
     [ Box.box' [ ] 
-        [ Columns.columns [ ]
-            [ yield! (model.Pending |> List.map (single_student dispatch))] ] ]
+        [ yield! List.append [students_level] [yield! render_all_students model dispatch] ] ] 
