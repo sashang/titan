@@ -22,6 +22,7 @@ open Microsoft.IdentityModel.Tokens
 open Saturn
 open Saturn.Auth
 open System
+open System.Data.SqlClient
 open System.IdentityModel.Tokens.Jwt
 open System.IO
 open System.Security.Claims
@@ -171,53 +172,53 @@ let configure_services startup_options (services:IServiceCollection) =
     fableJsonSettings.Converters.Add(Fable.JsonConverter())
     services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
     services.AddSingleton<IDatabase>(Database(startup_options.ConnectionString)) |> ignore
-    services.AddEntityFrameworkNpgsql() |> ignore
-    services.AddDbContext<IdentityDbContext<IdentityUser>>(
-        fun options ->
-            //options.UseInMemoryDatabase("NameOfDatabase") |> ignore
-            options.UseNpgsql(startup_options.ConnectionString) |> ignore
-        ) |> ignore
+    // services.AddEntityFrameworkNpgsql() |> ignore
+    // services.AddDbContext<IdentityDbContext<IdentityUser>>(
+    //     fun options ->
+    //         //options.UseInMemoryDatabase("NameOfDatabase") |> ignore
+    //         options.UseNpgsql(startup_options.ConnectionString) |> ignore
+    //     ) |> ignore
 
     services.AddFluentMigratorCore()
             .ConfigureRunner(fun rb ->
-                rb.AddPostgres()
+                rb.AddSqlServer2016()
                   .WithGlobalConnectionString(startup_options.ConnectionString)
                   .ScanIn(typeof<TitanMigrations.Initial>.Assembly).For.Migrations() |> ignore)
             .AddLogging(fun lb -> lb.AddFluentMigratorConsole() |> ignore) |> ignore
 
-    services.AddIdentity<IdentityUser, IdentityRole>(
-        fun options ->
-            // Password settings
-            options.Password.RequireDigit   <- true
-            options.Password.RequiredLength <- 4
-            options.Password.RequireNonAlphanumeric <- false
-            options.Password.RequireUppercase <- false
-            options.Password.RequireLowercase <- false
+    // services.AddIdentity<IdentityUser, IdentityRole>(
+    //     fun options ->
+    //         // Password settings
+    //         options.Password.RequireDigit   <- true
+    //         options.Password.RequiredLength <- 4
+    //         options.Password.RequireNonAlphanumeric <- false
+    //         options.Password.RequireUppercase <- false
+    //         options.Password.RequireLowercase <- false
 
-            // Lockout settings
-            options.Lockout.DefaultLockoutTimeSpan  <- TimeSpan.FromMinutes 30.0
-            options.Lockout.MaxFailedAccessAttempts <- 10
+    //         // Lockout settings
+    //         options.Lockout.DefaultLockoutTimeSpan  <- TimeSpan.FromMinutes 30.0
+    //         options.Lockout.MaxFailedAccessAttempts <- 10
 
-            // User settings
-            options.User.RequireUniqueEmail <- true
-        )
-        .AddEntityFrameworkStores<IdentityDbContext<IdentityUser>>()
-        .AddDefaultTokenProviders() |> ignore
+    //         // User settings
+    //         options.User.RequireUniqueEmail <- true
+    //     )
+    //     .AddEntityFrameworkStores<IdentityDbContext<IdentityUser>>()
+    //     .AddDefaultTokenProviders() |> ignore
 
     //apparently putting this in a scope is the thing to do with asp.net...
     let scope = services.BuildServiceProvider(false).CreateScope()
     scope.ServiceProvider.GetRequiredService<IMigrationRunner>().MigrateUp() |> ignore
 
     //add me as titan 
-    let user_manager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>()
-    let add_admin = task {
-        let user = IdentityUser(UserName = startup_options.AdminUsername , Email = startup_options.AdminEmail)
-        let! result = user_manager.CreateAsync(user, startup_options.AdminPassword)
-        let claim = Claim("IsTitan", "yes")
-        let! claim_result = user_manager.AddClaimAsync(user, claim)
-        return claim_result
-    }
-    add_admin.Wait()
+    // let user_manager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>()
+    // let add_admin = task {
+    //     let user = IdentityUser(UserName = startup_options.AdminUsername , Email = startup_options.AdminEmail)
+    //     let! result = user_manager.CreateAsync(user, startup_options.AdminPassword)
+    //     let claim = Claim("IsTitan", "yes")
+    //     let! claim_result = user_manager.AddClaimAsync(user, claim)
+    //     return claim_result
+    // }
+    // add_admin.Wait()
 
     //return the list of servicesk
     services

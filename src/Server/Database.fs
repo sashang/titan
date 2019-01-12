@@ -5,17 +5,18 @@ open Dapper
 open FSharp.Control.Tasks.ContextInsensitive
 open Microsoft.Extensions.Logging
 open Npgsql
+open System.Data.SqlClient
 open System.Collections.Generic
 open System.Dynamic
 open System.Threading.Tasks
 
-let private dapper_query<'Result> (query:string) (connection:NpgsqlConnection) =
+let private dapper_query<'Result> (query:string) (connection:SqlConnection) =
     connection.Query<'Result>(query)
     
-let private dapper_param_query<'Result> (query:string) (param:obj) (connection:NpgsqlConnection) : 'Result seq =
+let private dapper_param_query<'Result> (query:string) (param:obj) (connection:SqlConnection) : 'Result seq =
     connection.Query<'Result>(query, param)
     
-let private dapper_map_param_query<'Result> (query:string) (param : Map<string,_>) (connection:NpgsqlConnection) : 'Result seq =
+let private dapper_map_param_query<'Result> (query:string) (param : Map<string,_>) (connection:SqlConnection) : 'Result seq =
     let expando = ExpandoObject()
     let dict = expando :> IDictionary<string,obj>
     for value in param do
@@ -23,7 +24,7 @@ let private dapper_map_param_query<'Result> (query:string) (param : Map<string,_
 
     connection |> dapper_param_query query expando
 
-let private dapper_map_param_exec(sql : string) (param : Map<string,_>) (connection : NpgsqlConnection) : int =
+let private dapper_map_param_exec(sql : string) (param : Map<string,_>) (connection : SqlConnection) : int =
     let expando = ExpandoObject()
     let dict = expando :> IDictionary<string,obj>
     for value in param do
@@ -77,7 +78,7 @@ type Database(c : string) =
     interface IDatabase with
         member this.insert_student_school student_email tutor_user_id : Task<Result<unit, string>> = task {
             try
-                use pg_connection = new NpgsqlConnection(this.connection)
+                use pg_connection = new SqlConnection(this.connection)
                 pg_connection.Open()
                 let cmd = """insert into "StudentSchool" ("StudentId","SchoolId") VALUES ((select "Id" from "Student" where "Student"."Email" = @Email),(select "School"."Id" from "School" inner join "AspNetUsers" on "AspNetUsers"."Id" = @Id))"""
                 let m = (Map ["Email", student_email; "Id", tutor_user_id])
@@ -94,7 +95,7 @@ type Database(c : string) =
 
         member this.delete_pending_for_tutor email user_id : Task<Result<unit, string>> = task {
             try
-                use pg_connection = new NpgsqlConnection(this.connection)
+                use pg_connection = new SqlConnection(this.connection)
                 pg_connection.Open()
                 let cmd = """delete from "Pending" where ("Pending"."Email" = @Email and "SchoolId" = (select "School"."Id" from "School" where "School"."UserId" = @UserID))"""
                 let m = (Map ["Email", email; "UserId", user_id])
@@ -114,7 +115,7 @@ type Database(c : string) =
                 //and we call this function with an empty email then this will trigger.
                 if email = "" then
                     raise (failwith "Email cannot be empty")
-                use pg_connection = new NpgsqlConnection(this.connection)
+                use pg_connection = new SqlConnection(this.connection)
                 pg_connection.Open()
                 let cmd = """delete from "Pending" where "Email" = @Email"""
                 let m = (Map ["Email", email])
@@ -140,7 +141,7 @@ type Database(c : string) =
                 //and we call this function with an empty email then this will trigger.
                 if student.Email = "" then
                     raise (failwith "Email cannot be empty")
-                use pg_connection = new NpgsqlConnection(this.connection)
+                use pg_connection = new SqlConnection(this.connection)
                 pg_connection.Open()
                 let cmd = """insert into "Pending" ("FirstName","LastName","Email","SchoolId") VALUES (@FirstName, @LastName, @Email,(select "School"."Id" from "School" where "School"."Name" = @SchoolName))"""
                 let m = (Map ["Email", student.Email; "FirstName", student.FirstName; "LastName", student.FirstName; "SchoolName", school_name ])
@@ -159,7 +160,7 @@ type Database(c : string) =
 
         member this.query_pending : Task<Result<Models.Student list, string>> = task {
             try
-                use pg_connection = new NpgsqlConnection(this.connection)
+                use pg_connection = new SqlConnection(this.connection)
                 pg_connection.Open()
                 let sql = """select "FirstName", "LastName", "Email" from "Pending";"""
                 let result = pg_connection
@@ -176,7 +177,7 @@ type Database(c : string) =
 
         member this.query_all_schools : Task<Result<Models.School list, string>> = task {
             try
-                use pg_connection = new NpgsqlConnection(this.connection)
+                use pg_connection = new SqlConnection(this.connection)
                 pg_connection.Open()
                 let sql = """select * from "School";"""
                 let result = pg_connection
@@ -192,7 +193,7 @@ type Database(c : string) =
 
         member this.query_all_students : Task<Result<Models.Student list, string>> = task {
             try
-                use pg_connection = new NpgsqlConnection(this.connection)
+                use pg_connection = new SqlConnection(this.connection)
                 pg_connection.Open()
                 let sql = """select "FirstName", "LastName", "Email" from "Student";"""
                 let result = pg_connection
@@ -208,7 +209,7 @@ type Database(c : string) =
 
         member this.insert_student (student : Models.Student) : Task<Result<bool, string>> = task {
             try
-                use pg_connection = new NpgsqlConnection(this.connection)
+                use pg_connection = new SqlConnection(this.connection)
                 pg_connection.Open()
                 let cmd = """insert into "Student"("Email", "FirstName", "LastName") values(@Email, @FirstName, @LastName)"""
                 if pg_connection.Execute(cmd, student) = 1 then  
@@ -224,7 +225,7 @@ type Database(c : string) =
 
         member this.query_id (username : string) : Task<Result<string, string>> = task {
             try
-                use pg_connection = new NpgsqlConnection(this.connection)
+                use pg_connection = new SqlConnection(this.connection)
                 pg_connection.Open()
                 let sql = """select "Id" from "AspNetUsers" where "UserName" = @UserName"""
                 let result = pg_connection
@@ -240,7 +241,7 @@ type Database(c : string) =
 
         member this.register_punters (punter : Models.Punter) : Task<Result<bool, string>> = task {
             try
-                use pg_connection = new NpgsqlConnection(this.connection)
+                use pg_connection = new SqlConnection(this.connection)
                 pg_connection.Open()
                 let cmd = """insert into "Punter"("Email") values(@Email)"""
                 if pg_connection.Execute(cmd, punter) = 1 then  
@@ -255,7 +256,7 @@ type Database(c : string) =
         }
         member this.user_has_school (user_id : string) : Task<Result<bool, string>> = task {
             try
-                use pg_connection = new NpgsqlConnection(this.connection)
+                use pg_connection = new SqlConnection(this.connection)
                 pg_connection.Open()
                 let cmd = """select exists(select 1 from "School" where "UserId" = @UserId)"""
                 let exists = pg_connection
@@ -272,7 +273,7 @@ type Database(c : string) =
         member this.update_school_by_user_id (school : Models.School) : Task<Result<bool, string>> = task {
 
             try 
-                use pg_connection = new NpgsqlConnection(this.connection)
+                use pg_connection = new SqlConnection(this.connection)
                 pg_connection.Open()
                 let cmd = """update "School" set "Name" = @Name, "Principal" = @Principal where "UserId" = @UserId"""
                 if pg_connection.Execute(cmd, school) = 1 then  
@@ -288,7 +289,7 @@ type Database(c : string) =
 
         member this.insert_school (school : Models.School) : Task<Result<bool, string>> = task {
             try 
-                use pg_connection = new NpgsqlConnection(this.connection)
+                use pg_connection = new SqlConnection(this.connection)
                 pg_connection.Open()
                 let cmd = """insert into "School"("Name","UserId", "Principal") values(@Name,@UserId,@Principal)"""
                 if pg_connection.Execute(cmd, school) = 1 then  
@@ -305,7 +306,7 @@ type Database(c : string) =
 
         member this.school_from_user_id (user_id : string) : Task<Result<Models.School, string>> = task {
             try 
-                use pg_connection = new NpgsqlConnection(this.connection)
+                use pg_connection = new SqlConnection(this.connection)
                 pg_connection.Open()
                 let sql = """select "Name", "Principal" from "School" where "UserId" = @UserId"""
                 let result = pg_connection.QueryFirst<Models.School>(sql, {Models.default_school with Models.School.UserId = user_id})

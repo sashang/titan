@@ -16,8 +16,8 @@ type Initial() =
             .WithColumn("Principal").AsString().Nullable() |> ignore
 
         //create fk to the id column in the asp.net users table
-        this.Create.ForeignKey("FKUser").FromTable("School")
-            .ForeignColumn("UserId").ToTable("AspNetUsers").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
+        // this.Create.ForeignKey("FKUser").FromTable("School")
+        //     .ForeignColumn("UserId").ToTable("AspNetUsers").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
         
         //student table. They can't login so there's no entry for them in he aspnetusers table and hence no fk pointing there
         this.Create.Table("Student")
@@ -32,9 +32,9 @@ type Initial() =
             .WithColumn("SchoolId").AsInt32().ForeignKey().NotNullable()
             .WithColumn("StudentId").AsInt32().ForeignKey().NotNullable() |> ignore
 
-        this.Create.ForeignKey("FKSchool").FromTable("StudentSchool")
+        this.Create.ForeignKey("FKStudentSchoolSchool").FromTable("StudentSchool")
             .ForeignColumn("SchoolId").ToTable("School").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
-        this.Create.ForeignKey("FKStudent").FromTable("StudentSchool")
+        this.Create.ForeignKey("FKStudentSchoolStudent").FromTable("StudentSchool")
             .ForeignColumn("StudentId").ToTable("Student").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
         
         //Class descriptions linked to a school.
@@ -44,7 +44,7 @@ type Initial() =
             .WithColumn("Name").AsString().Nullable()
             .WithColumn("Description").AsString().Nullable() |> ignore
 
-        this.Create.ForeignKey("FKSchool").FromTable("ClassType")
+        this.Create.ForeignKey("FKClassTypeSchool").FromTable("ClassType")
             .ForeignColumn("SchoolId").ToTable("School").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
 
         //Time a class starts and ends
@@ -54,7 +54,7 @@ type Initial() =
             .WithColumn("StartTime").AsDateTimeOffset()
             .WithColumn("EndTime").AsDateTimeOffset() |> ignore
 
-        this.Create.ForeignKey("FKClassType").FromTable("ClassSchedule")
+        this.Create.ForeignKey("FKClassScheduleClassType").FromTable("ClassSchedule")
             .ForeignColumn("ClassTypeId").ToTable("ClassType").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
         
         //table to link student with class schedule
@@ -63,9 +63,9 @@ type Initial() =
             .WithColumn("ClassScheduleId").AsInt32().ForeignKey()
             .WithColumn("StudentId").AsInt32().ForeignKey() |> ignore
 
-        this.Create.ForeignKey("FKClassSchedule").FromTable("ClassScheduleStudent")
+        this.Create.ForeignKey("FKClassScheduleStudentClassSchedule").FromTable("ClassScheduleStudent")
             .ForeignColumn("ClassScheduleId").ToTable("ClassSchedule").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
-        this.Create.ForeignKey("FKStudent").FromTable("ClassScheduleStudent")
+        this.Create.ForeignKey("FKClassScheduleStudentStudent").FromTable("ClassScheduleStudent")
             .ForeignColumn("StudentId").ToTable("Student").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
         this.Create.UniqueConstraint("ConStudentClassSchedule").OnTable("ClassScheduleStudent")
             .Columns([|"ClassScheduleId"; "StudentId"|]) |> ignore

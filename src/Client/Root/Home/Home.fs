@@ -131,6 +131,8 @@ let private render_error (model : Model) dispatch =
                     [ Modifier.TextColor IsWhite  
                       Modifier.BackgroundColor IsTitanError ]] 
                 [ str (of_beta_result BetaRegistrationCode.BadEmail result)
+                  str (of_beta_result BetaRegistrationCode.Failure result)
+                  str (of_beta_result BetaRegistrationCode.DatabaseError result)
                   Notification.delete [ Common.Props [ OnClick (fun _ -> dispatch ClickDelNot) ] ] [ ] ]
         | false -> nothing 
     | None -> nothing

@@ -285,3 +285,23 @@ modify the pallete but keep harmony, it didn't give me the tools I needed.
 It's too dumbed down. So I went here
 (https://www.sessions.edu/color-calculator/) to pick more colors and did some
 research on colour theory.
+
+## Deploying on azure
+
+Using a docker image but the fake build.fsx should handle all of that
+
+```
+fake build --target Bundle
+```
+
+Then login to azure to configure the resource group settings
+
+```
+docker run -it --net=host microsoft/azure-cli
+```
+
+```
+bash-4.4# az webapp config appsettings set --resource-group tewtin --name tewtin --settings WEBSITES_PORT=8085
+```
+
+
