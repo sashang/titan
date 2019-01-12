@@ -8,6 +8,7 @@ open Fulma
 open Fable.Core.JsInterop
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
+open Fable.Import
 open Fable.PowerPack
 open Fable.PowerPack.Fetch
 open Thoth.Json
@@ -16,6 +17,7 @@ open ValueDeclarations
 type Msg =
     | SetEmail of string
     | ClickRegister
+    | ClickDelNot
     | RegisterSuccess of unit
     | RegisterFailure of exn
 
@@ -47,6 +49,8 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     match msg with
     | SetEmail email ->
         { model with Email = email}, Cmd.none
+    | ClickDelNot ->
+        {model with BetaRegistrationResult = None}, Cmd.none
     | ClickRegister ->
         model, Cmd.ofPromise register_punter {Domain.BetaRegistration.Email = model.Email} RegisterSuccess RegisterFailure
     | RegisterSuccess () ->
@@ -115,6 +119,22 @@ let testimonials =
                               Modifier.TextSize (Screen.All, TextSize.Is4) ] ]
                         [ str (MAIN_NAME + " has allowed me to increase the number of students attending my class") ] ] ] ] ]
 
+let private render_error (model : Model) dispatch =
+    match model.BetaRegistrationResult with
+    | Some result ->
+        match List.exists (fun x -> x = BetaRegistrationCode.BadEmail 
+                                    || x = BetaRegistrationCode.DatabaseError 
+                                    || x = BetaRegistrationCode.Failure) result.Codes with
+        | true ->
+            Notification.notification 
+                [ Notification.Modifiers 
+                    [ Modifier.TextColor IsWhite  
+                      Modifier.BackgroundColor IsTitanError ]] 
+                [ str (of_beta_result BetaRegistrationCode.BadEmail result)
+                  Notification.delete [ Common.Props [ OnClick (fun _ -> dispatch ClickDelNot) ] ] [ ] ]
+        | false -> nothing 
+    | None -> nothing
+
 let private beta_program model dispatch =
     Container.container
         [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
@@ -140,15 +160,7 @@ let private beta_program model dispatch =
                               Button.Props [ Props.OnClick (fun ev -> dispatch ClickRegister)
                                              Props.Style [ Props.CSSProp.Margin "20px" ] ] ]
                             [ str "Register" ] ] ]
-                  (match model.BetaRegistrationResult with
-                  | Some result ->
-                        match List.contains BetaRegistrationCode.BadEmail result.Codes with
-                        | true ->
-                            Help.help [ Help.Color IsDanger
-                                        Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is6) ] ] 
-                                      [ str (of_beta_result BetaRegistrationCode.BadEmail result) ]
-                        | false -> nothing 
-                  | _ -> nothing)] ] ]
+                  render_error model dispatch ] ] ]
 
 let footer = 
     Footer.footer [ Common.Modifiers [ Modifier.BackgroundColor IsTitanPrimary ] ]
