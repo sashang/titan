@@ -78,11 +78,11 @@ type Database(c : string) =
     interface IDatabase with
         member this.insert_student_school student_email tutor_user_id : Task<Result<unit, string>> = task {
             try
-                use pg_connection = new SqlConnection(this.connection)
-                pg_connection.Open()
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
                 let cmd = """insert into "StudentSchool" ("StudentId","SchoolId") VALUES ((select "Id" from "Student" where "Student"."Email" = @Email),(select "School"."Id" from "School" inner join "AspNetUsers" on "AspNetUsers"."Id" = @Id))"""
                 let m = (Map ["Email", student_email; "Id", tutor_user_id])
-                if dapper_map_param_exec cmd m pg_connection = 1 then  
+                if dapper_map_param_exec cmd m conn = 1 then  
                     return Ok ()
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
@@ -95,11 +95,11 @@ type Database(c : string) =
 
         member this.delete_pending_for_tutor email user_id : Task<Result<unit, string>> = task {
             try
-                use pg_connection = new SqlConnection(this.connection)
-                pg_connection.Open()
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
                 let cmd = """delete from "Pending" where ("Pending"."Email" = @Email and "SchoolId" = (select "School"."Id" from "School" where "School"."UserId" = @UserID))"""
                 let m = (Map ["Email", email; "UserId", user_id])
-                if dapper_map_param_exec cmd m pg_connection = 1 then  
+                if dapper_map_param_exec cmd m conn = 1 then  
                     return Ok ()
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
@@ -115,11 +115,11 @@ type Database(c : string) =
                 //and we call this function with an empty email then this will trigger.
                 if email = "" then
                     raise (failwith "Email cannot be empty")
-                use pg_connection = new SqlConnection(this.connection)
-                pg_connection.Open()
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
                 let cmd = """delete from "Pending" where "Email" = @Email"""
                 let m = (Map ["Email", email])
-                if dapper_map_param_exec cmd m pg_connection = 1 then  
+                if dapper_map_param_exec cmd m conn = 1 then  
                     return Ok ()
                 else
                     return Error ("Did not delete the expected number of records. sql is \"" + cmd + "\"")
@@ -141,12 +141,12 @@ type Database(c : string) =
                 //and we call this function with an empty email then this will trigger.
                 if student.Email = "" then
                     raise (failwith "Email cannot be empty")
-                use pg_connection = new SqlConnection(this.connection)
-                pg_connection.Open()
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
                 let cmd = """insert into "Pending" ("FirstName","LastName","Email","SchoolId") VALUES (@FirstName, @LastName, @Email,(select "School"."Id" from "School" where "School"."Name" = @SchoolName))"""
                 let m = (Map ["Email", student.Email; "FirstName", student.FirstName; "LastName", student.FirstName; "SchoolName", school_name ])
-                if dapper_map_param_exec cmd m pg_connection = 1 then  
-                //if pg_connection.Execute(cmd, m) = 1 then  
+                if dapper_map_param_exec cmd m conn = 1 then  
+                //if conn.Execute(cmd, m) = 1 then  
                     return Ok ()
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
@@ -160,10 +160,10 @@ type Database(c : string) =
 
         member this.query_pending : Task<Result<Models.Student list, string>> = task {
             try
-                use pg_connection = new SqlConnection(this.connection)
-                pg_connection.Open()
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
                 let sql = """select "FirstName", "LastName", "Email" from "Pending";"""
-                let result = pg_connection
+                let result = conn
                              |> dapper_query<Models.Student> sql
                              |> Seq.toList
                 return Ok result
@@ -177,10 +177,10 @@ type Database(c : string) =
 
         member this.query_all_schools : Task<Result<Models.School list, string>> = task {
             try
-                use pg_connection = new SqlConnection(this.connection)
-                pg_connection.Open()
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
                 let sql = """select * from "School";"""
-                let result = pg_connection
+                let result = conn
                              |> dapper_query<Models.School> sql
                              |> Seq.toList
                 return Ok result
@@ -193,10 +193,10 @@ type Database(c : string) =
 
         member this.query_all_students : Task<Result<Models.Student list, string>> = task {
             try
-                use pg_connection = new SqlConnection(this.connection)
-                pg_connection.Open()
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
                 let sql = """select "FirstName", "LastName", "Email" from "Student";"""
-                let result = pg_connection
+                let result = conn
                              |> dapper_query<Models.Student> sql
                              |> Seq.toList
                 return Ok result
@@ -209,10 +209,10 @@ type Database(c : string) =
 
         member this.insert_student (student : Models.Student) : Task<Result<bool, string>> = task {
             try
-                use pg_connection = new SqlConnection(this.connection)
-                pg_connection.Open()
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
                 let cmd = """insert into "Student"("Email", "FirstName", "LastName") values(@Email, @FirstName, @LastName)"""
-                if pg_connection.Execute(cmd, student) = 1 then  
+                if conn.Execute(cmd, student) = 1 then  
                     return (Ok true)
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
@@ -225,10 +225,10 @@ type Database(c : string) =
 
         member this.query_id (username : string) : Task<Result<string, string>> = task {
             try
-                use pg_connection = new SqlConnection(this.connection)
-                pg_connection.Open()
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
                 let sql = """select "Id" from "AspNetUsers" where "UserName" = @UserName"""
-                let result = pg_connection
+                let result = conn
                              |> dapper_map_param_query<string> sql (Map ["UserName", username])
                              |> Seq.head
                 return Ok result
@@ -241,10 +241,10 @@ type Database(c : string) =
 
         member this.register_punters (punter : Models.Punter) : Task<Result<bool, string>> = task {
             try
-                use pg_connection = new SqlConnection(this.connection)
-                pg_connection.Open()
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
                 let cmd = """insert into "Punter"("Email") values(@Email)"""
-                if pg_connection.Execute(cmd, punter) = 1 then  
+                if conn.Execute(cmd, punter) = 1 then  
                     return (Ok true)
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
@@ -256,10 +256,10 @@ type Database(c : string) =
         }
         member this.user_has_school (user_id : string) : Task<Result<bool, string>> = task {
             try
-                use pg_connection = new SqlConnection(this.connection)
-                pg_connection.Open()
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
                 let cmd = """select exists(select 1 from "School" where "UserId" = @UserId)"""
-                let exists = pg_connection
+                let exists = conn
                              |> dapper_map_param_query<bool> cmd (Map ["UserId", user_id])
                              |> Seq.head
                 return Ok exists
@@ -273,10 +273,10 @@ type Database(c : string) =
         member this.update_school_by_user_id (school : Models.School) : Task<Result<bool, string>> = task {
 
             try 
-                use pg_connection = new SqlConnection(this.connection)
-                pg_connection.Open()
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
                 let cmd = """update "School" set "Name" = @Name, "Principal" = @Principal where "UserId" = @UserId"""
-                if pg_connection.Execute(cmd, school) = 1 then  
+                if conn.Execute(cmd, school) = 1 then  
                     return (Ok true)
                 else
                     return Error ("Did not update the expected number of records. sql is \"" + cmd + "\"")
@@ -289,10 +289,10 @@ type Database(c : string) =
 
         member this.insert_school (school : Models.School) : Task<Result<bool, string>> = task {
             try 
-                use pg_connection = new SqlConnection(this.connection)
-                pg_connection.Open()
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
                 let cmd = """insert into "School"("Name","UserId", "Principal") values(@Name,@UserId,@Principal)"""
-                if pg_connection.Execute(cmd, school) = 1 then  
+                if conn.Execute(cmd, school) = 1 then  
                     return (Ok true)
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
@@ -306,10 +306,10 @@ type Database(c : string) =
 
         member this.school_from_user_id (user_id : string) : Task<Result<Models.School, string>> = task {
             try 
-                use pg_connection = new SqlConnection(this.connection)
-                pg_connection.Open()
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
                 let sql = """select "Name", "Principal" from "School" where "UserId" = @UserId"""
-                let result = pg_connection.QueryFirst<Models.School>(sql, {Models.default_school with Models.School.UserId = user_id})
+                let result = conn.QueryFirst<Models.School>(sql, {Models.default_school with Models.School.UserId = user_id})
                 return Ok result
             with
             | :? Npgsql.PostgresException as e ->
