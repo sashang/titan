@@ -119,7 +119,7 @@ let login_with_google_button =
         Button.Color IsTitanInfo
         Button.CustomClass "is-large"
         Button.Props [ Href "/secure/signin-google" ]
-    ] [ str "Google" ]
+    ] [ str "sign in with Google" ]
 
 
 let column (model : Model) (dispatch : Msg -> unit) =
@@ -131,26 +131,7 @@ let column (model : Model) (dispatch : Msg -> unit) =
             [ Heading.Modifiers [ Modifier.TextColor IsBlack ] ]
             [ str "Login" ]
           Box.box' [ ] [
-                Field.div [ ]
-                    [ Control.div [ ]
-                        [ Input.text
-                            [ Input.Size IsLarge
-                              Input.Placeholder "Your Username"
-                              Input.Props [
-                                AutoFocus true
-                                OnChange (fun ev -> dispatch (SetUsername ev.Value)) ] ] ] ]
-                Field.div [ ] [
-                    Control.div [ ]
-                        [ Input.password
-                            [ Input.Size IsLarge
-                              Input.Placeholder "Your Password"
-                              Input.Props [
-                                OnChange (fun ev -> dispatch (SetPassword ev.Value)) ] ] ] ]
                 Field.div [] [
-                    login_button dispatch ClickLogin "Login"
-                ]
-                Field.div [] [
-                    //login_button dispatch ClickGoogle "Google"
                     login_with_google_button
                 ]
                 render_error model dispatch
