@@ -8,22 +8,21 @@ open Domain
 open Elmish
 open Elmish.Browser
 open Elmish.Browser.Navigation
-open Elmish.React
 open Fable.Helpers.React.Props
-open Fable.Core
-open Fable.Core.JsInterop
 open Fable.Import
 open Fable.PowerPack
-open Elmish.Browser.Navigation
+open Fable.PowerPack.Fetch
 open Fulma
-open Fulma.Extensions
 open Fable.Helpers.React
+open Thoth.Json
 open ValueDeclarations
 
 type RootMsg =
     | LoginMsg of Login.Msg
     | ClickSignOut
     | ClickTitle
+    | CheckSessionSuccess of Session
+    | CheckSessionFailure of exn
     | SignOutMsg of SignOut.Msg
     | SignUpMsg of SignUp.Msg
     | DashboardMsg of Dashboard.Msg
@@ -85,8 +84,21 @@ let url_update (page : Pages.PageType option) (model : State) =
         let new_model, cmd = Enrol.init ()
         { model with Child = EnrolModel new_model}, Cmd.map EnrolMsg cmd
 
+let check_session () = promise {
+    Browser.console.info "check_session"
+    let props = [ RequestProperties.Method HttpMethod.GET
+                  RequestProperties.Credentials RequestCredentials.Include ]
+    let decoder = Decode.Auto.generateDecoder<Session>()
+    try
+        let! response = Fetch.fetchAs<Session> "/check-session" decoder props
+        return response
+    with 
+        | e -> return failwith (e.Message)
+}
+
 let init _ : State * Cmd<RootMsg> =
-    {Child = HomeModel (Home.init ()); Session = None}, Cmd.none
+    {Child = HomeModel (Home.init ()); Session = None},
+     Cmd.ofPromise check_session () CheckSessionSuccess CheckSessionFailure
 
 let private goto_url page e =
     Navigation.newUrl (Pages.to_path page) |> List.map (fun f -> f ignore) |> ignore
@@ -181,6 +193,12 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     | ClickSignOut, state ->
         let cmd = SignOut.update SignOut.SignOut
         state, Cmd.map SignOutMsg cmd
+
+    | CheckSessionSuccess session, state ->
+        {state with Session = Some session}, Cmd.none 
+
+    | CheckSessionFailure session, state ->
+        {state with Session = None}, Cmd.none 
 
     | SignUpMsg signup_msg, {Child = SignUpModel model; Session = None} ->
         let new_model, cmd = SignUp.update model signup_msg 

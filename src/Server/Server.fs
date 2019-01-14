@@ -4,7 +4,9 @@ open FSharp.Control.Tasks
 open FluentMigrator.Runner
 open FluentMigrator.Runner.Initialization
 open Giraffe
+open Giraffe.Common
 open Giraffe.Serialization
+open Giraffe.ResponseWriters
 open Microsoft.AspNetCore.Authentication
 open Microsoft.AspNetCore.Authentication.JwtBearer
 open Microsoft.AspNetCore.Builder
@@ -40,6 +42,8 @@ type RecStartupOptions = {
     AdminEmail : string
     AdminPassword : string
     ConnectionString : string
+    GoogleClientId : string
+    GoogleSecret : string
 }
 
 let print_user_details : HttpHandler =
@@ -53,10 +57,6 @@ let json_auth_fail_message : HttpHandler =
     fun next ctx ->
         ctx.WriteJsonAsync "api 403"
 
-let auth_google = pipeline {
-    requires_authentication (Giraffe.Auth.challenge "Google")
-    plug print_user_details
-}
 
 let auth_null : HttpHandler =
     fun next ctx ->
@@ -69,18 +69,29 @@ let sign_out (next : HttpFunc) (ctx : HttpContext) = task {
 }
 
 let sign_out_pipeline = pipeline {
-    sign_off "Identity.Application"
+    sign_off "Cookies"
 }
 
 let sign_out_router = router {
     pipe_through sign_out_pipeline
-    post "/sign-out" sign_out
+    get "/sign-out" sign_out
 }
 
-let logged_in_view = router {
+let auth_google = pipeline {
+    //plug (enableCors CORS.defaultCORSConfig)
+    requires_authentication (Giraffe.Auth.challenge "Google")
+    //plug print_user_details
+}
+
+let logged_in = router {
     pipe_through auth_google
-
 }
+
+let is_tutor = pipeline {
+    plug logged_in
+    requires_role "Tutor" json_auth_fail_message
+}
+
 let default_view = router {
     get "/" (fun next ctx -> task {
         return! next ctx
@@ -98,6 +109,23 @@ let print_claims (claims : TitanClaim list) (logger : ILogger<Debug.DebugLogger>
     claims |>
     List.map (fun x -> "type = " + x.Type + " value = " + x.Value) |>
     List.iter (fun x ->  logger.LogWarning(x))
+
+let check_session (next : HttpFunc) (ctx : HttpContext) = task {
+    try
+
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let config = ctx.GetService<IConfiguration>()
+        logger.LogInformation ("looking for session")
+        let name = ctx.User.Identity.Name
+        logger.LogInformation ("name = " + name)
+        let token =  generate_token name config.["JWTSecret"] config.["JWTIssuer"]
+        return! ctx.WriteJsonAsync {Session.init with Token = token; Username = name}
+    with ex ->
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        logger.LogInformation ("no session")
+        return! failwith ("no session for user" )
+}
+
 
 let validate_user (next : HttpFunc) (ctx : HttpContext) = task {
     try
@@ -134,9 +162,10 @@ let handleGetSecured =
 
 ///endpoints that require authorization to reach
 let secure_router = router {
-    pipe_through (Auth.requireAuthentication JWT)
+    //pipe_through (Auth.requireAuthentication JWT)
     //pipe_through (pipeline { requires_authentication (json_auth_fail_message)})
-    get "/validate" handleGetSecured
+    pipe_through logged_in
+    not_found_handler (redirectTo false "/")
     get "/load-school" API.load_school
     get "/get-all-students" API.get_all_students
     get "/get-pending" API.get_pending
@@ -144,14 +173,16 @@ let secure_router = router {
     post "/add-student-school" API.add_student_to_school
     post "/approve-pending" API.approve_pending
     post "/dismiss-pending" API.dismiss_pending
+    forward "/sign-out" sign_out_router
 }
 
 let titan_api =  router {
-    not_found_handler (text "resource not found")
+    not_found_handler (json "resource not found")
     post "/login" validate_user
     post "/sign-up" API.sign_up_user
-    post "/enroll" API.enroll
+    post "/enrol" API.enrol
     get "/get-schools" API.get_schools
+    //get "/signin-google" (redirectTo false "/api/secure")
     post "/register-punter" API.register_punter
     forward "/sign-out" sign_out_router
     forward "/secure" secure_router
@@ -162,22 +193,45 @@ let api_pipeline = pipeline {
     plug acceptJson 
     set_header "x-pipeline-type" "Api"
 }
-let web_app = router {
-    pipe_through api_pipeline
-    forward "/api" titan_api
+let defaultView = router {
+    get "/" (json "root")
+    get "/index.html" (redirectTo false "/")
+    get "/default.html" (redirectTo false "/")
 }
+
+let browser = pipeline {
+    plug acceptHtml
+    plug putSecureBrowserHeaders
+    plug fetchSession
+    set_header "x-pipeline-type" "Browser"
+}
+let browser_router = router {
+    not_found_handler (redirectTo false "/") //Use the default 404 webpage
+    pipe_through browser //Use the default browser pipeline
+    forward "/secure" secure_router
+    forward "" defaultView //Use the default view
+}
+
+let web_app = router {
+    //pipe_through api_pipeline
+    get "/check-session" check_session
+    forward "/sign-out" sign_out_router
+    forward "" browser_router
+}
+
+
 
 let configure_services startup_options (services:IServiceCollection) =
     let fableJsonSettings = Newtonsoft.Json.JsonSerializerSettings()
     fableJsonSettings.Converters.Add(Fable.JsonConverter())
     services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
     services.AddSingleton<IDatabase>(Database(startup_options.ConnectionString)) |> ignore
-    // services.AddEntityFrameworkNpgsql() |> ignore
+    //services.AddEntityFrameworkNpgsql() |> ignore
     // services.AddDbContext<IdentityDbContext<IdentityUser>>(
-    //     fun options ->
-    //         //options.UseInMemoryDatabase("NameOfDatabase") |> ignore
-    //         options.UseNpgsql(startup_options.ConnectionString) |> ignore
-    //     ) |> ignore
+    //      fun options ->
+    //          //options.UseInMemoryDatabase("NameOfDatabase") |> ignore
+    //          options (startup_options.ConnectionString) |> ignore
+    //      ) |> ignore
 
     services.AddFluentMigratorCore()
             .ConfigureRunner(fun rb ->
@@ -230,8 +284,7 @@ let get_env_var var =
 
 let configure_cors (builder : CorsPolicyBuilder) =
     builder.WithOrigins("http://localhost:8080")
-        .AllowAnyMethod()
-        .AllowAnyHeader()
+        .AllowCredentials()
     |> ignore
 
 let configure_logging (builder : ILoggingBuilder) =
@@ -250,7 +303,10 @@ let app (startup_options : RecStartupOptions) =
         use_static publicPath
         service_config (configure_services startup_options)
         host_config configure_host
-        use_jwt_authentication startup_options.JWTSecret startup_options.JWTIssuer
+        //use_cors "mypolicy" configure_cors
+        //use_jwt_authentication startup_options.JWTSecret startup_options.JWTIssuer
+        //use_cookies_authentication "tewtin.com"
+        use_google_oauth startup_options.GoogleClientId startup_options.GoogleSecret "/oauth_callback_google" ["language", "urn:google:language"]
         logging configure_logging
         use_gzip
     }

@@ -39,8 +39,10 @@ type TitanClaims =
 
 [<CLIMutable>]
 type Session = 
-    { username : string
-      token : string }
+    { Username : string
+      Token : string }
+
+      static member init = {Username = ""; Token = ""}
 
 [<CLIMutable>]
 type LoginResult =

@@ -11,7 +11,6 @@ open Fable.PowerPack
 open Fable.PowerPack.Fetch
 open Fable.Core.JsInterop
 open Fulma
-open ModifiedFableFetch
 open Shared
 open Thoth.Json
 
@@ -21,7 +20,7 @@ type LoginState =
 
 
 /// Messages that go back to the parent. See https://medium.com/@MangelMaxime/my-tips-for-working-with-elmish-ab8d193d52fd.
-/// This basically obviates the need to hijack the session login message in the parent. 
+/// This basically obviates the need to hijack the session login message in the parent.
 type ExternalMsg =
     | Nop
     | SignedIn of Session
@@ -59,7 +58,7 @@ let login (user_info : Login) =
         let! response = Fetch.fetchAs<LoginResult> "/api/login" decoder props
         match response.code with
         | LoginCode.Success::_ ->
-            return { username = response.username; token = response.token}
+            return { Session.Username = response.username; Session.Token = response.token}
         | _  -> return (raise (LoginException response))
     }
 
@@ -89,7 +88,8 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg>*ExternalMsg =
         {model with Result = None }, Cmd.none, Nop
     | ClickLogin ->
         model, Cmd.ofPromise login model.user_info Success Failure, Nop
-    
+
+
 let private of_login_result (code : LoginCode) (result : LoginResult) =
         List.fold2 (fun acc the_code the_message -> if code = the_code then acc + " " + the_message else acc) "" result.code result.message
 
@@ -98,21 +98,29 @@ let private render_error (model : Model) dispatch =
     | Some result ->
         match List.contains LoginCode.Failure result.code with
         | true ->
-            Notification.notification 
-                [ Notification.Modifiers 
-                    [ Modifier.TextColor IsWhite  
-                      Modifier.BackgroundColor IsTitanError ]] 
+            Notification.notification
+                [ Notification.Modifiers
+                    [ Modifier.TextColor IsWhite
+                      Modifier.BackgroundColor IsTitanError ]]
                 [ str (of_login_result LoginCode.Failure result)
                   Notification.delete [ Common.Props [ OnClick (fun _ -> dispatch ClickDelNot) ] ] [ ] ]
-        | false -> nothing 
+        | false -> nothing
     | _ ->  nothing
 
-let login_button dispatch msg text = 
+let login_button dispatch msg text =
     Button.button [
         Button.Color IsTitanInfo
         Button.OnClick (fun _ -> (dispatch msg))
         Button.CustomClass "is-large"
     ] [ str text ]
+
+let login_with_google_button =
+    Button.a [
+        Button.Color IsTitanInfo
+        Button.CustomClass "is-large"
+        Button.Props [ Href "/secure/signin-google" ]
+    ] [ str "Google" ]
+
 
 let column (model : Model) (dispatch : Msg -> unit) =
 
@@ -128,7 +136,7 @@ let column (model : Model) (dispatch : Msg -> unit) =
                         [ Input.text
                             [ Input.Size IsLarge
                               Input.Placeholder "Your Username"
-                              Input.Props [ 
+                              Input.Props [
                                 AutoFocus true
                                 OnChange (fun ev -> dispatch (SetUsername ev.Value)) ] ] ] ]
                 Field.div [ ] [
@@ -141,17 +149,21 @@ let column (model : Model) (dispatch : Msg -> unit) =
                 Field.div [] [
                     login_button dispatch ClickLogin "Login"
                 ]
+                Field.div [] [
+                    //login_button dispatch ClickGoogle "Google"
+                    login_with_google_button
+                ]
                 render_error model dispatch
-          ] 
+          ]
     ]
 
 
-let view  (model : Model) (dispatch : Msg -> unit) = 
+let view  (model : Model) (dispatch : Msg -> unit) =
 
     Container.container [ Container.IsFullHD
                           Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ] [
         (match model.login_state with
-        | LoggedIn ->   
+        | LoggedIn ->
             div [ Id "greeting"] [
                   h3 [ ClassName "text-center" ] [ str (sprintf "Hi %s!" model.user_info.username) ] ]
         | LoggedOut ->

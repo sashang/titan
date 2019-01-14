@@ -107,7 +107,28 @@ environment variables are not set the server will not start.
 
 ### Database
 
-Using Postgres at the moment. The filesystem database is gone.
+Replaced Postgres with Azure Sql Server. This works out cheaper per month.
+Postgres's basic plan was something like $35 but with Azure Sql Server it's
+$6. The 'downside' is it is cloud first, so that means I can't install it
+locally which means I had to setup and Azure account, setup a firewall rule
+to let traffic from my external ip through to it.
+
+#### Tools
+mssql. This gives you command line access to the database in azure.
+
+```
+mssql -s titan-sql-server.database.windows.net -u <username> -p <password> -d titan-dev -e
+```
+username and password are setup when you create the database in the Azure portal.
+
+#### Connection string
+
+Use this something like this. You'll need your own account in Azure.
+```
+Server=tcp:titan-sql-server.database.windows.net,1433;Initial Catalog=titan-dev;Persist Security Info=False;User ID={your_username};Password={your_password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
+```
+
+
 
 #### Migrations
 

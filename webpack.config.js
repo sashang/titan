@@ -27,7 +27,28 @@ var CONFIG = {
         // redirect requests that start with /api/* to the server on port 8085
         '/api/*': {
             target: 'http://localhost:' + (process.env.SERVER_PROXY_PORT || "8085"),
-               changeOrigin: true
+               changeOrigin: true,
+               //secure: false
+           },
+        '/secure/*': {
+            target: 'http://localhost:' + (process.env.SERVER_PROXY_PORT || "8085"),
+               changeOrigin: false,
+               //secure: false
+           },
+        '/oauth_callback_google': {
+            target: 'http://localhost:' + (process.env.SERVER_PROXY_PORT || "8085"),
+               changeOrigin: false,
+               //secure: false
+           },
+        '/check-session': {
+            target: 'http://localhost:' + (process.env.SERVER_PROXY_PORT || "8085"),
+               changeOrigin: true,
+               //secure: false
+           },
+        '/sign-out': {
+            target: 'http://localhost:' + (process.env.SERVER_PROXY_PORT || "8085"),
+               changeOrigin: true,
+               //secure: false
            }
        },
     // Use babel-preset-env to generate JS compatible with most-used browsers.

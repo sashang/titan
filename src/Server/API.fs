@@ -17,7 +17,7 @@ let private role_to_string = function
 | Some TitanRole.Principal -> "principal"
 | None -> "unknown"
 
-let enroll (next : HttpFunc) (ctx : HttpContext) = task {
+let enrol (next : HttpFunc) (ctx : HttpContext) = task {
     let logger = ctx.GetLogger<Debug.DebugLogger>()
     try
         let! info = ctx.BindJsonAsync<Domain.Enrol>()
