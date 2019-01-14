@@ -118,7 +118,11 @@ let check_session (next : HttpFunc) (ctx : HttpContext) = task {
         logger.LogInformation ("looking for session")
         if ctx.User.Identity.IsAuthenticated then
             let name = ctx.User.Identity.Name
-            logger.LogInformation ("name = " + name)
+            let auth_type = ctx.User.Identity.AuthenticationType
+            logger.LogInformation ("name = " + name + " auth type = " + auth_type)
+            ctx.User.Claims 
+            |> Seq.map (fun claim -> "type = " + claim.Type + " value = " + claim.Value)
+            |> Seq.iter (fun message -> logger.LogInformation (message)) |> ignore
             let token =  generate_token name config.["JWTSecret"] config.["JWTIssuer"]
             return! ctx.WriteJsonAsync {Session.init with Token = token; Username = name}
         else
