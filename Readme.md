@@ -165,6 +165,14 @@ mono ./packages/FluentMigrator.Console/net461/any/Migrate.exe -c
 --task migrate:up
 ```
 
+* Additionally for development you can run the development migration using the --profile option
+```
+mono ./packages/FluentMigrator.Console/net461/any/Migrate.exe -c
+"Host=localhost;Database=titan_dev;Username=titan_dev;Password=1234"
+--provider Postgres -a src/Server/bin/Debug/netcoreapp2.1/Server.dll
+--task migrate:up --profile Development
+```
+This will run the migration in Migrations/Development.fs
 
 
 ### Using Paket
