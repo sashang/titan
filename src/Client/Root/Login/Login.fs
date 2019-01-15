@@ -4,6 +4,7 @@ open CustomColours
 open Domain
 open Elmish
 open Elmish.Browser.Navigation
+open Fable.FontAwesome
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.Import
@@ -115,12 +116,14 @@ let login_button dispatch msg text =
     ] [ str text ]
 
 let login_with_google_button =
-    Button.a [
-        Button.Color IsTitanInfo
-        Button.CustomClass "is-large"
-        Button.Props [ Href "/secure/signin-google" ]
-    ] [ str "sign in with Google" ]
-
+    Columns.columns [ ]
+        [ Column.column [ Column.Width (Screen.All, Column.Is1) ]
+            [ Fa.i [ Fa.Brand.Google; Fa.Size Fa.Fa2x ] [  ] ]
+          Column.column [ ] [
+              Button.a [
+                    Button.Color IsTitanInfo
+                    Button.Props [ Href "/secure/signin-google" ]
+                ] [ str "sign in with Google" ] ] ]
 
 let column (model : Model) (dispatch : Msg -> unit) =
 
@@ -137,7 +140,6 @@ let column (model : Model) (dispatch : Msg -> unit) =
                 render_error model dispatch
           ]
     ]
-
 
 let view  (model : Model) (dispatch : Msg -> unit) =
 

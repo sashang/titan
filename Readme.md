@@ -84,6 +84,15 @@ view the messages in the Chrome debugger (hit F12).
 
 ### Environment Variables
 
+#### Bash
+```
+export ASPNETCORE_ENVIRONMENT="Development"
+```
+#### Fish (friendly interactive shell)
+```
+set -x ASPNETCORE_ENVIRONMENT Development
+```
+
 #### Google authentication
 This is all in a state of flux so may or not may not work. Set the following
 environment variables: 

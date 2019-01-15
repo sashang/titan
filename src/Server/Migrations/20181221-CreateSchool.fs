@@ -3,19 +3,6 @@
 namespace TitanMigrations
 
 open FluentMigrator
-open System.Collections.Generic
-open System.Dynamic
-
-type User = 
-    { Email : string
-      GivenName : string
-      Surname : string }
-
-type TitanClaim =
-    { UserId : int
-      Type : string
-      Value : string }
-
 
 
 
@@ -118,7 +105,7 @@ type Initial() =
         this.Create.Table("TitanClaims")
             .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable()
             .WithColumn("UserId").AsInt32().NotNullable() 
-            .WithColumn("Type").AsString().NotNullable().Unique()
+            .WithColumn("Type").AsString().NotNullable()
             .WithColumn("Value").AsString().NotNullable() |> ignore
 
         this.Create.ForeignKey("FKTitanClaims").FromTable("TitanClaims")

@@ -38,9 +38,6 @@ let port = 8085us
 type RecStartupOptions = {
     JWTSecret : string 
     JWTIssuer : string 
-    AdminUsername : string
-    AdminEmail : string
-    AdminPassword : string
     ConnectionString : string
     GoogleClientId : string
     GoogleSecret : string
@@ -233,12 +230,6 @@ let configure_services startup_options (services:IServiceCollection) =
     fableJsonSettings.Converters.Add(Fable.JsonConverter())
     services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
     services.AddSingleton<IDatabase>(Database(startup_options.ConnectionString)) |> ignore
-    //services.AddEntityFrameworkNpgsql() |> ignore
-    // services.AddDbContext<IdentityDbContext<IdentityUser>>(
-    //      fun options ->
-    //          //options.UseInMemoryDatabase("NameOfDatabase") |> ignore
-    //          options (startup_options.ConnectionString) |> ignore
-    //      ) |> ignore
 
     services.AddFluentMigratorCore()
             .ConfigureRunner(fun rb ->
@@ -247,39 +238,10 @@ let configure_services startup_options (services:IServiceCollection) =
                   .ScanIn(typeof<TitanMigrations.Initial>.Assembly).For.Migrations() |> ignore)
             .AddLogging(fun lb -> lb.AddFluentMigratorConsole() |> ignore) |> ignore
 
-    // services.AddIdentity<IdentityUser, IdentityRole>(
-    //     fun options ->
-    //         // Password settings
-    //         options.Password.RequireDigit   <- true
-    //         options.Password.RequiredLength <- 4
-    //         options.Password.RequireNonAlphanumeric <- false
-    //         options.Password.RequireUppercase <- false
-    //         options.Password.RequireLowercase <- false
-
-    //         // Lockout settings
-    //         options.Lockout.DefaultLockoutTimeSpan  <- TimeSpan.FromMinutes 30.0
-    //         options.Lockout.MaxFailedAccessAttempts <- 10
-
-    //         // User settings
-    //         options.User.RequireUniqueEmail <- true
-    //     )
-    //     .AddEntityFrameworkStores<IdentityDbContext<IdentityUser>>()
-    //     .AddDefaultTokenProviders() |> ignore
-
     //apparently putting this in a scope is the thing to do with asp.net...
     let scope = services.BuildServiceProvider(false).CreateScope()
     scope.ServiceProvider.GetRequiredService<IMigrationRunner>().MigrateUp() |> ignore
 
-    //add me as titan 
-    // let user_manager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>()
-    // let add_admin = task {
-    //     let user = IdentityUser(UserName = startup_options.AdminUsername , Email = startup_options.AdminEmail)
-    //     let! result = user_manager.CreateAsync(user, startup_options.AdminPassword)
-    //     let claim = Claim("IsTitan", "yes")
-    //     let! claim_result = user_manager.AddClaimAsync(user, claim)
-    //     return claim_result
-    // }
-    // add_admin.Wait()
 
     //return the list of servicesk
     services
@@ -300,7 +262,11 @@ let configure_logging (builder : ILoggingBuilder) =
 let configure_host (builder : IWebHostBuilder) =
     //turns out if you pass an anonymous function to a function that expects an Action<...> or
     //Func<...> the type inference will work out the inner types....so you don't need to specify them.
-    builder.ConfigureAppConfiguration((fun ctx builder -> builder.AddJsonFile("appsettings.json") |> ignore))
+    let settings_file =
+        match get_env_var "ASPNETCORE_ENVIRONMENT" with
+        | None -> "appsettings.json"
+        | Some e -> "appsettings."+e+".json"
+    builder.ConfigureAppConfiguration((fun ctx builder -> builder.AddJsonFile(settings_file) |> ignore))
 
 let app (startup_options : RecStartupOptions) =
     application {

@@ -3,9 +3,8 @@
 {
     "JWTSecret": "generate the secret using src/bash/gen-jwt-secret.sh",
     "JWTIssuer": "the domain name of the issuer",
-    "AdminUsername": "initial admin username. this user added to the database on startup.",
-    "AdminEmail": "",
-    "AdminPassword": "some password.",
     "ConnectionString": "database connection string"
+    "GoogleClientId" : "client id",
+    "GoogleSecret" : "secret"
 }
   
