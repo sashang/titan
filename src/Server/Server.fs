@@ -109,7 +109,6 @@ let print_claims (claims : TitanClaim list) (logger : ILogger<Debug.DebugLogger>
 
 let check_session (next : HttpFunc) (ctx : HttpContext) = task {
     try
-
         let logger = ctx.GetLogger<Debug.DebugLogger>()
         let config = ctx.GetService<IConfiguration>()
         logger.LogInformation ("looking for session")
@@ -130,33 +129,6 @@ let check_session (next : HttpFunc) (ctx : HttpContext) = task {
         return! failwith ("no session for user" )
 }
 
-
-let validate_user (next : HttpFunc) (ctx : HttpContext) = task {
-    try
-        let! login = ctx.BindJsonAsync<Domain.Login>()
-        let sign_in_manager = ctx.GetService<SignInManager<IdentityUser>>()
-        let! result = sign_in_manager.PasswordSignInAsync(login.username, login.password, true, false)
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
-        let config = ctx.GetService<IConfiguration>()
-        match result.Succeeded with
-        | true ->
-            let token = generate_token login.username config.["JWTSecret"] config.["JWTIssuer"]
-            return! ctx.WriteJsonAsync
-                { LoginResult.code = [LoginCode.Success]
-                  LoginResult.message = []
-                  token = token
-                  username = login.username }
-        | _ ->
-            let msg = sprintf "Failed to login user '%s'" login.username
-            logger.LogWarning(msg)
-            return! ctx.WriteJsonAsync
-                { LoginResult.code = [LoginCode.Failure]
-                  LoginResult.message = [msg]
-                  token = ""
-                  username = "" }
-    with ex ->
-        return! failwith ("exception: could not validate user: " + ex.Message)
-}
 
 let handleGetSecured =
     fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -182,8 +154,6 @@ let secure_router = router {
 
 let titan_api =  router {
     not_found_handler (json "resource not found")
-    post "/login" validate_user
-    post "/sign-up" API.sign_up_user
     post "/enrol" API.enrol
     get "/get-schools" API.get_schools
     //get "/signin-google" (redirectTo false "/api/secure")
