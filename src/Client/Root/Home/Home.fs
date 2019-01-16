@@ -70,6 +70,10 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     | {Child = None}, FirstTimeUser ->
         Browser.console.info "FirstTimeUser message"
         {model with Child = Some (FirstTimeModel (FirstTime.init true))}, Cmd.none
+    | {Child = Some (FirstTimeModel child) }, FirstTimeMsg msg ->
+        Browser.console.info "FirstTimeMsg message"
+        let new_ft_model, new_cmd = FirstTime.update child msg
+        {model with Child = Some (FirstTimeModel new_ft_model) }, Cmd.none
 
 
 let private of_beta_result (code : BetaRegistrationCode) (result : BetaRegistrationResult) =

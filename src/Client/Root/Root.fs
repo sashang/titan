@@ -243,7 +243,7 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         | Ok claims ->
             match state with
             | {Child = HomeModel home_model} when claims.is_first_time ->
-                let new_home_model, home_msg = Home.update home_model Home.FirstTime
+                let new_home_model, home_msg = Home.update home_model Home.FirstTimeUser
                 { state with Session = Some session; Claims = claims; Child = HomeModel new_home_model}, Cmd.none
             | _ ->
                 { state with Session = Some session; Claims = claims}, Cmd.none
@@ -258,7 +258,7 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         let new_model, cmd = SignUp.update model signup_msg 
         {state with Child = SignUpModel new_model}, Cmd.map SignUpMsg cmd 
 
-    | HomeMsg home_msg, {Child = HomeModel model; Session = None} ->
+    | HomeMsg home_msg, {Child = HomeModel model} ->
         let new_model, cmd = Home.update model home_msg
         {state with Child = HomeModel new_model}, Cmd.map HomeMsg cmd
 
