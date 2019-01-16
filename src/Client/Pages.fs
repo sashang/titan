@@ -8,7 +8,7 @@ type PageType =
     | Login
     | SignUp
     | Enrol
-    | Dashboard
+    | DashboardTutor
 
 
 let to_path =
@@ -16,7 +16,7 @@ let to_path =
     | PageType.Home -> "#home"
     | PageType.Login -> "#login"
     | PageType.SignUp -> "#sign-up"
-    | PageType.Dashboard -> "#dashboard"
+    | PageType.DashboardTutor -> "#dashboard-tutor"
     | PageType.Enrol -> "#enroll"
 
 
@@ -27,6 +27,6 @@ let page_parser : Parser<PageType -> _,_> =
           map PageType.Login (s "login")
           map PageType.SignUp (s "sign-up")
           map PageType.Enrol (s "enroll")
-          map (PageType.Dashboard) (s "dashboard") ]
+          map (PageType.DashboardTutor) (s "dashboard-tutor") ]
 
 let url_parser location = parseHash page_parser location

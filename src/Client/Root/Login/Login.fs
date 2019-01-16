@@ -59,7 +59,7 @@ let login (user_info : Login) =
         let! response = Fetch.fetchAs<LoginResult> "/api/login" decoder props
         match response.code with
         | LoginCode.Success::_ ->
-            return { Session.Username = response.username; Session.Token = response.token}
+            return { Session.init with Session.Username = response.username; Session.Token = response.token}
         | _  -> return (raise (LoginException response))
     }
 

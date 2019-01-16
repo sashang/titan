@@ -1,5 +1,14 @@
 module Models
 
+[<CLIMutable>]
+type TitanClaims =
+    { Id : int32
+      UserId : int32
+      Type : string
+      Value : string }
+
+      static member init = {Id = 0; UserId = 0; Type = ""; Value = ""}
+
 //databse model of the school table.
 [<CLIMutable>]
 type School =

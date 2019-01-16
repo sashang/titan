@@ -1,8 +1,7 @@
 /// Domain model shared between client and server.
 namespace Domain
 
-// Json web token type.
-type JWT = string
+open Thoth.Json
 
 type APICode = 
     | Success = 0
@@ -29,20 +28,14 @@ type Login =
 type LoginCode = Success = 0 | Failure = 1
 
 
-[<CLIMutable>]
-type TitanClaim =
-    { Type : string
-      Value : string }
-
-type TitanClaims = 
-    { Claims : TitanClaim list}
 
 [<CLIMutable>]
 type Session = 
     { Username : string
       Token : string }
+      static member init = 
+        {Username = ""; Token = ""}
 
-      static member init = {Username = ""; Token = ""}
 
 [<CLIMutable>]
 type LoginResult =

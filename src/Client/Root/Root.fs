@@ -3,7 +3,7 @@
 module Root
 
 open CustomColours
-open Dashboard
+open DashboardRouter
 open Domain
 open Elmish
 open Elmish.Browser
@@ -14,57 +14,83 @@ open Fable.PowerPack
 open Fable.PowerPack.Fetch
 open Fulma
 open Fable.Helpers.React
+open Fable.Core
+open Fable.Core.JsInterop
 open Thoth.Json
 open ValueDeclarations
+
+
+//convert string from base64. Needed for reading content section of a JWT.
+[<Emit("atob($0)")>]
+let from_base64 (s:string) : string = jsNative
+
+[<CLIMutable>]
+type TitanClaim = 
+    { Surname : string 
+      GivenName : string
+      Email : string
+      IsTitan : bool 
+      IsStudent : bool 
+      IsTutor : bool}
+    static member init = 
+      { Surname = ""
+        GivenName = ""
+        Email = ""
+        IsTitan = false
+        IsTutor = false
+        IsStudent = false }
+
+    static member decoder : Decode.Decoder<TitanClaim> =
+        Decode.object
+            (fun get -> 
+                { Surname = get.Required.Field "family_name" Decode.string
+                  GivenName= get.Required.Field "given_name" Decode.string
+                  Email = get.Required.Field "email" Decode.string
+                  IsTutor =  get.Optional.Field "IsTutor" Decode.string = Some "true"
+                  IsStudent = get.Optional.Field "IsStudent" Decode.string = Some "true"
+                  IsTitan = get.Optional.Field "IsTitan" Decode.string = Some "true" })
+    member this.is_first_time = not (this.IsStudent || this.IsTitan || this.IsTutor)
 
 type RootMsg =
     | LoginMsg of Login.Msg
     | ClickSignOut
     | ClickTitle
+    | FirstTime of TitanClaim
     | CheckSessionSuccess of Session
     | CheckSessionFailure of exn
     | SignOutMsg of SignOut.Msg
     | SignUpMsg of SignUp.Msg
-    | DashboardMsg of Dashboard.Msg
+    | DashboardRouterMsg of DashboardRouter.Msg
     | UrlUpdatedMsg of Pages.PageType
     | HomeMsg of Home.Msg
     | EnrolMsg of Enrol.Msg
 
-let string_of_root_msg = function
-    | EnrolMsg _ -> "EnrolMsg"
-    | LoginMsg _ -> "loginmsg"
-    | ClickSignOut -> "ClickSignOut"
-    | ClickTitle -> "ClickTitle"
-    | SignOutMsg _ -> "SignOutMsg"
-    | HomeMsg _ -> "HomeMsg"
-    | SignUpMsg _ -> "SignUpMsg"
-    | DashboardMsg _ -> "DashboardMsg"
-    | UrlUpdatedMsg _ -> "UrlUpdatedMsg"
-
 type PageModel =
     | LoginModel of Login.Model
     | SignUpModel of SignUp.Model
-    | DashboardModel of Dashboard.Model
+    | DashboardRouterModel of DashboardRouter.Model
     | EnrolModel of Enrol.Model
     | HomeModel of Home.Model
 and
     State = {
         Child : PageModel //which child page I'm at
         Session : Session option //who I am
-    }
+        Claims : TitanClaim
+    } with
+    static member init = {Child = HomeModel (Home.init ()); Session = None; Claims = TitanClaim.init } 
 
-let url_update (page : Pages.PageType option) (model : State) =
+let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMsg> =
     match page with
     //no page type for some reason (maybe the url to page parser didn't work or the user entered and invalid url)
     //so we just change nothing.
     | None -> model, Cmd.none
 
     // the following pages require a session token
-    | Some Pages.Dashboard ->
+    | Some Pages.DashboardTutor ->
         match model with
         | {Session = Some session} ->
-            let new_model, cmd = Dashboard.init ()
-            { model with Child = DashboardModel new_model}, Cmd.map DashboardMsg cmd
+            let new_model, cmd = Tutor.Dashboard.init ()
+            { model with Child = (DashboardRouterModel ({Child = DashboardRouter.TutorModel new_model}))}, Cmd.map (DashboardRouterMsg << DashboardRouter.TutorMsg) cmd
         | {Session = None} ->
             model, Cmd.none
 
@@ -78,11 +104,15 @@ let url_update (page : Pages.PageType option) (model : State) =
 
     | Some Pages.PageType.SignUp ->
         let new_model, cmd = SignUp.init ()
-        { model with Child = SignUpModel new_model}, Cmd.map LoginMsg cmd
+        { model with Child = SignUpModel new_model}, Cmd.map SignUpMsg cmd
 
     | Some Pages.PageType.Enrol ->
         let new_model, cmd = Enrol.init ()
         { model with Child = EnrolModel new_model}, Cmd.map EnrolMsg cmd
+
+// let b2s : byte[] -> string = import "byte2string" "../custom.js"
+// let something () : string = import "something" "../custom.js"
+// let echo (s:string) : string = import "echo" "../custom.js"
 
 let check_session () = promise {
     Browser.console.info "check_session"
@@ -91,13 +121,14 @@ let check_session () = promise {
     let decoder = Decode.Auto.generateDecoder<Session>()
     try
         let! response = Fetch.fetchAs<Session> "/check-session" decoder props
+        Browser.console.info "decoded response"
         return response
     with 
         | e -> return failwith (e.Message)
 }
 
 let init _ : State * Cmd<RootMsg> =
-    {Child = HomeModel (Home.init ()); Session = None},
+    {Child = HomeModel (Home.init ()); Session = None; Claims = TitanClaim.init},
      Cmd.ofPromise check_session () CheckSessionSuccess CheckSessionFailure
 
 let private goto_url page e =
@@ -116,6 +147,14 @@ let private nav_item_button_url page (text : string) =
             [ Button.Color IsTitanInfo
               Button.OnClick (goto_url page) ]
             [ str text ] ]
+
+
+let dashboard_button (claims : TitanClaim) =
+    if claims.IsTutor then
+        nav_item_button_url Pages.DashboardTutor "Dashboard"
+    else
+        nothing
+    
 
 let view model dispatch =
     Hero.hero [
@@ -144,6 +183,7 @@ let view model dispatch =
                                 yield nav_item_button_url Pages.Enrol "Enrol"
                                 yield nav_item_button_url Pages.Login "Login"
                           | Some session ->
+                                yield dashboard_button model.Claims
                                 yield nav_item_button dispatch ClickSignOut "Sign Out" ]
                 ]
             ]
@@ -155,8 +195,8 @@ let view model dispatch =
                     yield Login.view login_model (LoginMsg >> dispatch)
                 | SignUpModel sign_up_model ->
                     yield SignUp.view sign_up_model (SignUpMsg >> dispatch)
-                | DashboardModel model ->
-                    yield Dashboard.view model (DashboardMsg >> dispatch) 
+                | DashboardRouterModel model ->
+                    yield DashboardRouter.view model (DashboardRouterMsg >> dispatch) 
                 | HomeModel model ->
                     yield! Home.view model (HomeMsg  >> dispatch)
                 | EnrolModel model ->
@@ -184,7 +224,7 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     | SignOutMsg sign_out, state ->
         let cmd = SignOut.update sign_out
         //assume that signing out worked so we delete the sesison
-        { Child = HomeModel (Home.init ()); Session = None}, Cmd.map SignOutMsg cmd
+        { Child = HomeModel (Home.init ()); Session = None; Claims = TitanClaim.init}, Cmd.map SignOutMsg cmd
 
     | ClickTitle, state ->
         //move to the home page
@@ -195,7 +235,21 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         state, Cmd.map SignOutMsg cmd
 
     | CheckSessionSuccess session, state ->
-        {state with Session = Some session}, Cmd.none 
+        let jwt_parts = session.Token.Split '.'
+        let jwt_content = from_base64 (Array.get jwt_parts 1)
+        Browser.console.info jwt_content
+        let result = Decode.fromString TitanClaim.decoder jwt_content
+        match result with
+        | Ok claims ->
+            match state with
+            | {Child = HomeModel home_model} when claims.is_first_time ->
+                let new_home_model, home_msg = Home.update home_model Home.FirstTime
+                { state with Session = Some session; Claims = claims; Child = HomeModel new_home_model}, Cmd.none
+            | _ ->
+                { state with Session = Some session; Claims = claims}, Cmd.none
+        | Error e -> 
+            Browser.console.warn e
+            {state with Session = None}, Cmd.none 
 
     | CheckSessionFailure session, state ->
         {state with Session = None}, Cmd.none 
@@ -215,14 +269,14 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     | LoginMsg login_msg, {Session = Some session} ->
         state, Cmd.none
 
-    | DashboardMsg msg, {Child = DashboardModel model; Session = Some session} ->
-        let new_model, cmd = Dashboard.update model msg
-        {state with Child = DashboardModel new_model}, Cmd.map DashboardMsg cmd
+    | DashboardRouterMsg msg, {Child = DashboardRouterModel model; Session = Some session} ->
+        let new_model, cmd = DashboardRouter.update model msg
+        {state with Child = DashboardRouterModel new_model}, Cmd.map DashboardRouterMsg cmd
     
     | UrlUpdatedMsg msg, {Child = some_child; Session = Some session} ->
         Browser.console.info "got updatedurlmsg"
         state, Cmd.none
 
     | msg, state ->
-        Browser.console.error ("got unexpected msg " + string_of_root_msg msg)
+        Browser.console.error ("got unexpected msg ")
         state, Cmd.none

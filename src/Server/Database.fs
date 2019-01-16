@@ -33,6 +33,10 @@ let private dapper_map_param_exec(sql : string) (param : Map<string,_>) (connect
     connection.Execute(sql, expando)
 
 type IDatabase =
+
+    /// get a list of claims for the user based on their email
+    abstract member query_claims: string -> Task<Result<Models.TitanClaims list, string>>
+
     abstract member insert_school: Models.School -> Task<Result<bool, string>>
 
     /// Query the database to see if a school is linked to a user
@@ -76,6 +80,22 @@ type Database(c : string) =
     member this.connection = c
 
     interface IDatabase with
+        member this.query_claims email : Task<Result<Models.TitanClaims list, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                let sql = """select * from "TitanClaims" where ("UserId" = (select "Id" from "User" where "Email" = @Email))"""
+                let result = conn
+                             |> dapper_map_param_query<Models.TitanClaims> sql (Map["Email", email])
+                             |> Seq.toList
+                return Ok result
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
+
         member this.insert_student_school student_email tutor_user_id : Task<Result<unit, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)

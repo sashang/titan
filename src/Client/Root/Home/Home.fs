@@ -18,12 +18,18 @@ type Msg =
     | SetEmail of string
     | ClickRegister
     | ClickDelNot
+    | FirstTimeUser
+    | FirstTimeMsg of FirstTime.Msg
     | RegisterSuccess of unit
     | RegisterFailure of exn
 
+type PageModel =
+    | FirstTimeModel of FirstTime.Model
+
 type Model =
     { Email : string 
-      BetaRegistrationResult : BetaRegistrationResult option}
+      BetaRegistrationResult : BetaRegistrationResult option
+      Child : PageModel option }
 
 exception RegisterException of BetaRegistrationResult
 //what the user sees 1st time
@@ -43,24 +49,28 @@ let private register_punter (punter : Domain.BetaRegistration) = promise {
     | _  -> return (raise (RegisterException response))
 }
 let init () =
-    {Email = ""; BetaRegistrationResult = None }
+    {Email = ""; BetaRegistrationResult = None; Child = None }
 
 let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
-    match msg with
-    | SetEmail email ->
+    match model, msg with
+    | _, SetEmail email ->
         { model with Email = email}, Cmd.none
-    | ClickDelNot ->
+    | _, ClickDelNot ->
         {model with BetaRegistrationResult = None}, Cmd.none
-    | ClickRegister ->
+    | _, ClickRegister ->
         model, Cmd.ofPromise register_punter {Domain.BetaRegistration.Email = model.Email} RegisterSuccess RegisterFailure
-    | RegisterSuccess () ->
+    | _, RegisterSuccess () ->
         {model with BetaRegistrationResult = None}, Cmd.none
-    | RegisterFailure err ->
+    | _, RegisterFailure err ->
         match err with
         | :? RegisterException as login_ex -> //TODO: check this with someone who knows more. the syntax is weird, and Data0??
             { model with BetaRegistrationResult = Some login_ex.Data0 }, Cmd.none
         | _ ->
             { model with BetaRegistrationResult = None }, Cmd.none
+    | {Child = None}, FirstTimeUser ->
+        Browser.console.info "FirstTimeUser message"
+        {model with Child = Some (FirstTimeModel (FirstTime.init true))}, Cmd.none
+
 
 let private of_beta_result (code : BetaRegistrationCode) (result : BetaRegistrationResult) =
     List.fold2 (fun acc the_code the_message -> if code = the_code then acc + " " + the_message else acc) "" result.Codes result.Messages
@@ -174,6 +184,11 @@ let view (model : Model) (dispatch : Msg -> unit) =
     [ Section.section 
         [ Section.Modifiers [ ] ]
         [ first_impression ]
+      Section.section 
+        [ ]
+        [ (match model.Child with
+          | Some (FirstTimeModel ft_child) -> FirstTime.view ft_child (dispatch << FirstTimeMsg)
+          | _ -> nothing) ]
       Section.section 
         [ Section.Modifiers [ Modifier.BackgroundColor IsTitanPrimary ] ]
         [ target_audience ]

@@ -94,24 +94,32 @@ let default_view = router {
         return! next ctx
     })
 }
-let generate_token username secret issuer =
-    let claims = [|
-        Claim(JwtRegisteredClaimNames.UniqueName, username);
-        Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) |]
-    claims
-    |> generateJWT (secret, SecurityAlgorithms.HmacSha256) issuer (DateTime.UtcNow.AddHours(1.0))
-
-
-let print_claims (claims : TitanClaim list) (logger : ILogger<Debug.DebugLogger>) =
-    claims |>
-    List.map (fun x -> "type = " + x.Type + " value = " + x.Value) |>
-    List.iter (fun x ->  logger.LogWarning(x))
+let generate_token secret issuer (ctx : HttpContext) = task {
+    let user = ctx.User
+    let db = ctx.GetService<IDatabase>()
+    let given_name = user.FindFirst(ClaimTypes.GivenName).Value
+    let surname = user.FindFirst(ClaimTypes.Surname).Value
+    let email = user.FindFirst(ClaimTypes.Email).Value
+    let! result = db.query_claims email
+    match result with
+    | Error message -> return failwith message //no claims no token
+    | Ok titan_claims ->
+        let claims = [| for claim in titan_claims do 
+                           yield Claim(claim.Type, claim.Value) |] 
+        return 
+            [| Claim(JwtRegisteredClaimNames.Email, email);
+               Claim(JwtRegisteredClaimNames.GivenName, given_name);
+               Claim(JwtRegisteredClaimNames.FamilyName, surname);
+               Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) |]
+            |> Array.append claims
+            |> generateJWT (secret, SecurityAlgorithms.HmacSha256) issuer (DateTime.UtcNow.AddHours(1.0))
+}
 
 let check_session (next : HttpFunc) (ctx : HttpContext) = task {
     try
         let logger = ctx.GetLogger<Debug.DebugLogger>()
         let config = ctx.GetService<IConfiguration>()
-        logger.LogInformation ("looking for session")
+        logger.LogInformation ("checking if user is authenticated")
         if ctx.User.Identity.IsAuthenticated then
             let name = ctx.User.Identity.Name
             let auth_type = ctx.User.Identity.AuthenticationType
@@ -119,7 +127,8 @@ let check_session (next : HttpFunc) (ctx : HttpContext) = task {
             ctx.User.Claims 
             |> Seq.map (fun claim -> "type = " + claim.Type + " value = " + claim.Value)
             |> Seq.iter (fun message -> logger.LogInformation (message)) |> ignore
-            let token =  generate_token name config.["JWTSecret"] config.["JWTIssuer"]
+            let! token =  generate_token config.["JWTSecret"] config.["JWTIssuer"] ctx
+            logger.LogInformation ("Generated token = " + token)
             return! ctx.WriteJsonAsync {Session.init with Token = token; Username = name}
         else
             return! RequestErrors.UNAUTHORIZED "Bearer" "" ("no user logged in") next ctx

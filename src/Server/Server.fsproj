@@ -19,8 +19,6 @@
     <Compile Include="./Migrations/DataTypes.fs" />
     <Compile Include="./Migrations/20181221-CreateSchool.fs" />
     <Compile Include="./Migrations/Development.fs" />
-    <Compile Include="ServerTypes.fs" />
-    <Compile Include="JsonWebToken.fs" />
     <Compile Include="../Shared/FableJson.fs" />
     <Compile Include="Model/Models.fs" />
     <Compile Include="Database.fs" />

@@ -15,11 +15,6 @@ let handleNotFound (model: SinglePageState) =
     Browser.console.error("Error parsing url: " + Browser.window.location.href)
     ( model, Navigation.modifyUrl (Pages.to_path Pages.PageType.Login) )
 
-let print_claims (claims : TitanClaim list) =
-    claims |>
-    List.map (fun x -> "type = " + x.Type + " value = " + x.Value) |>
-    List.iter (fun x -> Browser.console.info x)
-    
 #if DEBUG
 open Elmish.Debug
 open Elmish.HMR
