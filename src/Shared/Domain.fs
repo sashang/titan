@@ -181,3 +181,24 @@ type DismissPendingRequest =
 [<CLIMutableAttribute>]
 type DismissPendingResult =
     { Error : APIError option}
+
+[<CLIMutable>]
+type StudentRegister =
+    { FirstName : string
+      LastName : string
+      Email : string }
+
+[<CLIMutable>]
+type StudentRegisterResult =
+    { Error : APIError option}
+
+[<CLIMutable>]
+type TutorRegister =
+    { FirstName : string
+      LastName : string
+      Email : string
+      SchoolName : string }
+
+[<CLIMutable>]
+type TutorRegisterResult =
+    { Error : APIError option}

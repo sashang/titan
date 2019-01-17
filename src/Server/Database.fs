@@ -37,6 +37,8 @@ type IDatabase =
     /// get a list of claims for the user based on their email
     abstract member query_claims: string -> Task<Result<Models.TitanClaims list, string>>
 
+    abstract member insert_tutor: string -> string -> string -> string -> Task<Result<unit, string>>
+    abstract member insert_student: string -> string -> string -> Task<Result<unit, string>>
     abstract member insert_school: Models.School -> Task<Result<bool, string>>
 
     /// Query the database to see if a school is linked to a user
@@ -52,9 +54,6 @@ type IDatabase =
     ///register interested partys
     abstract member register_punters: Models.Punter -> Task<Result<bool, string>>
 
-    /// add student to Student table
-    abstract member insert_student : Models.Student -> Task<Result<bool, string>>
-    
     /// query to get all students
     abstract member query_all_students : Task<Result<Models.Student list, string>>
 
@@ -80,6 +79,54 @@ type Database(c : string) =
     member this.connection = c
 
     interface IDatabase with
+        member this.insert_tutor first last schoolname email : Task<Result<unit, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                let cmd = """insert into "User" ("FirstName","LastName","Email") VALUES (@FirstName, @LastName, @Email)"""
+                let m = (Map ["Email", email; "FirstName", first; "LastName", last])
+                if dapper_map_param_exec cmd m conn = 1 then  
+                    let cmd = """insert into "TitanClaims" ("UserId","Type","Value") VALUES ((select "User"."Id" from "User" where "Email" = @Email), "IsTutor", "true")"""
+                    let m = (Map ["Email", email])
+                    if dapper_map_param_exec cmd m conn = 1 then  
+                        let cmd = """insert into "School" ("UserId","Name") VALUES ((select "User"."Id" from "User" where "Email" = @Email), @Name)"""
+                        let m = (Map ["Email", email;"Name", schoolname])
+                        if dapper_map_param_exec cmd m conn = 1 then  
+                            return Ok ()
+                        else 
+                            return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+                    else
+                        return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+                else
+                    return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
+        member this.insert_student first last email : Task<Result<unit, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                let cmd = """insert into "User" ("FirstName","LastName","Email") VALUES (@FirstName, @LastName, @Email)"""
+                let m = (Map ["Email", email; "FirstName", first; "LastName", last])
+                if dapper_map_param_exec cmd m conn = 1 then  
+                    let cmd = """insert into "TitanClaims" ("UserId","Type","Value") VALUES ((select "User"."Id" from "User" where "Email" = @Email), "IsStudent", "true")"""
+                    let m = (Map ["Email", email])
+                    if dapper_map_param_exec cmd m conn = 1 then  
+                        return Ok ()
+                    else
+                        return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+                else
+                    return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
+
         member this.query_claims email : Task<Result<Models.TitanClaims list, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
@@ -225,22 +272,6 @@ type Database(c : string) =
                 return Error e.MessageText
             |  e ->
                 return Error e.Message
-        }
-
-        member this.insert_student (student : Models.Student) : Task<Result<bool, string>> = task {
-            try
-                use conn = new SqlConnection(this.connection)
-                conn.Open()
-                let cmd = """insert into "Student"("Email", "FirstName", "LastName") values(@Email, @FirstName, @LastName)"""
-                if conn.Execute(cmd, student) = 1 then  
-                    return (Ok true)
-                else
-                    return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
-                with
-                | :? Npgsql.PostgresException as e ->
-                    return Error e.MessageText
-                |  e ->
-                    return Error e.Message
         }
 
         member this.query_id (username : string) : Task<Result<string, string>> = task {

@@ -1,24 +1,32 @@
 module Client.Shared
 
 open Domain
+open Thoth.Json
 
-/// The composed model for the different possible page states of the application
-type PageModel =
-| HomeModel
-| LoginModel of Login.Model
-| SignUpModel of SignUp.Model
+/// Claim info that's shared between pages on the client side.
+[<CLIMutable>]
+type TitanClaim = 
+    { Surname : string 
+      GivenName : string
+      Email : string
+      IsTitan : bool 
+      IsStudent : bool 
+      IsTutor : bool}
+    static member init = 
+      { Surname = ""
+        GivenName = ""
+        Email = ""
+        IsTitan = false
+        IsTutor = false
+        IsStudent = false }
 
-type Msg =
-| LoginMsg of Login.Msg //message from the login page
-| Init
-| SignUpMsg of SignUp.Msg
-| SignOutMsg of SignOut.Msg
-| UrlUpdatedMsg of Pages.PageType
-
-
-type SinglePageState = {
-    page : PageModel //which page I'm at
-    session : Session option //who I am
-}
-
-
+    static member decoder : Decode.Decoder<TitanClaim> =
+        Decode.object
+            (fun get -> 
+                { Surname = get.Required.Field "family_name" Decode.string
+                  GivenName= get.Required.Field "given_name" Decode.string
+                  Email = get.Required.Field "email" Decode.string
+                  IsTutor =  get.Optional.Field "IsTutor" Decode.string = Some "true"
+                  IsStudent = get.Optional.Field "IsStudent" Decode.string = Some "true"
+                  IsTitan = get.Optional.Field "IsTitan" Decode.string = Some "true" })
+    member this.is_first_time = not (this.IsStudent || this.IsTitan || this.IsTutor)

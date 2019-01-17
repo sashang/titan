@@ -1,5 +1,6 @@
 ﻿module Home
 
+open Client.Shared
 open CustomColours
 open Domain
 open Elmish
@@ -19,6 +20,8 @@ type Msg =
     | ClickRegister
     | ClickDelNot
     | FirstTimeUser
+    | Success of unit
+    | Failure of exn
     | FirstTimeMsg of FirstTime.Msg
     | RegisterSuccess of unit
     | RegisterFailure of exn
@@ -29,7 +32,11 @@ type PageModel =
 type Model =
     { Email : string 
       BetaRegistrationResult : BetaRegistrationResult option
+      Claims : TitanClaim option
       Child : PageModel option }
+
+    static member init = 
+        { Email = ""; BetaRegistrationResult = None; Claims = None; Child = None}
 
 exception RegisterException of BetaRegistrationResult
 //what the user sees 1st time
@@ -48,32 +55,38 @@ let private register_punter (punter : Domain.BetaRegistration) = promise {
         return ()
     | _  -> return (raise (RegisterException response))
 }
-let init () =
-    {Email = ""; BetaRegistrationResult = None; Child = None }
+let init () = Model.init
 
-let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
-    match model, msg with
-    | _, SetEmail email ->
+let update  (model : Model) (msg : Msg) (claims : TitanClaim): Model*Cmd<Msg> =
+    match model, msg, claims with
+    | _, SetEmail email, claims ->
         { model with Email = email}, Cmd.none
-    | _, ClickDelNot ->
+    | _, ClickDelNot, claims ->
         {model with BetaRegistrationResult = None}, Cmd.none
-    | _, ClickRegister ->
+    | _, ClickRegister, claims ->
         model, Cmd.ofPromise register_punter {Domain.BetaRegistration.Email = model.Email} RegisterSuccess RegisterFailure
-    | _, RegisterSuccess () ->
+    | _, RegisterSuccess (), claims ->
         {model with BetaRegistrationResult = None}, Cmd.none
-    | _, RegisterFailure err ->
+    | _, RegisterFailure err, claims ->
         match err with
         | :? RegisterException as login_ex -> //TODO: check this with someone who knows more. the syntax is weird, and Data0??
             { model with BetaRegistrationResult = Some login_ex.Data0 }, Cmd.none
         | _ ->
             { model with BetaRegistrationResult = None }, Cmd.none
-    | {Child = None}, FirstTimeUser ->
+    | {Child = None}, FirstTimeUser, claims ->
         Browser.console.info "FirstTimeUser message"
-        {model with Child = Some (FirstTimeModel (FirstTime.init true))}, Cmd.none
-    | {Child = Some (FirstTimeModel child) }, FirstTimeMsg msg ->
+        {model with Child = Some (FirstTimeModel (FirstTime.init true claims))}, Cmd.none
+    | {Child = Some (FirstTimeModel child) }, FirstTimeMsg msg, claims ->
         Browser.console.info "FirstTimeMsg message"
         let new_ft_model, new_cmd = FirstTime.update child msg
-        {model with Child = Some (FirstTimeModel new_ft_model) }, Cmd.none
+        {model with Child = Some (FirstTimeModel new_ft_model) }, Cmd.map FirstTimeMsg new_cmd
+
+    | mode, FirstTimeMsg(FirstTime.ClickGo), claims ->
+        Browser.console.info "HomeMsg click go"
+        model, Cmd.ofPromise FirstTime.submit_tutor { TutorRegister.FirstName = "wo"; TutorRegister.Email = "asdas"; TutorRegister.LastName = "aedsaas"; TutorRegister.SchoolName = "sad"} Success Failure
+    | _ ->
+        Browser.console.info "Unknown HomeMsg"
+        model, Cmd.none
 
 
 let private of_beta_result (code : BetaRegistrationCode) (result : BetaRegistrationResult) =

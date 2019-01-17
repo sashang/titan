@@ -151,13 +151,14 @@ let secure_router = router {
     //pipe_through (pipeline { requires_authentication (json_auth_fail_message)})
     pipe_through logged_in
     not_found_handler (redirectTo false "/")
-    get "/load-school" API.load_school
-    get "/get-all-students" API.get_all_students
-    get "/get-pending" API.get_pending
-    post "/create-school" API.create_school
-    post "/add-student-school" API.add_student_to_school
-    post "/approve-pending" API.approve_pending
-    post "/dismiss-pending" API.dismiss_pending
+    get "api/load-school" API.load_school
+    get "api/get-all-students" API.get_all_students
+    get "api/get-pending" API.get_pending
+    post "api/create-school" API.create_school
+    post "api/add-student-school" API.add_student_to_school
+    post "api/dismiss-pending" API.dismiss_pending
+    post "api/register-student" API.register_student
+    post "/api/register-tutor" API.register_tutor
     forward "/sign-out" sign_out_router
 }
 

@@ -2,6 +2,7 @@
 /// processing is done. Messages to child pages are routed from here.
 module Root
 
+open Client.Shared
 open CustomColours
 open DashboardRouter
 open Domain
@@ -24,35 +25,8 @@ open ValueDeclarations
 [<Emit("atob($0)")>]
 let from_base64 (s:string) : string = jsNative
 
-[<CLIMutable>]
-type TitanClaim = 
-    { Surname : string 
-      GivenName : string
-      Email : string
-      IsTitan : bool 
-      IsStudent : bool 
-      IsTutor : bool}
-    static member init = 
-      { Surname = ""
-        GivenName = ""
-        Email = ""
-        IsTitan = false
-        IsTutor = false
-        IsStudent = false }
-
-    static member decoder : Decode.Decoder<TitanClaim> =
-        Decode.object
-            (fun get -> 
-                { Surname = get.Required.Field "family_name" Decode.string
-                  GivenName= get.Required.Field "given_name" Decode.string
-                  Email = get.Required.Field "email" Decode.string
-                  IsTutor =  get.Optional.Field "IsTutor" Decode.string = Some "true"
-                  IsStudent = get.Optional.Field "IsStudent" Decode.string = Some "true"
-                  IsTitan = get.Optional.Field "IsTitan" Decode.string = Some "true" })
-    member this.is_first_time = not (this.IsStudent || this.IsTitan || this.IsTutor)
 
 type RootMsg =
-    | LoginMsg of Login.Msg
     | ClickSignOut
     | ClickTitle
     | FirstTime of TitanClaim
@@ -64,9 +38,11 @@ type RootMsg =
     | UrlUpdatedMsg of Pages.PageType
     | HomeMsg of Home.Msg
     | EnrolMsg of Enrol.Msg
+    | Success of unit
+    | Failure of exn
 
 type PageModel =
-    | LoginModel of Login.Model
+    | LoginModel
     | SignUpModel of SignUp.Model
     | DashboardRouterModel of DashboardRouter.Model
     | EnrolModel of Enrol.Model
@@ -75,9 +51,9 @@ and
     State = {
         Child : PageModel //which child page I'm at
         Session : Session option //who I am
-        Claims : TitanClaim
+        Claims : TitanClaim option
     } with
-    static member init = {Child = HomeModel (Home.init ()); Session = None; Claims = TitanClaim.init } 
+    static member init = {Child = HomeModel (Home.init ()); Session = None; Claims = None } 
 
 let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMsg> =
     match page with
@@ -99,8 +75,7 @@ let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMs
         { model with Child = HomeModel (Home.init ()) }, Cmd.none
 
     | Some Pages.PageType.Login ->
-        let new_model, cmd = Login.init ()
-        { model with Child = LoginModel new_model}, Cmd.map LoginMsg cmd
+        { model with Child = LoginModel}, Cmd.none 
 
     | Some Pages.PageType.SignUp ->
         let new_model, cmd = SignUp.init ()
@@ -128,8 +103,7 @@ let check_session () = promise {
 }
 
 let init _ : State * Cmd<RootMsg> =
-    {Child = HomeModel (Home.init ()); Session = None; Claims = TitanClaim.init},
-     Cmd.ofPromise check_session () CheckSessionSuccess CheckSessionFailure
+    State.init, Cmd.ofPromise check_session () CheckSessionSuccess CheckSessionFailure
 
 let private goto_url page e =
     Navigation.newUrl (Pages.to_path page) |> List.map (fun f -> f ignore) |> ignore
@@ -183,16 +157,18 @@ let view model dispatch =
                                 yield nav_item_button_url Pages.Enrol "Enrol"
                                 yield nav_item_button_url Pages.Login "Login"
                           | Some session ->
-                                yield dashboard_button model.Claims
-                                yield nav_item_button dispatch ClickSignOut "Sign Out" ]
+                                yield! List.append [ match model.Claims with
+                                                     | Some claims -> yield dashboard_button claims
+                                                     | None -> yield nothing]
+                                                   [ yield nav_item_button dispatch ClickSignOut "Sign Out" ] ]
                 ]
             ]
         ]
         Hero.body [ ] 
             [ 
                 match model.Child with
-                | LoginModel login_model -> 
-                    yield Login.view login_model (LoginMsg >> dispatch)
+                | LoginModel -> 
+                    yield Login.view
                 | SignUpModel sign_up_model ->
                     yield SignUp.view sign_up_model (SignUpMsg >> dispatch)
                 | DashboardRouterModel model ->
@@ -212,19 +188,11 @@ let view model dispatch =
 *)
 let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     match msg, state with    
-    //here we have a login message and we are not logged in (no session)
-    | LoginMsg login_msg, {Child = LoginModel model; Session = None} ->
-        let next_model, cmd, ext = Login.update model login_msg
-        match ext with
-        | Login.ExternalMsg.SignedIn session ->
-            {state with Child = LoginModel next_model; Session = Some session}, Cmd.map LoginMsg cmd
-        | Login.ExternalMsg.Nop ->
-            {state with Child = LoginModel next_model}, Cmd.map LoginMsg cmd
 
     | SignOutMsg sign_out, state ->
         let cmd = SignOut.update sign_out
         //assume that signing out worked so we delete the sesison
-        { Child = HomeModel (Home.init ()); Session = None; Claims = TitanClaim.init}, Cmd.map SignOutMsg cmd
+        { Child = HomeModel (Home.init ()); Session = None; Claims = None}, Cmd.map SignOutMsg cmd
 
     | ClickTitle, state ->
         //move to the home page
@@ -243,10 +211,10 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         | Ok claims ->
             match state with
             | {Child = HomeModel home_model} when claims.is_first_time ->
-                let new_home_model, home_msg = Home.update home_model Home.FirstTimeUser
-                { state with Session = Some session; Claims = claims; Child = HomeModel new_home_model}, Cmd.none
+                let new_home_model, home_msg = Home.update home_model Home.FirstTimeUser claims
+                { state with Session = Some session; Claims = Some claims; Child = HomeModel new_home_model}, Cmd.none
             | _ ->
-                { state with Session = Some session; Claims = claims}, Cmd.none
+                { state with Session = Some session; Claims = Some claims}, Cmd.none
         | Error e -> 
             Browser.console.warn e
             {state with Session = None}, Cmd.none 
@@ -258,16 +226,18 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         let new_model, cmd = SignUp.update model signup_msg 
         {state with Child = SignUpModel new_model}, Cmd.map SignUpMsg cmd 
 
-    | HomeMsg home_msg, {Child = HomeModel model} ->
-        let new_model, cmd = Home.update model home_msg
+    | HomeMsg home_msg, {Child = HomeModel model; Claims = Some claims} ->
+        Browser.console.info "HomeMsg with claims"
+        let new_model, cmd = Home.update model home_msg claims
         {state with Child = HomeModel new_model}, Cmd.map HomeMsg cmd
+
+    | HomeMsg home_msg, {Claims = None} -> //no claims so don't pass it through
+        Browser.console.info "HomeMsg with no claims"
+        state, Cmd.none
 
     | EnrolMsg enrol_msg, {Child = EnrolModel model; Session = None} ->
         let new_model, cmd = Enrol.update model enrol_msg
         {state with Child = EnrolModel new_model}, Cmd.map EnrolMsg cmd
-    //here we are logging in and we are already logged in
-    | LoginMsg login_msg, {Session = Some session} ->
-        state, Cmd.none
 
     | DashboardRouterMsg msg, {Child = DashboardRouterModel model; Session = Some session} ->
         let new_model, cmd = DashboardRouter.update model msg

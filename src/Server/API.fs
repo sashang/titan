@@ -77,36 +77,6 @@ let dismiss_pending (next :HttpFunc) (ctx : HttpContext) = task {
         return! ctx.WriteJsonAsync {DismissPendingResult.Error = None}
 }
 
-let approve_pending (next :HttpFunc) (ctx : HttpContext) = task {
-    let logger = ctx.GetLogger<Debug.DebugLogger>()
-    let db = ctx.GetService<IDatabase>()
-    let! info = ctx.BindJsonAsync<Domain.ApprovePendingRequest>()
-    //get the user id of the tutor
-    let user_id = ctx.User.FindFirst(ClaimTypes.NameIdentifier).Value
-    let! result = db.insert_student {Models.Student.init with Email = info.Email; FirstName = info.FirstName; LastName = info.LastName}
-    match result with
-    | Error e ->
-        logger.LogInformation("failed to insert pending student: " + e)
-        let api_error = {ApprovePendingResult.Error = Some (APIError.init [APICode.DatabaseError] [e])}
-        return! ctx.WriteJsonAsync api_error
-    | Ok _ ->
-        let! result = db.insert_student_school info.Email user_id
-        match result with
-        | Error e ->
-            logger.LogInformation("failed to insert new student: " + e)
-            let api_error = {ApprovePendingResult.Error = Some (APIError.init [APICode.DatabaseError] [e])}
-            return! ctx.WriteJsonAsync api_error
-        | Ok _ ->
-            let! result = db.delete_pending info.Email
-            match result with
-            | Error e ->
-                logger.LogInformation("failed delete pending student: " + e)
-                let api_error = {ApprovePendingResult.Error = Some (APIError.init [APICode.DatabaseError] [e])}
-                return! ctx.WriteJsonAsync api_error
-            | Ok _ ->
-                return! ctx.WriteJsonAsync {ApprovePendingResult.Error = None}
-}
-
 let get_pending (next : HttpFunc) (ctx : HttpContext) = task {
     let logger = ctx.GetLogger<Debug.DebugLogger>()
     let db = ctx.GetService<IDatabase>()
@@ -123,6 +93,34 @@ let get_pending (next : HttpFunc) (ctx : HttpContext) = task {
             {GetAllStudentsResult.Codes = [APICode.DatabaseError]
              GetAllStudentsResult.Messages = ["Failed to get students from database"]
              Students = []}
+}
+
+let register_tutor (next : HttpFunc) (ctx : HttpContext) = task {
+    let! registration = ctx.BindJsonAsync<Domain.TutorRegister>()
+    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    let db = ctx.GetService<IDatabase>()
+    let! result = db.insert_tutor registration.FirstName registration.LastName registration.SchoolName registration.Email 
+    match result with
+    | Ok () ->
+        return! ctx.WriteJsonAsync {TutorRegisterResult.Error = None}
+    | Error e ->
+        logger.LogWarning e
+        return! ctx.WriteJsonAsync {TutorRegisterResult.Error = 
+            Some({APIError.Codes = [APICode.Success]; APIError.Messages = [e]})}
+}
+
+let register_student (next : HttpFunc) (ctx : HttpContext) = task {
+    let! registration = ctx.BindJsonAsync<Domain.StudentRegister>()
+    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    let db = ctx.GetService<IDatabase>()
+    let! result = db.insert_student registration.FirstName registration.LastName registration.Email 
+    match result with
+    | Ok () ->
+        return! ctx.WriteJsonAsync {StudentRegisterResult.Error = None}
+    | Error e ->
+        logger.LogWarning e
+        return! ctx.WriteJsonAsync {StudentRegisterResult.Error = 
+            Some({APIError.Codes = [APICode.Success]; APIError.Messages = [e]})}
 }
 
 let add_student_to_school (next : HttpFunc) (ctx : HttpContext) = task {

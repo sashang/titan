@@ -11,6 +11,7 @@
     <Compile Include="Pages.fs" />
     <Compile Include="CustomColours.fs" />
     <Compile Include="Style.fs" />
+    <Compile Include="Shared.fs" />
     <Compile Include="Root/SignUp/SignUp.fs" />
     <Compile Include="Root/Home/FirstTime/FirstTime.fs" />
     <Compile Include="Root/Home/Home.fs" />
@@ -25,7 +26,6 @@
     <Compile Include="Root/Dashboard/Student/Dashboard.fs" />
     <Compile Include="Root/Dashboard/DashboardRouter.fs" />
     <Compile Include="Root/Root.fs" />
-    <Compile Include="Shared.fs" />
     <Compile Include="Client.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

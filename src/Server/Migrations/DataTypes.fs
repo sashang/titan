@@ -2,8 +2,8 @@ namespace TitanMigrations
 
 type User = 
     { Email : string
-      GivenName : string
-      Surname : string }
+      FirstName : string
+      LastName : string }
 
 type TitanClaim =
     { UserId : int
