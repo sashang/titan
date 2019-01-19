@@ -29,10 +29,7 @@ let private dapper_map_param_exec(sql : string) (param : Map<string,_>) (connect
     let dict = expando :> IDictionary<string,obj>
     for value in param do
         dict.Add(value.Key, value.Value :> obj)
-
-    let r = connection.Execute(sql, expando)
-    printfn "number of rows %i" r
-    r
+    connection.Execute(sql, expando)
 
 type IDatabase =
 

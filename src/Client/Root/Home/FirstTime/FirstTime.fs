@@ -15,6 +15,7 @@ open Fable.Core.JsInterop
 open Fulma
 open ModifiedFableFetch
 open Thoth.Json
+open ValueDeclarations
 
 type Category =
     | Tutor
@@ -26,6 +27,7 @@ type Msg =
     | ClickTutor
     | ClickStudent
     | Toggle
+    | ClickAcceptTerms
     | SetFirstName of string
     | SetLastName of string
     | SetSchoolName of string
@@ -54,9 +56,10 @@ type Model =
     { Active : bool
       SubForm : CategoryForm option
       Claims : TitanClaim
+      Accepted : bool
       Error : APIError }
     static member init active claims = 
-        {Active = true; SubForm = None; Claims = claims; Error = APIError.init_empty}
+        {Active = true; Accepted = false; SubForm = None; Claims = claims; Error = APIError.init_empty}
 
 exception RegisterEx of APIError
 
@@ -85,9 +88,6 @@ let private submit_student (student : StudentRegister) = promise {
 let init active claims =
     Model.init active claims
 
-let button (model : Model) (dispatch : Msg -> unit) text msg =
-    Button.button [ Button.Color IsTitanInfo
-                    Button.Props [ OnClick (fun e -> dispatch msg) ] ] [ str text ] 
 
 
 let inner_content model dispatch = function
@@ -99,7 +99,8 @@ let inner_content model dispatch = function
                 (fun e -> dispatch (SetLastName e.Value)) APICode.LastName model.Error
               yield! input_field_with_error "School Name" form.SchoolName
                 (fun e -> dispatch (SetSchoolName e.Value)) APICode.SchoolName model.Error
-              yield! input_field_ro "Email" form.Email APICode.Email model.Error  ]
+              yield! input_field_ro "Email" form.Email APICode.Email model.Error
+              yield checkbox ACCEPT_TERMS model.Accepted dispatch ClickAcceptTerms  ]
 
     | StudentForm form ->
         Box.box' [ ]
@@ -107,15 +108,26 @@ let inner_content model dispatch = function
                 (fun e -> dispatch (SetFirstName e.Value)) APICode.FirstName model.Error
               yield! input_field_with_error "Last Name" form.LastName
                 (fun e -> dispatch (SetLastName e.Value)) APICode.LastName model.Error
-              yield! input_field_ro "Email" form.Email APICode.Email model.Error]
+              yield! input_field_ro "Email" form.Email APICode.Email model.Error
+              yield checkbox ACCEPT_TERMS model.Accepted dispatch ClickAcceptTerms ] 
 
 let content (model : Model) (dispatch : Msg -> unit) =
+    let is_tutor_form subform =
+        match subform with
+        | Some (TutorForm _) -> true
+        | _ -> false
+
+    let is_student_form subform = 
+        match subform with
+        | Some (StudentForm _) -> true
+        | _ -> false
+
     div [ ] [
         Columns.columns []
             [ Column.column [ ]
-                [ button model dispatch "Tutor" ClickTutor ]
+                [ button_enabled dispatch ClickTutor "Tutor" true ]
               Column.column [ ]
-                [ button model dispatch "Student" ClickStudent ] ]
+                [ button_enabled dispatch ClickStudent "Student" true ] ]
                 
         (match model.SubForm with
         | Some form -> inner_content model dispatch form
@@ -133,11 +145,10 @@ let view (model : Model) (dispatch : Msg -> unit) =
                   Modal.Card.body [ ]
                     [ content model dispatch ]
                   Modal.Card.foot [ ]
-                    [ button model dispatch "Go!" ClickGo
+                    [ button_enabled dispatch ClickGo "Go!" model.Accepted
                       Button.button [ Button.Props [ OnClick (fun e -> dispatch ClickCancel) ] ]
                         [ str "Cancel" ] ]
-                  notification APICode.Database model.Error
-                ] ] ]
+                  notification APICode.Database model.Error ] ] ]
 
 let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     match model, msg with
@@ -147,6 +158,10 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
 
     | model, SuccessTest test -> 
         Browser.console.info "asdasd"
+        model, Cmd.none
+
+    | {Accepted = false} , ClickGo ->
+        Browser.console.info "user must accept terms before proceeding"
         model, Cmd.none
 
     | model, ClickGo ->
@@ -205,3 +220,8 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
 
     | {SubForm = Some(TutorForm tutor_form)}, SetSchoolName name ->
         {model with SubForm = Some (TutorForm {tutor_form with TutorFormModel.SchoolName = name})}, Cmd.none
+
+    | model, ClickAcceptTerms ->
+        Browser.console.info "Accepted terms"
+        //toggle when the user clicks accept terms
+        {model with Accepted = not model.Accepted}, Cmd.none

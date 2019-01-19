@@ -40,24 +40,14 @@ let centerStyle direction =
             Padding "20px 0"
     ]
 
-let words size message =
-    R.span [ Style [ FontSize (size |> sprintf "%dpx") ] ] [ R.str message ]
-
-let buttonLink cssClass onClick elements =
-    R.a [ ClassName cssClass
-          OnClick (fun _ -> onClick())
-          OnTouchStart (fun _ -> onClick())
-          Style [ Cursor "pointer" ] ] elements
-
-let button dispatch msg text = 
-    Button.button [
+let button dispatch msg text props = 
+    Button.button (List.append [
         Button.Color IsTitanInfo
-        Button.OnClick (fun _ -> (dispatch msg))
-    ] [ R.str text ]
+        Button.OnClick (fun _ -> (dispatch msg)) ] props)
+        [ R.str text ]
 
- 
-
-
+let button_enabled dispatch msg text enable =
+    button dispatch msg text [Button.Disabled (not enable)]
 
 let onEnter msg dispatch =
     function
@@ -89,6 +79,7 @@ let input_field_ro label text code error =
                       Input.IsReadOnly true ]]]
               (make_help code error))]
 
+                    
 let input_field label text on_change =
     [ Field.div [ ] 
         [ Field.label [ Field.Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
@@ -117,3 +108,12 @@ let notification (code : APICode) (error : APIError) =
           [ for (c,m) in zipped do yield (if c = code then R.str m else R.nothing) ]
     else
         R.nothing
+
+let checkbox text ticked dispatch msg = 
+    Field.div [ ]
+        [ Control.div [ ]
+            [ Checkbox.checkbox [  ]
+                [ Checkbox.input [ Common.Props [ 
+                    Checked ticked
+                    OnChange (fun ev -> dispatch msg)] ]
+                  R.str text ] ] ]
