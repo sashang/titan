@@ -54,7 +54,7 @@ let main args =
             printfn "xavier user id = %s" user_id
             //add a school
             task {
-                let! res = db.insert_school {Models.default_school with Name="xmansion"; Principal = "Prof X"; UserId = user_id}
+                let! res = db.insert_school {Models.init with Name="xmansion"; UserId = user_id}
                 match res with
                 | Ok _ ->
                     printfn "add xmansion school"
@@ -68,8 +68,8 @@ let main args =
             printfn "error: %s" message
             return failwith message
 
-        db.insert_student {Student.init with FirstName="Scott"; LastName = "Summers"; Email = "cyclops@xmansion.com"} |> ignore
-        db.insert_student {Student.init with FirstName="Logan"; LastName = ""; Email = "wolverine@xmansion.com"} |> ignore
+        db.insert_student "Scott" "Summers"  "cyclops@xmansion.com" |> ignore
+        db.insert_student "Logan" "" "wolverine@xmansion.com" |> ignore
     }
     result.Wait()
     0

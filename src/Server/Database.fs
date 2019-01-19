@@ -49,6 +49,8 @@ type IDatabase =
     abstract member update_school_by_user_id: Models.School -> Task<Result<bool, string>>
 
     abstract member school_from_user_id: string -> Task<Result<Models.School, string>>
+    
+    abstract member school_from_email: string -> Task<Result<Models.School, string>>
 
     ///register interested partys
     abstract member register_punters: Models.Punter -> Task<Result<bool, string>>
@@ -323,6 +325,22 @@ type Database(c : string) =
                 return Error e.Message
         }
 
+        member this.school_from_email (email : string) : Task<Result<Models.School, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                let cmd = """select * from "School" where "School"."UserId" = (select "Id" from "User" where "Email" = @Email)"""
+                let result = conn
+                                |> dapper_map_param_query<Models.School> cmd (Map ["Email", email])
+                                |> Seq.head
+                return Ok result
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
+        
         member this.update_school_by_user_id (school : Models.School) : Task<Result<bool, string>> = task {
 
             try 
@@ -362,7 +380,7 @@ type Database(c : string) =
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
                 let sql = """select "Name", "Principal" from "School" where "UserId" = @UserId"""
-                let result = conn.QueryFirst<Models.School>(sql, {Models.default_school with Models.School.UserId = user_id})
+                let result = conn.QueryFirst<Models.School>(sql, {Models.init with Models.School.UserId = user_id})
                 return Ok result
             with
             | :? Npgsql.PostgresException as e ->

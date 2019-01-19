@@ -68,19 +68,17 @@ let private make_help (code : APICode) (error : APIError) =
          [] error.Codes error.Messages
 
 //a read only input field
-let input_field_ro label text code error =
+let input_field_ro label text =
     [ Field.div [ ] 
-        (List.append 
-            [ Field.label [ Field.Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
-                [ Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ R.str label ] ]
-              Control.div [ ]
-                [ Input.text 
-                    [ Input.Value text
-                      Input.IsReadOnly true ]]]
-              (make_help code error))]
+        [ Field.label [ Field.Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
+            [ Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ R.str label ] ]
+          Control.div [ ]
+            [ Input.text 
+                [ Input.Value text
+                  Input.IsReadOnly true ]]]]
 
                     
-let input_field label text on_change =
+let input_field_without_error label text on_change =
     [ Field.div [ ] 
         [ Field.label [ Field.Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
             [ Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ R.str label ] ]
@@ -89,7 +87,7 @@ let input_field label text on_change =
                 [ Input.Value text
                   Input.OnChange on_change ] ]] ]
 
-let input_field_with_error (label: string) (text : string) on_change (code : APICode) (error : APIError) =
+let input_field_with_error (error : APIError) (code : APICode) (label: string) (text : string) on_change  =
     [ Field.div [ ]
         (List.append 
             [ Field.label [ Field.Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
@@ -100,14 +98,23 @@ let input_field_with_error (label: string) (text : string) on_change (code : API
                       Input.OnChange on_change ] ] ]
               (make_help code error))]
 
-let notification (code : APICode) (error : APIError) =
-    let zipped = List.zip error.Codes error.Messages
+let input_field (error : APIError option) (code : APICode) =
+    match error with
+    | Some error -> input_field_with_error error code
+    | _ -> input_field_without_error
+        
 
-    if List.contains code error.Codes then
-        Notification.notification [ Notification.Color IsTitanError ]
-          [ for (c,m) in zipped do yield (if c = code then R.str m else R.nothing) ]
-    else
-        R.nothing
+let notification (code : APICode) (error : APIError option) =
+    
+    match error with
+    | Some e ->
+        if List.contains code e.Codes then
+            let zipped = List.zip e.Codes e.Messages
+            Notification.notification [ Notification.Color IsTitanError ]
+              [ for (c,m) in zipped do yield (if c = code then R.str m else R.nothing) ]
+        else
+            R.nothing
+    | _ -> R.nothing
 
 let checkbox text ticked dispatch msg = 
     Field.div [ ]

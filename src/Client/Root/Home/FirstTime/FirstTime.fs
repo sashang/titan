@@ -31,7 +31,7 @@ type Msg =
     | SetFirstName of string
     | SetLastName of string
     | SetSchoolName of string
-    | Success of unit
+    | Success of APIError
     | Failure of exn
 
 type TutorFormModel =
@@ -57,10 +57,10 @@ type Model =
       Claims : TitanClaim
       Accepted : bool
       Consent : bool //student has parent or guardian consent
-      Error : APIError }
+      Error : APIError option }
     static member init active claims = 
         {Active = true; Accepted = false; SubForm = None;
-         Claims = claims; Error = APIError.init_empty; Consent = false}
+         Claims = claims; Error = None; Consent = false}
 
 exception RegisterEx of APIError
 
@@ -68,7 +68,7 @@ let submit_tutor (tutor : TutorRegister) = promise {
     if not tutor.is_valid then
         return (raise (RegisterEx (APIError.init [APICode.SchoolName] ["Name cannot be blank"])))
     else
-        let request = make_request 4 tutor
+        let request = make_post 4 tutor
         let decoder = Decode.Auto.generateDecoder<APIError>()
         let! response = Fetch.tryFetchAs "/api/register-tutor" decoder request
         Browser.console.info "received response from register-tutor"
@@ -79,7 +79,7 @@ let private submit_student (student : StudentRegister) = promise {
     if not student.is_valid then
         return (raise (RegisterEx (APIError.init [APICode.Failure] ["Invalid input"])))
     else
-        let request = make_request 3 student
+        let request = make_post 3 student
         let decoder = Decode.Auto.generateDecoder<APIError>()
         let! response = Fetch.tryFetchAs "/api/register-student" decoder request
         Browser.console.info "received response from register-student"
@@ -94,22 +94,22 @@ let init active claims =
 let inner_content model dispatch = function
     | TutorForm form ->
         Box.box' [ ]
-            [ yield! input_field_with_error "First Name" form.FirstName
-                (fun e -> dispatch (SetFirstName e.Value)) APICode.FirstName model.Error
-              yield! input_field_with_error "Last Name" form.LastName
-                (fun e -> dispatch (SetLastName e.Value)) APICode.LastName model.Error
-              yield! input_field_with_error "School Name" form.SchoolName
-                (fun e -> dispatch (SetSchoolName e.Value)) APICode.SchoolName model.Error
-              yield! input_field_ro "Email" form.Email APICode.Email model.Error
+            [ yield! input_field  model.Error APICode.FirstName
+                  "First Name" form.FirstName (fun e -> dispatch (SetFirstName e.Value))
+              yield! input_field model.Error APICode.LastName
+                "Last Name" form.LastName (fun e -> dispatch (SetLastName e.Value)) 
+              yield! input_field model.Error APICode.SchoolName
+                "School Name" form.SchoolName (fun e -> dispatch (SetSchoolName e.Value))
+              yield! input_field_ro "Email" form.Email
               yield checkbox ACCEPT_TERMS model.Accepted dispatch ClickAcceptTerms  ]
 
     | StudentForm form ->
         Box.box' [ ]
-            [ yield! input_field_with_error "First Name" form.FirstName
-                (fun e -> dispatch (SetFirstName e.Value)) APICode.FirstName model.Error
-              yield! input_field_with_error "Last Name" form.LastName
-                (fun e -> dispatch (SetLastName e.Value)) APICode.LastName model.Error
-              yield! input_field_ro "Email" form.Email APICode.Email model.Error
+            [ yield! input_field model.Error APICode.FirstName 
+                "First Name" form.FirstName (fun e -> dispatch (SetFirstName e.Value))
+              yield! input_field model.Error APICode.LastName
+                "Last Name" form.LastName (fun e -> dispatch (SetLastName e.Value))
+              yield! input_field_ro "Email" form.Email 
               yield checkbox CONSENT model.Consent dispatch ClickConsent
               yield checkbox ACCEPT_TERMS model.Accepted dispatch ClickAcceptTerms ] 
 
@@ -197,14 +197,14 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
            StudentRegister.LastName = student_model.LastName
            StudentRegister.Email = student_model.Email } Success Failure
 
-    | model, Success () ->
+    | model, Success _ ->
         {model with Active = false}, Cmd.none
 
     | model, Failure e ->
         match e with
         | :? RegisterEx as ex ->
             List.iter (fun m -> Browser.console.warn ("RegisterEx:" + m)) ex.Data0.Messages
-            {model with Error = ex.Data0}, Cmd.none
+            {model with Error = Some ex.Data0}, Cmd.none
         | e ->
             Browser.console.warn ("Failed to submit form " + e.Message)
             model, Cmd.none

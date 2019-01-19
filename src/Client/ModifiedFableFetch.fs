@@ -47,20 +47,15 @@ let post_record (url: string) (body: string) (properties: RequestProperties list
         }
     )
 
-let unwrap_response (response : Result<APIError,string>) ex_to_raise = 
+let unwrap_response (response : Result<APIError,string>) ex_to_raise  = 
     match response with
-    | Ok result ->
-        match result.Codes with
-        | [] -> ()
-        | APICode.Success::_  -> ()
-        | _ ->
-            raise (ex_to_raise result)
+    | Ok result -> result
     | Error e ->
         Browser.console.warn ("Error: " + e)
         raise (ex_to_raise (APIError.init [APICode.Fetch] [e]))
 
 
-let make_request (count : int) (data : 'a) =
+let make_post (count : int) (data : 'a) =
     let body = Encode.Auto.toString (count, data)
     let props =
         [ RequestProperties.Method HttpMethod.POST
@@ -68,4 +63,12 @@ let make_request (count : int) (data : 'a) =
           requestHeaders [ HttpRequestHeaders.ContentType "application/json"
                            HttpRequestHeaders.Accept "application/json"]
           RequestProperties.Body !^(body) ] 
+    props
+
+let make_get =
+    let props =
+        [ RequestProperties.Method HttpMethod.GET
+          RequestProperties.Credentials RequestCredentials.Include
+          requestHeaders [ HttpRequestHeaders.ContentType "application/json"
+                           HttpRequestHeaders.Accept "application/json"] ] 
     props

@@ -14,10 +14,9 @@ type TitanClaims =
 type School =
     { Id : int32
       UserId : string
-      Name : string 
-      Principal : string }
+      Name : string }
 
-let default_school = {Id = 0; UserId = ""; Name = ""; Principal = ""}
+let init = {Id = 0; UserId = ""; Name = ""}
 
 [<CLIMutable>]
 type Punter =

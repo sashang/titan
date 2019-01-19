@@ -5,7 +5,6 @@ open Thoth.Json
 
 [<RequireQualifiedAccess>]
 type APICode = 
-    | Success
     | Failure
     | Database
     | Fetch
@@ -14,6 +13,7 @@ type APICode =
     | Email
     | FirstName
     | LastName
+    | NoSchool
 
 [<CLIMutableAttribute>]
 type APIError = 
@@ -87,34 +87,21 @@ type SignOutResult =
     { code : SignOutCode list
       message : string list }
 
-///Return codes to the create school request.
-type CreateSchoolCode = 
-    Success = 0 | SchoolNameInUse = 1 | DatabaseError = 2
-    | Unknown = 3 | FetchError = 4
-
-///The data submitted with the create school request
 [<CLIMutable>]
-type School =
-    { Name : string
-      Principal : string }
+type SchoolRequest =
+    { Email : string }
 
-///The result of submitting the create school request when the teacher
-///first creates the school
 [<CLIMutable>]
-type CreateSchoolResult =
-    { Codes : CreateSchoolCode list
-      Messages : string list }
-
-type LoadSchoolCode =
-    Success = 0 | DatabaseError = 1 | FetchError = 2 | NoSchool = 3
+type SchoolResponse =
+    { SchoolName : string
+      Error : APIError option }
 
 [<CLIMutable>]
 type LoadSchoolResult =
-    { Codes : LoadSchoolCode list
-      /// The error messages if there are error codes in Codes
-      Messages : string list
-      /// Valid if the first code in Codes is Success
-      TheSchool : School}
+    { SchoolName : string
+      FirstName : string
+      LastName : string
+      Error : APIError }
 
 [<CLIMutable>]
 type BetaRegistration =
@@ -140,14 +127,12 @@ type Student =
 
 [<CLIMutable>]
 type GetAllStudentsResult =
-    { Codes : APICode list
-      Messages : string list
+    { Error : APIError option
       Students : Student list}
 
 [<CLIMutableAttribute>]
 type AddStudentSchool = 
-    { Codes : APICode list
-      Messages : string list }
+    { Error : APIError option }
 
 
 /// Students who have applied to enrol and are waiting for approval

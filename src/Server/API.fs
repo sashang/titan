@@ -5,7 +5,6 @@ open Domain
 open FSharp.Control.Tasks.ContextInsensitive
 open Giraffe
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Identity
 open Microsoft.Extensions.Logging
 open System.Security.Claims
 open System.Net.Mail
@@ -48,19 +47,6 @@ let enrol (next : HttpFunc) (ctx : HttpContext) = task {
             return! ctx.WriteJsonAsync api_error
 }
 
-let get_schools (next : HttpFunc) (ctx : HttpContext) = task {
-    let logger = ctx.GetLogger<Debug.DebugLogger>()
-    logger.LogInformation("get schools")
-    let db = ctx.GetService<IDatabase>()
-    let! result = db.query_all_schools
-    match result with
-    | Ok schools ->
-        return! ctx.WriteJsonAsync (schools |> List.map (fun x -> {School.Name = x.Name; School.Principal = x.Principal}))
-    | Error err ->
-        logger.LogInformation("Could not get students: " + err)
-        return! ctx.WriteJsonAsync []
-}
-
 let dismiss_pending (next :HttpFunc) (ctx : HttpContext) = task {
     let logger = ctx.GetLogger<Debug.DebugLogger>()
     let db = ctx.GetService<IDatabase>()
@@ -84,14 +70,12 @@ let get_pending (next : HttpFunc) (ctx : HttpContext) = task {
     match result with
     | Ok students ->
         return! ctx.WriteJsonAsync 
-            {GetAllStudentsResult.Codes = [APICode.Success]
-             GetAllStudentsResult.Messages = []
+            {GetAllStudentsResult.Error = None
              Students = students |> List.map (fun x -> {FirstName = x.FirstName; LastName = x.LastName; Email = x.Email})}
     | Error err ->
         logger.LogInformation("Could not get students")
         return! ctx.WriteJsonAsync 
-            {GetAllStudentsResult.Codes = [APICode.Database]
-             GetAllStudentsResult.Messages = ["Failed to get students from database"]
+            {GetAllStudentsResult.Error = None
              Students = []}
 }
 
@@ -144,11 +128,10 @@ let add_student_to_school (next : HttpFunc) (ctx : HttpContext) = task {
     let! result = db.insert_student_school student.Email user_id
     match result with
     | Ok () ->
-        return! ctx.WriteJsonAsync {AddStudentSchool.Codes = [APICode.Success];
-            AddStudentSchool.Messages = [""]}
+        return! ctx.WriteJsonAsync {AddStudentSchool.Error = None}
     | Error e ->
         logger.LogWarning e
-        return! ctx.WriteJsonAsync {AddStudentSchool.Codes = [APICode.Database]; AddStudentSchool.Messages = [e]}
+        return! ctx.WriteJsonAsync {AddStudentSchool.Error = Some (APIError.init [APICode.Database] [e])}
 
 }
  
@@ -159,14 +142,12 @@ let get_all_students (next : HttpFunc) (ctx : HttpContext) = task {
     match result with
     | Ok students ->
         return! ctx.WriteJsonAsync 
-            {GetAllStudentsResult.Codes = [APICode.Success]
-             GetAllStudentsResult.Messages = []
+            {GetAllStudentsResult.Error = None
              Students = students |> List.map (fun x -> {FirstName = x.FirstName; LastName = x.LastName; Email = x.Email})}
     | Error err ->
         logger.LogInformation("Could not get students")
         return! ctx.WriteJsonAsync 
-            {GetAllStudentsResult.Codes = [APICode.Database]
-             GetAllStudentsResult.Messages = ["Failed to get students from database"]
+            {GetAllStudentsResult.Error = Some (APIError.init [APICode.Database] ["Failed to get students from database"])
              Students = []}
 }
 
@@ -204,64 +185,22 @@ let register_punter (next : HttpFunc) (ctx : HttpContext) = task {
              BetaRegistrationResult.Messages = [e.Message]}
 }
 
-let create_school (next : HttpFunc) (ctx : HttpContext) = task {
-    let db_service = ctx.GetService<IDatabase>()
-    let! school = ctx.BindJsonAsync<Domain.School>()
-    //get the user id the asp.net way....
-    let user_id = ctx.User.FindFirst(ClaimTypes.NameIdentifier).Value
-    let! exists = db_service.user_has_school user_id
-    let school_info = {Models.default_school with Models.School.Principal = school.Principal
-                                                  Models.School.Name = school.Name; Models.School.UserId = user_id}
-
-    let! result =
-        match exists with
-        | Ok false ->
-            db_service.insert_school school_info    
-        | Ok true ->
-            db_service.update_school_by_user_id school_info
-        | Error error -> task { return Error error }
-
-
-    let logger = ctx.GetLogger<Debug.DebugLogger>()
-    match result with
-    | Ok _ ->
-        return! ctx.WriteJsonAsync {CreateSchoolResult.Codes = [CreateSchoolCode.Success]; CreateSchoolResult.Messages = [""]}
-    | Error message ->
-        logger.LogWarning("Failed to create school: " + message)
-        return! ctx.WriteJsonAsync {CreateSchoolResult.Codes = [CreateSchoolCode.DatabaseError]; CreateSchoolResult.Messages = [message]}
-}
-
 /// Load the user's school.
 let load_school (next :HttpFunc) (ctx : HttpContext) = task {
     let logger = ctx.GetLogger<Debug.DebugLogger>()
+    logger.LogInformation("called load_school")
     let db_service = ctx.GetService<IDatabase>()
-    let user_id = ctx.User.FindFirst(ClaimTypes.NameIdentifier).Value
-    let! result = db_service.user_has_school user_id
+    let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+    let! result = db_service.school_from_email user_email
     match result with
-        //has a school so look it up and return it.
-        | Ok true ->
-            let! result = db_service.school_from_user_id user_id
-            match result with
-            | Ok db_school ->
-                let the_school = {Domain.School.Name = db_school.Name; Domain.School.Principal = db_school.Principal}
-                return! ctx.WriteJsonAsync {LoadSchoolResult.Codes = [LoadSchoolCode.Success]
-                                            LoadSchoolResult.Messages = [""]; TheSchool = the_school}
-            | Error message ->
-                logger.LogWarning("Failed to load school: " + message)
-                return! ctx.WriteJsonAsync {LoadSchoolResult.Codes = [LoadSchoolCode.DatabaseError]
-                                            LoadSchoolResult.Messages = [message]
-                                            TheSchool = {Domain.School.Principal = ""; Domain.School.Name = ""}}
-        //no school
-        | Ok false -> 
-            return! ctx.WriteJsonAsync {LoadSchoolResult.Codes = [LoadSchoolCode.NoSchool]
-                                        LoadSchoolResult.Messages = ["No school associated with user."]
-                                        TheSchool = {Domain.School.Principal = ""; Domain.School.Name = ""}}
-        //something bad happened
-        | Error error ->
-            logger.LogWarning("Failed to check if user is associated with a school: " + error)
-            return! ctx.WriteJsonAsync {LoadSchoolResult.Codes = [LoadSchoolCode.DatabaseError]
-                                        LoadSchoolResult.Messages = [error]
-                                        TheSchool = {Domain.School.Principal = ""; Domain.School.Name = ""}}
+    | Ok db_school ->
+        let the_school = {Domain.SchoolResponse.SchoolName = db_school.Name; Error = None}
+        return! ctx.WriteJsonAsync the_school
+                                   
+    | Error message ->
+        logger.LogWarning("Failed to load school: " + message)
+        return! ctx.WriteJsonAsync {SchoolResponse.SchoolName = "";
+                                    Error = Some (APIError.init [APICode.Database] [message])}
 
 }
 
