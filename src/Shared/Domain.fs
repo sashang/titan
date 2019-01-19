@@ -124,6 +124,13 @@ type Student =
       static member init =
         {FirstName = ""; LastName = ""; Email = ""}
 
+[<CLIMutable>]
+type UserResponse =
+    { FirstName : string
+      LastName : string
+      Error : APIError option }
+    static member init =
+        {FirstName = ""; LastName = ""; Error = None}
 
 [<CLIMutable>]
 type GetAllStudentsResult =

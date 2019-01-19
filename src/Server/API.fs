@@ -185,6 +185,26 @@ let register_punter (next : HttpFunc) (ctx : HttpContext) = task {
              BetaRegistrationResult.Messages = [e.Message]}
 }
 
+let get_name  (next :HttpFunc) (ctx : HttpContext) = task {
+    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    logger.LogInformation("called get_name")
+    let db_service = ctx.GetService<IDatabase>()
+    let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+    let! result = db_service.user_from_email user_email
+    match result with
+    | Ok user ->
+        let the_school = {UserResponse.FirstName = user.FirstName;
+                          UserResponse.LastName = user.LastName;
+                          UserResponse.Error = None}
+        return! ctx.WriteJsonAsync the_school
+                                   
+    | Error message ->
+        logger.LogWarning("Failed to load school: " + message)
+        return! ctx.WriteJsonAsync {UserResponse.FirstName = ""
+                                    UserResponse.LastName = ""
+                                    UserResponse.Error = Some(APIError.init [APICode.Database] [message])}
+}
+
 /// Load the user's school.
 let load_school (next :HttpFunc) (ctx : HttpContext) = task {
     let logger = ctx.GetLogger<Debug.DebugLogger>()
@@ -202,5 +222,23 @@ let load_school (next :HttpFunc) (ctx : HttpContext) = task {
         return! ctx.WriteJsonAsync {SchoolResponse.SchoolName = "";
                                     Error = Some (APIError.init [APICode.Database] [message])}
 
+}
+
+let load_user (next :HttpFunc) (ctx : HttpContext) = task {
+    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    logger.LogInformation("called load_user")
+    let db_service = ctx.GetService<IDatabase>()
+    let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+    let! result = db_service.user_from_email user_email
+    match result with
+    | Ok user_details ->
+        let the_school = {UserResponse.FirstName = user_details.FirstName;
+                          UserResponse.LastName = user_details.LastName;
+                          Error = None}
+        return! ctx.WriteJsonAsync the_school
+                                   
+    | Error message ->
+        logger.LogWarning("Failed to load school: " + message)
+        return! ctx.WriteJsonAsync UserResponse.init
 }
 

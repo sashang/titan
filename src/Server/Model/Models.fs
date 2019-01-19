@@ -8,6 +8,16 @@ type TitanClaims =
       Value : string }
 
       static member init = {Id = 0; UserId = 0; Type = ""; Value = ""}
+      
+[<RequireQualifiedAccessAttribute>]
+[<CLIMutable>]
+type User =
+    { Id : int32
+      FirstName : string
+      Email : string
+      LastName : string }
+
+    static member init = {Id = 0; FirstName = ""; LastName = ""; Email = ""}
 
 //databse model of the school table.
 [<CLIMutable>]
@@ -16,7 +26,7 @@ type School =
       UserId : string
       Name : string }
 
-let init = {Id = 0; UserId = ""; Name = ""}
+    static member init = {Id = 0; UserId = ""; Name = ""}
 
 [<CLIMutable>]
 type Punter =

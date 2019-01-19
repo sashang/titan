@@ -32,12 +32,13 @@ type Msg =
     | SetLastName of string
     | ClickSave
     | Success of SchoolResponse
+    | LoadUserSuccess of UserResponse
     | Failure of exn
 
 let private load_school () = promise {
     let request = make_get 
     let decoder = Decode.Auto.generateDecoder<SchoolResponse>()
-    let! response = Fetch.tryFetchAs "/api/school-from-email" decoder request
+    let! response = Fetch.tryFetchAs "/api/load-school" decoder request
     match response with
     | Ok result ->
         match result.Error with
@@ -48,11 +49,26 @@ let private load_school () = promise {
     | Error e ->
         return failwith "no school"
 }
+let private load_user () = promise {
+    let request = make_get 
+    let decoder = Decode.Auto.generateDecoder<UserResponse>()
+    let! response = Fetch.tryFetchAs "/api/load-user" decoder request
+    match response with
+    | Ok result ->
+        match result.Error with
+        | None -> 
+            return result
+        | _ ->
+            return failwith "no user details"
+    | Error e ->
+        return failwith "no user details"
+}
 
 let init () : Model*Cmd<Msg> =
     {SchoolName = ""; Error = None
      FirstName = ""; LastName = ""},
-     Cmd.ofPromise load_school () Success Failure
+     Cmd.batch [Cmd.ofPromise load_school () Success Failure
+                Cmd.ofPromise load_user () LoadUserSuccess Failure]
 
 
 let private of_load_school_result (code : APICode) (result : LoadSchoolResult) =
@@ -147,6 +163,8 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
      //   model, Cmd.none
     | Success result ->
         {model with SchoolName = result.SchoolName}, Cmd.none
+    | LoadUserSuccess result ->
+        {model with FirstName = result.FirstName; LastName = result.LastName}, Cmd.none
     | Failure e ->
         match e with
         | :? LoadSchoolException as ex -> //TODO: check this with someone who knows more. the syntax is weird, and Data0??
