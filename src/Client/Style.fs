@@ -112,7 +112,7 @@ let input_field_with_error (label: string) (text : string) on_change (code : API
 let notification (code : APICode) (error : APIError) =
     let zipped = List.zip error.Codes error.Messages
 
-    if error.Codes <> [] then
+    if List.contains code error.Codes then
         Notification.notification [ Notification.Color IsTitanError ]
           [ for (c,m) in zipped do yield (if c = code then R.str m else R.nothing) ]
     else

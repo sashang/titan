@@ -88,10 +88,8 @@ type Initial() =
             .ForeignColumn("UserId").ToTable("User").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
 
 
-        this.Insert.IntoTable("User").Row({Email = "sashang@gmail.com"; FirstName = "Sashan"; LastName = "Govender"}) |> ignore
-        this.Insert.IntoTable("TitanClaims").Row({UserId = 1; Type = "IsTitan"; Value = "true"})|> ignore
         this.Insert.IntoTable("User").Row({Email = "sashang@tewtin.com"; FirstName = "Sashan"; LastName = "Govender"}) |> ignore
-        this.Insert.IntoTable("TitanClaims").Row({UserId = 2; Type = "IsTitan"; Value = "true"})|> ignore
+        this.Insert.IntoTable("TitanClaims").Row({UserId = 1; Type = "IsTitan"; Value = "true"})|> ignore
         
     override this.Down() =
         this.Delete.Table("ClassScheduleStudent") |> ignore

@@ -124,9 +124,13 @@ let register_student (next : HttpFunc) (ctx : HttpContext) = task {
         match result with
         | Ok () ->
             return! ctx.WriteJsonAsync APIError.init_empty
-        | Error e ->
-            logger.LogWarning e
-            return! ctx.WriteJsonAsync APIError.db
+        | Error msg ->
+            logger.LogWarning msg
+            //clean up this error
+            return! if msg.Contains("duplicate") then 
+                       ctx.WriteJsonAsync (APIError.init [APICode.Email] ["Duplicate email address"] )
+                    else 
+                        ctx.WriteJsonAsync (APIError.db msg)
     else
         return! ctx.WriteJsonAsync APIError.unauthorized
 }

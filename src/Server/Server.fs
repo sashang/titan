@@ -163,6 +163,7 @@ let titan_api =  router {
     //get "/signin-google" (redirectTo false "/api/secure")
     post "/register-punter" API.register_punter
     post "/register-tutor" API.register_tutor
+    post "/register-student" API.register_student
 }
 
 ///Define the pipeline that http request headers will see

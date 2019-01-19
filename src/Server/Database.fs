@@ -116,7 +116,8 @@ type Database(c : string) =
                 let cmd = """insert into "User" ("FirstName","LastName","Email") VALUES (@FirstName, @LastName, @Email)"""
                 let m = (Map ["Email", email; "FirstName", first; "LastName", last])
                 if dapper_map_param_exec cmd m conn = 1 then  
-                    let cmd = """insert into "TitanClaims" ("UserId","Type","Value") VALUES ((select "User"."Id" from "User" where "Email" = @Email), "IsStudent", "true")"""
+                    let cmd = """insert into "TitanClaims" ("UserId","Type","Value") VALUES
+                        ((select "Id" from "User" where "Email" = @Email), 'IsStudent', 'true')"""
                     let m = (Map ["Email", email])
                     if dapper_map_param_exec cmd m conn = 1 then  
                         return Ok ()
