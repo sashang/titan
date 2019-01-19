@@ -36,14 +36,14 @@ type RootMsg =
     | DashboardRouterMsg of DashboardRouter.Msg
     | UrlUpdatedMsg of Pages.PageType
     | HomeMsg of Home.Msg
-    | EnrolMsg of Enrol.Msg
+//    | EnrolMsg of Enrol.Msg
     | Success of unit
     | Failure of exn
 
 type PageModel =
     | LoginModel
     | DashboardRouterModel of DashboardRouter.Model
-    | EnrolModel of Enrol.Model
+(*    | EnrolModel of Enrol.Model*)
     | HomeModel of Home.Model
 and
     State = {
@@ -76,9 +76,9 @@ let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMs
     | Some Pages.PageType.Login ->
         { model with Child = LoginModel}, Cmd.none 
 
-    | Some Pages.PageType.Enrol ->
+(*    | Some Pages.PageType.Enrol ->
         let new_model, cmd = Enrol.init ()
-        { model with Child = EnrolModel new_model}, Cmd.map EnrolMsg cmd
+        { model with Child = EnrolModel new_model}, Cmd.map EnrolMsg cmd*)
 
 // let b2s : byte[] -> string = import "byte2string" "../custom.js"
 // let something () : string = import "something" "../custom.js"
@@ -168,8 +168,8 @@ let view model dispatch =
                     yield DashboardRouter.view model (DashboardRouterMsg >> dispatch) 
                 | HomeModel model ->
                     yield! Home.view model (HomeMsg  >> dispatch)
-                | EnrolModel model ->
-                    yield! Enrol.view model (EnrolMsg  >> dispatch)
+(*                | EnrolModel model ->
+                    yield! Enrol.view model (EnrolMsg  >> dispatch)*)
             ]
         Hero.foot [ ] [ Home.footer ]
     ]
@@ -227,9 +227,9 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         Browser.console.info "HomeMsg with no claims"
         state, Cmd.none
 
-    | EnrolMsg enrol_msg, {Child = EnrolModel model; Session = None} ->
+(*    | EnrolMsg enrol_msg, {Child = EnrolModel model; Session = None} ->
         let new_model, cmd = Enrol.update model enrol_msg
-        {state with Child = EnrolModel new_model}, Cmd.map EnrolMsg cmd
+        {state with Child = EnrolModel new_model}, Cmd.map EnrolMsg cmd*)
 
     | DashboardRouterMsg msg, {Child = DashboardRouterModel model; Session = Some session} ->
         let new_model, cmd = DashboardRouter.update model msg

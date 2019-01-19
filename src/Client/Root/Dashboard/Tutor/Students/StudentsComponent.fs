@@ -36,16 +36,7 @@ let private get_all_students () = promise {
                            HttpRequestHeaders.Accept "application/json" ]]
     let decoder = Decode.Auto.generateDecoder<Domain.GetAllStudentsResult>()
     let! response = Fetch.tryFetchAs "/api/secure/get-all-students" decoder props
-    match response with
-    | Ok result ->
-        match result.Codes with
-        | APICode.Success::_ -> 
-            return result.Students
-        | _ ->
-            return (raise (GetAllStudentsEx result))
-    | Error e ->
-        return (raise (GetAllStudentsEx {Codes = [APICode.Fetch]; Messages = [e];
-            Students = []}))
+    return failwith "need to complete this"
 }
 let init () =
     { Students = [ ]; Result = None },
@@ -62,7 +53,7 @@ let update (model : Model) (msg : Msg) =
             { model with Result = Some ex.Data0 }, Cmd.none
         | e ->
             Browser.console.warn "Received general exception"
-            { model with Result = Some { Codes = [APICode.Failure]; Messages = ["Unknown errror"]; Students = [ ] }}, Cmd.none
+            model, Cmd.none
 
 
 let private student_content (student : Student) =

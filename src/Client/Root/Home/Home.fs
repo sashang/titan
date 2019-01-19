@@ -76,14 +76,12 @@ let update  (model : Model) (msg : Msg) (claims : TitanClaim): Model*Cmd<Msg> =
     | {Child = None}, FirstTimeUser, claims ->
         Browser.console.info "FirstTimeUser message"
         {model with Child = Some (FirstTimeModel (FirstTime.init true claims))}, Cmd.none
+        
     | {Child = Some (FirstTimeModel child) }, FirstTimeMsg msg, claims ->
         Browser.console.info "FirstTimeMsg message"
         let new_ft_model, new_cmd = FirstTime.update child msg
         {model with Child = Some (FirstTimeModel new_ft_model) }, Cmd.map FirstTimeMsg new_cmd
 
-    | mode, FirstTimeMsg(FirstTime.ClickGo), claims ->
-        Browser.console.info "HomeMsg click go"
-        model, Cmd.ofPromise FirstTime.submit_tutor { TutorRegister.FirstName = "wo"; TutorRegister.Email = "asdas"; TutorRegister.LastName = "aedsaas"; TutorRegister.SchoolName = "sad"} Success Failure
     | _ ->
         Browser.console.info "Unknown HomeMsg"
         model, Cmd.none

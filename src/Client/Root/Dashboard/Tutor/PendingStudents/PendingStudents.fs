@@ -93,11 +93,7 @@ let private get_pending () = promise {
     let! response = Fetch.tryFetchAs "/api/secure/get-pending" decoder props
     match response with
     | Ok result ->
-        match result.Codes with
-        | APICode.Success::_ -> 
-            return result.Students
-        | _ ->
-            return (raise (PendingEx result))
+        return (raise (PendingEx result))
     | Error e ->
         return (raise (PendingEx {Codes = [APICode.Fetch]; Messages = [e];
             Students = []}))
