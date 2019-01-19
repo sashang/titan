@@ -3,19 +3,31 @@ namespace Domain
 
 open Thoth.Json
 
+[<RequireQualifiedAccess>]
 type APICode = 
-    | Success = 0
-    | Failure = 1
-    | DatabaseError = 2
-    | FetchError = 2
+    | Success
+    | Failure
+    | Database
+    | Fetch
+    | Unauthorized
+    | SchoolName
+    | Email
+    | FirstName
+    | LastName
 
 [<CLIMutableAttribute>]
 type APIError = 
     { Codes : APICode list
       Messages : string list }
+    static member init_empty = {Codes = []; Messages = []}
     
     static member init codes messages =
         {Codes = codes; Messages = messages}
+    static member unauthorized =
+        {Codes = [APICode.Unauthorized]; Messages = ["You are not authorized"]}
+    static member db msg =
+        {Codes = [APICode.Database]; Messages = [msg]}
+
 // Login credentials.
 [<CLIMutable>] //needed for BindJsonAync to work
 type Login =
@@ -187,10 +199,8 @@ type StudentRegister =
     { FirstName : string
       LastName : string
       Email : string }
-
-[<CLIMutable>]
-type StudentRegisterResult =
-    { Error : APIError option}
+    static member init = {FirstName = ""; LastName = ""; Email = "" }
+    member this.is_valid = (this.FirstName <> "" && this.LastName <> "" && this.Email <> "")
 
 [<CLIMutable>]
 type TutorRegister =
@@ -198,7 +208,5 @@ type TutorRegister =
       LastName : string
       Email : string
       SchoolName : string }
-
-[<CLIMutable>]
-type TutorRegisterResult =
-    { Error : APIError option}
+    static member init = {FirstName = ""; LastName = ""; Email = ""; SchoolName = ""}
+    member this.is_valid = this.FirstName <> "" && this.LastName <> "" && this.Email <> "" && this.SchoolName <> ""

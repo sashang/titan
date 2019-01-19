@@ -11,9 +11,6 @@ open Fable.Import.Browser
 open Pages
 open Root
 
-let handleNotFound (model: SinglePageState) =
-    Browser.console.error("Error parsing url: " + Browser.window.location.href)
-    ( model, Navigation.modifyUrl (Pages.to_path Pages.PageType.Login) )
 
 #if DEBUG
 open Elmish.Debug

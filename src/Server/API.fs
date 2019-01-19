@@ -31,7 +31,7 @@ let enrol (next : HttpFunc) (ctx : HttpContext) = task {
             return! ctx.WriteJsonAsync {EnrolResult.Error = None}
         | Error e -> 
             logger.LogInformation("Enrolment failed: " + e)
-            let api_error = {EnrolResult.Error = Some (APIError.init [APICode.DatabaseError] [e])}
+            let api_error = {EnrolResult.Error = Some (APIError.init [APICode.Database] [e])}
             return! ctx.WriteJsonAsync api_error
     with
         | :? FormatException as e ->
@@ -71,7 +71,7 @@ let dismiss_pending (next :HttpFunc) (ctx : HttpContext) = task {
     match result with
     | Error e ->
         logger.LogInformation("failed to delete pending student: " + e)
-        let api_error = {DismissPendingResult.Error = Some (APIError.init [APICode.DatabaseError] [e])}
+        let api_error = {DismissPendingResult.Error = Some (APIError.init [APICode.Database] [e])}
         return! ctx.WriteJsonAsync api_error
     | Ok _ ->
         return! ctx.WriteJsonAsync {DismissPendingResult.Error = None}
@@ -90,37 +90,45 @@ let get_pending (next : HttpFunc) (ctx : HttpContext) = task {
     | Error err ->
         logger.LogInformation("Could not get students")
         return! ctx.WriteJsonAsync 
-            {GetAllStudentsResult.Codes = [APICode.DatabaseError]
+            {GetAllStudentsResult.Codes = [APICode.Database]
              GetAllStudentsResult.Messages = ["Failed to get students from database"]
              Students = []}
 }
 
 let register_tutor (next : HttpFunc) (ctx : HttpContext) = task {
-    let! registration = ctx.BindJsonAsync<Domain.TutorRegister>()
-    let logger = ctx.GetLogger<Debug.DebugLogger>()
-    let db = ctx.GetService<IDatabase>()
-    let! result = db.insert_tutor registration.FirstName registration.LastName registration.SchoolName registration.Email 
-    match result with
-    | Ok () ->
-        return! ctx.WriteJsonAsync {TutorRegisterResult.Error = None}
-    | Error e ->
-        logger.LogWarning e
-        return! ctx.WriteJsonAsync {TutorRegisterResult.Error = 
-            Some({APIError.Codes = [APICode.Success]; APIError.Messages = [e]})}
+    if ctx.User.Identity.IsAuthenticated then
+        let! registration = ctx.BindJsonAsync<Domain.TutorRegister>()
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let db = ctx.GetService<IDatabase>()
+        let! result = db.insert_tutor registration.FirstName registration.LastName registration.SchoolName registration.Email 
+        match result with
+        | Ok () ->
+            return! ctx.WriteJsonAsync APIError.init_empty
+        | Error msg ->
+            logger.LogWarning msg
+            //clean up this error
+            return! if msg.Contains("duplicate") then 
+                       ctx.WriteJsonAsync (APIError.init [APICode.Email] ["Duplicate email address"] )
+                    else 
+                        ctx.WriteJsonAsync (APIError.db msg)
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
 }
 
 let register_student (next : HttpFunc) (ctx : HttpContext) = task {
-    let! registration = ctx.BindJsonAsync<Domain.StudentRegister>()
-    let logger = ctx.GetLogger<Debug.DebugLogger>()
-    let db = ctx.GetService<IDatabase>()
-    let! result = db.insert_student registration.FirstName registration.LastName registration.Email 
-    match result with
-    | Ok () ->
-        return! ctx.WriteJsonAsync {StudentRegisterResult.Error = None}
-    | Error e ->
-        logger.LogWarning e
-        return! ctx.WriteJsonAsync {StudentRegisterResult.Error = 
-            Some({APIError.Codes = [APICode.Success]; APIError.Messages = [e]})}
+    if ctx.User.Identity.IsAuthenticated then
+        let! registration = ctx.BindJsonAsync<Domain.StudentRegister>()
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let db = ctx.GetService<IDatabase>()
+        let! result = db.insert_student registration.FirstName registration.LastName registration.Email 
+        match result with
+        | Ok () ->
+            return! ctx.WriteJsonAsync APIError.init_empty
+        | Error e ->
+            logger.LogWarning e
+            return! ctx.WriteJsonAsync APIError.db
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
 }
 
 let add_student_to_school (next : HttpFunc) (ctx : HttpContext) = task {
@@ -136,7 +144,7 @@ let add_student_to_school (next : HttpFunc) (ctx : HttpContext) = task {
             AddStudentSchool.Messages = [""]}
     | Error e ->
         logger.LogWarning e
-        return! ctx.WriteJsonAsync {AddStudentSchool.Codes = [APICode.DatabaseError]; AddStudentSchool.Messages = [e]}
+        return! ctx.WriteJsonAsync {AddStudentSchool.Codes = [APICode.Database]; AddStudentSchool.Messages = [e]}
 
 }
  
@@ -153,7 +161,7 @@ let get_all_students (next : HttpFunc) (ctx : HttpContext) = task {
     | Error err ->
         logger.LogInformation("Could not get students")
         return! ctx.WriteJsonAsync 
-            {GetAllStudentsResult.Codes = [APICode.DatabaseError]
+            {GetAllStudentsResult.Codes = [APICode.Database]
              GetAllStudentsResult.Messages = ["Failed to get students from database"]
              Students = []}
 }

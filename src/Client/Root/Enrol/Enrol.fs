@@ -80,10 +80,10 @@ let private enroll (model : Model) = promise {
                 return ()
         | Error e ->
             Browser.console.info ("got generic error: " + e)
-            return (raise (EnrolEx (APIError.init [APICode.FetchError] [e])))
+            return (raise (EnrolEx (APIError.init [APICode.Fetch] [e])))
     | None ->
         let message = "Choose a school from the dropdown"
-        return (raise (EnrolEx (APIError.init [APICode.FetchError] [message])))
+        return (raise (EnrolEx (APIError.init [APICode.Fetch] [message])))
 
 }
 let init () =

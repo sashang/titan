@@ -21,7 +21,7 @@ type Initial() =
         this.Create.Table("School")
             .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable().Unique()
             .WithColumn("UserId").AsInt32().ForeignKey().Unique()
-            .WithColumn("Name").AsString().Unique().Nullable() |> ignore
+            .WithColumn("Name").AsString().Unique().NotNullable() |> ignore
 
         this.Create.ForeignKey("FKSchoolUser").FromTable("School") .ForeignColumn("UserId")
             .ToTable("User").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore

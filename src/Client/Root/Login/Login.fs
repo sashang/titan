@@ -23,7 +23,7 @@ let login_with_google_button =
           Column.column [ ] [
               Button.a [
                     Button.Color IsTitanInfo
-                    Button.Props [ Href "/secure/signin-google" ]
+                    Button.Props [ Href "/signin-google" ]
                 ] [ str "sign in with Google" ] ] ]
 
 let column =

@@ -30,7 +30,9 @@ let private dapper_map_param_exec(sql : string) (param : Map<string,_>) (connect
     for value in param do
         dict.Add(value.Key, value.Value :> obj)
 
-    connection.Execute(sql, expando)
+    let r = connection.Execute(sql, expando)
+    printfn "number of rows %i" r
+    r
 
 type IDatabase =
 
@@ -86,10 +88,12 @@ type Database(c : string) =
                 let cmd = """insert into "User" ("FirstName","LastName","Email") VALUES (@FirstName, @LastName, @Email)"""
                 let m = (Map ["Email", email; "FirstName", first; "LastName", last])
                 if dapper_map_param_exec cmd m conn = 1 then  
-                    let cmd = """insert into "TitanClaims" ("UserId","Type","Value") VALUES ((select "User"."Id" from "User" where "Email" = @Email), "IsTutor", "true")"""
+                    let cmd = """insert into "TitanClaims" ("UserId","Type","Value") VALUES
+                        ((select "Id" from "User" where "Email" = @Email), 'IsTutor', 'true')"""
                     let m = (Map ["Email", email])
                     if dapper_map_param_exec cmd m conn = 1 then  
-                        let cmd = """insert into "School" ("UserId","Name") VALUES ((select "User"."Id" from "User" where "Email" = @Email), @Name)"""
+                        let cmd = """insert into "School" ("UserId","Name")
+                            VALUES ((select "User"."Id" from "User" where "Email" = @Email), @Name)"""
                         let m = (Map ["Email", email;"Name", schoolname])
                         if dapper_map_param_exec cmd m conn = 1 then  
                             return Ok ()

@@ -147,37 +147,27 @@ let handleGetSecured =
 
 ///endpoints that require authorization to reach
 let secure_router = router {
-    //pipe_through (Auth.requireAuthentication JWT)
-    //pipe_through (pipeline { requires_authentication (json_auth_fail_message)})
     pipe_through logged_in
     not_found_handler (redirectTo false "/")
-    get "api/load-school" API.load_school
-    get "api/get-all-students" API.get_all_students
-    get "api/get-pending" API.get_pending
-    post "api/create-school" API.create_school
-    post "api/add-student-school" API.add_student_to_school
-    post "api/dismiss-pending" API.dismiss_pending
-    post "api/register-student" API.register_student
-    post "/api/register-tutor" API.register_tutor
-    forward "/sign-out" sign_out_router
 }
 
-let titan_api =  router {
-    not_found_handler (json "resource not found")
-    post "/enrol" API.enrol
-    get "/get-schools" API.get_schools
-    //get "/signin-google" (redirectTo false "/api/secure")
-    post "/register-punter" API.register_punter
-    forward "/sign-out" sign_out_router
-    forward "/secure" secure_router
-}
-
-///Define the pipeline that http request headers will see
 let api_pipeline = pipeline {
     plug acceptJson 
     set_header "x-pipeline-type" "Api"
 }
+let titan_api =  router {
+    not_found_handler (json "resource not found")
+    //pipe_through api_pipeline
+    post "/enrol" API.enrol
+    get "/get-schools" API.get_schools
+    //get "/signin-google" (redirectTo false "/api/secure")
+    post "/register-punter" API.register_punter
+    post "/register-tutor" API.register_tutor
+}
+
+///Define the pipeline that http request headers will see
 let defaultView = router {
+    printfn "default view"
     get "/" (json "root")
     get "/index.html" (redirectTo false "/")
     get "/default.html" (redirectTo false "/")
@@ -192,18 +182,16 @@ let browser = pipeline {
 let browser_router = router {
     not_found_handler (redirectTo false "/") //Use the default 404 webpage
     pipe_through browser //Use the default browser pipeline
-    forward "/secure" secure_router
+    forward "/signin-google" secure_router
     forward "" defaultView //Use the default view
 }
 
 let web_app = router {
-    //pipe_through api_pipeline
     get "/check-session" check_session
     forward "/sign-out" sign_out_router
+    forward "/api" titan_api
     forward "" browser_router
 }
-
-
 
 let configure_services startup_options (services:IServiceCollection) =
     let fableJsonSettings = Newtonsoft.Json.JsonSerializerSettings()
@@ -221,8 +209,6 @@ let configure_services startup_options (services:IServiceCollection) =
     //apparently putting this in a scope is the thing to do with asp.net...
     let scope = services.BuildServiceProvider(false).CreateScope()
     scope.ServiceProvider.GetRequiredService<IMigrationRunner>().MigrateUp() |> ignore
-
-
     //return the list of servicesk
     services
 
@@ -230,11 +216,6 @@ let get_env_var var =
     match Environment.GetEnvironmentVariable(var) with
     | null -> None
     | value -> Some value
-
-let configure_cors (builder : CorsPolicyBuilder) =
-    builder.WithOrigins("http://localhost:8080")
-        .AllowCredentials()
-    |> ignore
 
 let configure_logging (builder : ILoggingBuilder) =
     builder.AddConsole()
@@ -256,9 +237,6 @@ let app (startup_options : RecStartupOptions) =
         use_static publicPath
         service_config (configure_services startup_options)
         host_config configure_host
-        //use_cors "mypolicy" configure_cors
-        //use_jwt_authentication startup_options.JWTSecret startup_options.JWTIssuer
-        //use_cookies_authentication "tewtin.com"
         use_google_oauth startup_options.GoogleClientId startup_options.GoogleSecret "/oauth_callback_google" ["language", "urn:google:language"]
         logging configure_logging
         use_gzip

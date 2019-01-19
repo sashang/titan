@@ -1,6 +1,7 @@
 module FirstTime
 
 open Client.Shared
+open Client.Style
 open CustomColours
 open Domain
 open Elmish
@@ -12,6 +13,7 @@ open Fable.PowerPack
 open Fable.PowerPack.Fetch
 open Fable.Core.JsInterop
 open Fulma
+open ModifiedFableFetch
 open Thoth.Json
 
 type Category =
@@ -51,57 +53,33 @@ type CategoryForm =
 type Model =
     { Active : bool
       SubForm : CategoryForm option
-      Claims : TitanClaim}
-    static member init active claims = {Active = true; SubForm = None; Claims = claims}
+      Claims : TitanClaim
+      Error : APIError }
+    static member init active claims = 
+        {Active = true; SubForm = None; Claims = claims; Error = APIError.init_empty}
 
-exception StudentRegisterEx of APIError
+exception RegisterEx of APIError
 
 let submit_tutor (tutor : TutorRegister) = promise {
-    Browser.console.info "start  submit-tutor"
-    let body = Encode.Auto.toString (4, tutor)
-    let props =
-        [ RequestProperties.Method HttpMethod.POST
-          RequestProperties.Credentials RequestCredentials.Include
-          requestHeaders [ HttpRequestHeaders.ContentType "application/json"
-                           HttpRequestHeaders.Accept "application/json"]
-          RequestProperties.Body !^(body) ] 
-    let decoder = Decode.Auto.generateDecoder<TutorRegisterResult>()
-    let! response = Fetch.tryFetchAs "/secure/api/register-tutor" decoder props
-    Browser.console.info "received response from register-tutor"
-    match response with
-    | Ok result ->
-        match result.Error with
-        | Some error -> 
-            Browser.console.info ("got some error: " + (List.head error.Messages))
-            return (raise (StudentRegisterEx error))
-        | _ ->
-            return ()
-    | Error e ->
-        Browser.console.info ("got fetch error: " + e)
-        return (raise (StudentRegisterEx (APIError.init [APICode.FetchError] [e])))
+    if not tutor.is_valid then
+        return (raise (RegisterEx (APIError.init [APICode.SchoolName] ["Name cannot be blank"])))
+    else
+        let request = make_request 4 tutor
+        let decoder = Decode.Auto.generateDecoder<APIError>()
+        let! response = Fetch.tryFetchAs "/api/register-tutor" decoder request
+        Browser.console.info "received response from register-tutor"
+        return unwrap_response response RegisterEx
 }
 
 let private submit_student (student : StudentRegister) = promise {
-    let body = Encode.Auto.toString (3, student)
-    let props =
-        [ RequestProperties.Method HttpMethod.POST
-          RequestProperties.Credentials RequestCredentials.Include
-          requestHeaders [ HttpRequestHeaders.ContentType "application/json"
-                           HttpRequestHeaders.Accept "application/json"]
-          RequestProperties.Body !^(body) ] 
-    let decoder = Decode.Auto.generateDecoder<StudentRegisterResult>()
-    let! response = Fetch.tryFetchAs "/secure/api/register-student" decoder props
-    match response with
-    | Ok result ->
-        match result.Error with
-        | Some error -> 
-            Browser.console.info ("got some error: " + (List.head error.Messages))
-            return (raise (StudentRegisterEx error))
-        | _ ->
-            return ()
-    | Error e ->
-        Browser.console.info ("got fetch error: " + e)
-        return (raise (StudentRegisterEx (APIError.init [APICode.FetchError] [e])))
+    if not student.is_valid then
+        return (raise (RegisterEx (APIError.init [APICode.Failure] ["Invalid input"])))
+    else
+        let request = make_request 3 student
+        let decoder = Decode.Auto.generateDecoder<APIError>()
+        let! response = Fetch.tryFetchAs "/api/register-student" decoder request
+        Browser.console.info "received response from register-student"
+        return unwrap_response response RegisterEx
 }
 
 let init active claims =
@@ -111,37 +89,25 @@ let button (model : Model) (dispatch : Msg -> unit) text msg =
     Button.button [ Button.Color IsTitanInfo
                     Button.Props [ OnClick (fun e -> dispatch msg) ] ] [ str text ] 
 
-let private input_field_ro label text =
-    [ Field.div [ ] 
-        [ Field.label [ Field.Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
-            [ Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ str label ] ]
-          Control.div [ ]
-            [ Input.text 
-                [ Input.Value text
-                  Input.IsReadOnly true ]]] ]
 
-let private input_field label text on_change =
-    [ Field.div [ ] 
-        [ Field.label [ Field.Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
-            [ Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ str label ] ]
-          Control.div [ ]
-            [ Input.text 
-                [ Input.Value text
-                  Input.OnChange on_change ] ] ] ]
-
-let inner_content dispatch = function
+let inner_content model dispatch = function
     | TutorForm form ->
         Box.box' [ ]
-            [ yield! input_field "First Name" form.FirstName (fun e -> dispatch (SetFirstName e.Value))
-              yield! input_field "Last Name" form.LastName (fun e -> dispatch (SetLastName e.Value))
-              yield! input_field "School Name" form.SchoolName (fun e -> dispatch (SetSchoolName e.Value))
-              yield! input_field_ro "Email" form.Email  ]
+            [ yield! input_field_with_error "First Name" form.FirstName
+                (fun e -> dispatch (SetFirstName e.Value)) APICode.FirstName model.Error
+              yield! input_field_with_error "Last Name" form.LastName
+                (fun e -> dispatch (SetLastName e.Value)) APICode.LastName model.Error
+              yield! input_field_with_error "School Name" form.SchoolName
+                (fun e -> dispatch (SetSchoolName e.Value)) APICode.SchoolName model.Error
+              yield! input_field_ro "Email" form.Email APICode.Email model.Error  ]
 
     | StudentForm form ->
         Box.box' [ ]
-            [ yield! input_field "First Name" form.FirstName (fun e -> dispatch (SetFirstName e.Value))
-              yield! input_field "Last Name" form.LastName (fun e -> dispatch (SetLastName e.Value))
-              yield! input_field_ro "Email" form.Email]
+            [ yield! input_field_with_error "First Name" form.FirstName
+                (fun e -> dispatch (SetFirstName e.Value)) APICode.FirstName model.Error
+              yield! input_field_with_error "Last Name" form.LastName
+                (fun e -> dispatch (SetLastName e.Value)) APICode.LastName model.Error
+              yield! input_field_ro "Email" form.Email APICode.Email model.Error]
 
 let content (model : Model) (dispatch : Msg -> unit) =
     div [ ] [
@@ -152,7 +118,7 @@ let content (model : Model) (dispatch : Msg -> unit) =
                 [ button model dispatch "Student" ClickStudent ] ]
                 
         (match model.SubForm with
-        | Some form -> inner_content dispatch form
+        | Some form -> inner_content model dispatch form
         | None -> nothing)
     ]
 
@@ -169,7 +135,9 @@ let view (model : Model) (dispatch : Msg -> unit) =
                   Modal.Card.foot [ ]
                     [ button model dispatch "Go!" ClickGo
                       Button.button [ Button.Props [ OnClick (fun e -> dispatch ClickCancel) ] ]
-                        [ str "Cancel" ] ] ] ] ]
+                        [ str "Cancel" ] ]
+                  notification APICode.Database model.Error
+                ] ] ]
 
 let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     match model, msg with
@@ -209,8 +177,13 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         {model with Active = false}, Cmd.none
 
     | model, Failure e ->
-        Browser.console.warn ("Failed to submit form " + e.Message)
-        model, Cmd.none
+        match e with
+        | :? RegisterEx as ex ->
+            List.iter (fun m -> Browser.console.warn ("RegisterEx:" + m)) ex.Data0.Messages
+            {model with Error = ex.Data0}, Cmd.none
+        | e ->
+            Browser.console.warn ("Failed to submit form " + e.Message)
+            model, Cmd.none
 
     | model, ClickStudent ->
         {model with SubForm = Some (StudentForm (StudentFormModel.init model.Claims.GivenName model.Claims.Surname model.Claims.Email))}, Cmd.none
