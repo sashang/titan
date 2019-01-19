@@ -210,7 +210,7 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
                 let tutor_model, cmd = DashboardRouter.init_tutor
                 { state with 
                     Session = Some session; Claims = Some claims;
-                    Child = DashboardRouterModel(tutor_model)}, Cmd.none
+                    Child = DashboardRouterModel(tutor_model)}, Cmd.map DashboardRouterMsg cmd
         | Error e -> 
             Browser.console.warn e
             {state with Session = None}, Cmd.none 

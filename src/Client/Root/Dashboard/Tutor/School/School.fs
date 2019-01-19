@@ -16,8 +16,7 @@ open ModifiedFableFetch
 open Shared
 open Thoth.Json
 
-exception CreateSchoolException of APIError
-exception LoadSchoolException of APIError
+exception SaveEx of APIError
 
 type Model =
     { SchoolName : string
@@ -26,11 +25,11 @@ type Model =
       Error : APIError option}
 
 type Msg =
-    | SetPrincipalName of string
     | SetSchoolName of string
     | SetFirstName of string
     | SetLastName of string
     | ClickSave
+    | SaveSuccess of unit
     | Success of SchoolResponse
     | LoadUserSuccess of UserResponse
     | Failure of exn
@@ -62,6 +61,19 @@ let private load_user () = promise {
             return failwith "no user details"
     | Error e ->
         return failwith "no user details"
+}
+
+let private save data = promise {
+    let request = make_post 3 data
+    let decoder = Decode.Auto.generateDecoder<APIError option>()
+    let! response = Fetch.tryFetchAs "/api/save-tutor" decoder request
+    match response with
+    | Ok result ->
+        match result with
+        | Some err -> return  raise (SaveEx err)
+        | None -> return ()
+    | Error msg ->
+        return (failwith msg)
 }
 
 let init () : Model*Cmd<Msg> =
@@ -151,23 +163,23 @@ let view (model : Model) (dispatch : Msg -> unit) =
 
 let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     match msg with
-    //| ClickSave ->
-        //model, Cmd.ofPromise submit model Success Failure
+    | ClickSave ->
+        model, Cmd.ofPromise save model SaveSuccess Failure
+    | SaveSuccess () ->
+        model, Cmd.none
     | SetFirstName name ->
         {model with FirstName = name}, Cmd.none
     | SetLastName name ->
         {model with LastName = name}, Cmd.none
     | SetSchoolName name ->
         {model with SchoolName = name}, Cmd.none
-    //| Success _ ->
-     //   model, Cmd.none
     | Success result ->
         {model with SchoolName = result.SchoolName}, Cmd.none
     | LoadUserSuccess result ->
         {model with FirstName = result.FirstName; LastName = result.LastName}, Cmd.none
     | Failure e ->
         match e with
-        | :? LoadSchoolException as ex -> //TODO: check this with someone who knows more. the syntax is weird, and Data0??
+        | :? SaveEx as ex ->
             { model with Error = Some ex.Data0 }, Cmd.none
         | e ->
             { model with Error = Some { Codes = [APICode.Failure]; Messages = ["Unknown errror"] }}, Cmd.none

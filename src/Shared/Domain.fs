@@ -202,3 +202,12 @@ type TutorRegister =
       SchoolName : string }
     static member init = {FirstName = ""; LastName = ""; Email = ""; SchoolName = ""}
     member this.is_valid = this.FirstName <> "" && this.LastName <> "" && this.Email <> "" && this.SchoolName <> ""
+    
+[<CLIMutable>]
+type SaveRequest =
+    { FirstName : string
+      LastName : string
+      SchoolName : string }
+    static member init = {FirstName = ""; LastName = ""; SchoolName = ""}
+    member this.is_valid = this.FirstName <> "" && this.LastName <> "" && this.SchoolName <> ""
+      

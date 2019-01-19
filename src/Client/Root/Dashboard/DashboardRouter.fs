@@ -21,7 +21,7 @@ type Model =
 
 let init_tutor = 
     let tutor_model,cmd = Tutor.Dashboard.init ()
-    {Child = TutorModel(tutor_model)}, cmd
+    {Child = TutorModel(tutor_model)}, Cmd.map TutorMsg cmd
 
 let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
     match model, msg with

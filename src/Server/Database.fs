@@ -76,12 +76,32 @@ type IDatabase =
 
     /// delete pending for a tutor
     abstract member delete_pending_for_tutor : string -> string -> Task<Result<unit, string>>
+    
+    /// update user given email
+    abstract member update_user : string->string -> string -> Task<Result<unit, string>>
 
     
 type Database(c : string) = 
     member this.connection = c
 
     interface IDatabase with
+        member this.update_user first last email : Task<Result<unit, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                let cmd = """update "User" set "FirstName" = @FirstName, "LastName" = @LastName where "Email" = @Email"""
+                let m = (Map ["Email", email; "FirstName", first; "LastName", last])
+                if dapper_map_param_exec cmd m conn = 1 then  
+                    return Ok ()
+                else 
+                    return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
+        
         member this.insert_tutor first last schoolname email : Task<Result<unit, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)

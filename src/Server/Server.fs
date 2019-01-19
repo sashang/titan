@@ -165,6 +165,7 @@ let titan_api =  router {
     post "/register-punter" API.register_punter
     post "/register-tutor" API.register_tutor
     post "/register-student" API.register_student
+    post "/save-tutor" API.save_tutor
 }
 
 ///Define the pipeline that http request headers will see

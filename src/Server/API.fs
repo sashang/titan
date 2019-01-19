@@ -10,11 +10,6 @@ open System.Security.Claims
 open System.Net.Mail
 open System
 
-let private role_to_string = function
-| Some TitanRole.Admin -> "admin"
-| Some TitanRole.Student -> "student"
-| Some TitanRole.Principal -> "principal"
-| None -> "unknown"
 
 let enrol (next : HttpFunc) (ctx : HttpContext) = task {
     let logger = ctx.GetLogger<Debug.DebugLogger>()
@@ -242,3 +237,20 @@ let load_user (next :HttpFunc) (ctx : HttpContext) = task {
         return! ctx.WriteJsonAsync UserResponse.init
 }
 
+let save_tutor (next :HttpFunc) (ctx : HttpContext) = task {
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        logger.LogInformation("called save_tutor")
+        let! data = ctx.BindJsonAsync<Domain.SaveRequest>()
+        let db_service = ctx.GetService<IDatabase>()
+        let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        let! result = db_service.update_user data.FirstName data.LastName user_email
+        match result with
+        | Ok () ->
+            return! ctx.WriteJsonAsync None
+        | Error message ->
+            logger.LogWarning("Failed to save tutor data: " + message)
+            return! ctx.WriteJsonAsync (APIError.init [APICode.Database] [message])
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
+}
