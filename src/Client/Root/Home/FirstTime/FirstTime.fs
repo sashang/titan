@@ -26,12 +26,11 @@ type Msg =
     | ClickCancel
     | ClickTutor
     | ClickStudent
-    | Toggle
+    | ClickConsent
     | ClickAcceptTerms
     | SetFirstName of string
     | SetLastName of string
     | SetSchoolName of string
-    | SuccessTest of bool
     | Success of unit
     | Failure of exn
 
@@ -57,9 +56,11 @@ type Model =
       SubForm : CategoryForm option
       Claims : TitanClaim
       Accepted : bool
+      Consent : bool //student has parent or guardian consent
       Error : APIError }
     static member init active claims = 
-        {Active = true; Accepted = false; SubForm = None; Claims = claims; Error = APIError.init_empty}
+        {Active = true; Accepted = false; SubForm = None;
+         Claims = claims; Error = APIError.init_empty; Consent = false}
 
 exception RegisterEx of APIError
 
@@ -109,6 +110,7 @@ let inner_content model dispatch = function
               yield! input_field_with_error "Last Name" form.LastName
                 (fun e -> dispatch (SetLastName e.Value)) APICode.LastName model.Error
               yield! input_field_ro "Email" form.Email APICode.Email model.Error
+              yield checkbox CONSENT model.Consent dispatch ClickConsent
               yield checkbox ACCEPT_TERMS model.Accepted dispatch ClickAcceptTerms ] 
 
 let content (model : Model) (dispatch : Msg -> unit) =
@@ -135,6 +137,16 @@ let content (model : Model) (dispatch : Msg -> unit) =
     ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
+
+    let is_go_enabled = 
+        match model.SubForm with
+        | Some (TutorForm _) ->
+            model.Accepted
+        | Some (StudentForm _) ->
+            model.Accepted && model.Consent
+        | _ -> false
+
+
     div [ ] [
       Modal.modal [ Modal.IsActive model.Active ]
             [ Modal.background [ Props [ OnClick (fun e -> dispatch ClickCancel)] ] [ ]
@@ -145,49 +157,46 @@ let view (model : Model) (dispatch : Msg -> unit) =
                   Modal.Card.body [ ]
                     [ content model dispatch ]
                   Modal.Card.foot [ ]
-                    [ button_enabled dispatch ClickGo "Go!" model.Accepted
+                    [ button_enabled dispatch ClickGo "Go!" is_go_enabled
                       Button.button [ Button.Props [ OnClick (fun e -> dispatch ClickCancel) ] ]
                         [ str "Cancel" ] ]
                   notification APICode.Database model.Error ] ] ]
 
 let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     match model, msg with
-    | model, Toggle -> {model with Active = not model.Active}, Cmd.none
 
     | model, ClickCancel -> {model with Active = false}, Cmd.none
 
-    | model, SuccessTest test -> 
-        Browser.console.info "asdasd"
-        model, Cmd.none
-
-    | {Accepted = false} , ClickGo ->
+    | {Accepted = false; SubForm = Some (TutorForm _)} , ClickGo ->
         Browser.console.info "user must accept terms before proceeding"
         model, Cmd.none
+        
+    | {Accepted = true; SubForm = Some (TutorForm tutor_model)} , ClickGo ->
+        model, Cmd.ofPromise
+                    submit_tutor 
+                    { TutorRegister.FirstName = tutor_model.FirstName
+                      TutorRegister.LastName = tutor_model.LastName
+                      TutorRegister.Email = tutor_model.Email
+                      TutorRegister.SchoolName = tutor_model.SchoolName }
+                    Success
+                    Failure
 
-    | model, ClickGo ->
-        Browser.console.info "received click go"
-        match model.SubForm with
-        | Some (StudentForm student_model) ->
-           {model with Active = true}, 
-           Cmd.ofPromise submit_student 
-              {StudentRegister.FirstName = student_model.FirstName
-               StudentRegister.LastName = student_model.LastName
-               StudentRegister.Email = student_model.Email } Success Failure
+    | {Consent = false; Accepted = _; SubForm = Some (StudentForm _)}, ClickGo ->
+        Browser.console.info "studnet must obtain consent before proceeding"
+        model, Cmd.none
 
-        | Some (TutorForm tutor_model) ->
-            Browser.console.info "this is a tutor form"
-            model, Cmd.ofPromise
-                        submit_tutor 
-                        { TutorRegister.FirstName = tutor_model.FirstName
-                          TutorRegister.LastName = tutor_model.LastName
-                          TutorRegister.Email = tutor_model.Email
-                          TutorRegister.SchoolName = tutor_model.SchoolName }
-                        Success
-                        Failure
+    | {Consent = _; Accepted = false; SubForm = Some(StudentForm _)}, ClickGo ->
+        Browser.console.info "student must accept terms before proceeding"
+        model, Cmd.none
 
-        | _ ->
-            Browser.console.info "doing nothing"
-            model, Cmd.none
+    | {Consent = true; Accepted = true; SubForm = Some(StudentForm student_model)}, ClickGo ->
+       Browser.console.info "student must accept terms before proceeding"
+       {model with Active = true}, 
+       Cmd.ofPromise submit_student 
+          {StudentRegister.FirstName = student_model.FirstName
+           StudentRegister.LastName = student_model.LastName
+           StudentRegister.Email = student_model.Email } Success Failure
+
     | model, Success () ->
         {model with Active = false}, Cmd.none
 
@@ -222,6 +231,7 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         {model with SubForm = Some (TutorForm {tutor_form with TutorFormModel.SchoolName = name})}, Cmd.none
 
     | model, ClickAcceptTerms ->
-        Browser.console.info "Accepted terms"
-        //toggle when the user clicks accept terms
         {model with Accepted = not model.Accepted}, Cmd.none
+
+    | model, ClickConsent ->
+        {model with Consent = not model.Consent}, Cmd.none
