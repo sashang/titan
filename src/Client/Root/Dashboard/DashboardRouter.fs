@@ -19,6 +19,10 @@ type Msg =
 type Model =
     { Child : PageModel }
 
+let init_tutor = 
+    let tutor_model,cmd = Tutor.Dashboard.init ()
+    {Child = TutorModel(tutor_model)}, cmd
+
 let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
     match model, msg with
     | {Child = TutorModel model}, TutorMsg msg  ->

@@ -44,7 +44,7 @@ let private get_all_students () = promise {
         | _ ->
             return (raise (GetAllStudentsEx result))
     | Error e ->
-        return (raise (GetAllStudentsEx {Codes = [APICode.FetchError]; Messages = [e];
+        return (raise (GetAllStudentsEx {Codes = [APICode.Fetch]; Messages = [e];
             Students = []}))
 }
 let init () =

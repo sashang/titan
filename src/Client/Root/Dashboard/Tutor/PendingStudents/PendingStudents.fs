@@ -56,7 +56,7 @@ let private approve_pending (pending : ApprovePendingRequest) = promise {
             return pending.Email //return email, use it to id the student to remove from the model
     | Error e ->
         Browser.console.info ("got generic error: " + e)
-        return (raise (ApprovePendingEx (APIError.init [APICode.FetchError] [e])))
+        return (raise (ApprovePendingEx (APIError.init [APICode.Fetch] [e])))
 }
 
 let private dismiss_pending (pending : DismissPendingRequest) = promise {
@@ -79,7 +79,7 @@ let private dismiss_pending (pending : DismissPendingRequest) = promise {
             return pending.Email //return email, use it to id the student to remove from the model
     | Error e ->
         Browser.console.info ("got generic error: " + e)
-        return (raise (DismissPendingEx (APIError.init [APICode.FetchError] [e])))
+        return (raise (DismissPendingEx (APIError.init [APICode.Fetch] [e])))
 }
 
 let private get_pending () = promise {
@@ -99,7 +99,7 @@ let private get_pending () = promise {
         | _ ->
             return (raise (PendingEx result))
     | Error e ->
-        return (raise (PendingEx {Codes = [APICode.FetchError]; Messages = [e];
+        return (raise (PendingEx {Codes = [APICode.Fetch]; Messages = [e];
             Students = []}))
 }
 

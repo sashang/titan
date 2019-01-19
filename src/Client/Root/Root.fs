@@ -33,7 +33,6 @@ type RootMsg =
     | CheckSessionSuccess of Session
     | CheckSessionFailure of exn
     | SignOutMsg of SignOut.Msg
-    | SignUpMsg of SignUp.Msg
     | DashboardRouterMsg of DashboardRouter.Msg
     | UrlUpdatedMsg of Pages.PageType
     | HomeMsg of Home.Msg
@@ -43,7 +42,6 @@ type RootMsg =
 
 type PageModel =
     | LoginModel
-    | SignUpModel of SignUp.Model
     | DashboardRouterModel of DashboardRouter.Model
     | EnrolModel of Enrol.Model
     | HomeModel of Home.Model
@@ -66,7 +64,8 @@ let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMs
         match model with
         | {Session = Some session} ->
             let new_model, cmd = Tutor.Dashboard.init ()
-            { model with Child = (DashboardRouterModel ({Child = DashboardRouter.TutorModel new_model}))}, Cmd.map (DashboardRouterMsg << DashboardRouter.TutorMsg) cmd
+            { model with Child = (DashboardRouterModel ({Child = DashboardRouter.TutorModel new_model}))},
+                                 Cmd.map (DashboardRouterMsg << DashboardRouter.TutorMsg) cmd
         | {Session = None} ->
             model, Cmd.none
 
@@ -76,10 +75,6 @@ let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMs
 
     | Some Pages.PageType.Login ->
         { model with Child = LoginModel}, Cmd.none 
-
-    | Some Pages.PageType.SignUp ->
-        let new_model, cmd = SignUp.init ()
-        { model with Child = SignUpModel new_model}, Cmd.map SignUpMsg cmd
 
     | Some Pages.PageType.Enrol ->
         let new_model, cmd = Enrol.init ()
@@ -169,8 +164,6 @@ let view model dispatch =
                 match model.Child with
                 | LoginModel -> 
                     yield Login.view
-                | SignUpModel sign_up_model ->
-                    yield SignUp.view sign_up_model (SignUpMsg >> dispatch)
                 | DashboardRouterModel model ->
                     yield DashboardRouter.view model (DashboardRouterMsg >> dispatch) 
                 | HomeModel model ->
@@ -213,18 +206,17 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
             | {Child = HomeModel home_model} when claims.is_first_time ->
                 let new_home_model, home_msg = Home.update home_model Home.FirstTimeUser claims
                 { state with Session = Some session; Claims = Some claims; Child = HomeModel new_home_model}, Cmd.none
-            | _ ->
-                { state with Session = Some session; Claims = Some claims}, Cmd.none
+            | model when claims.IsTutor  ->
+                let tutor_model, cmd = DashboardRouter.init_tutor
+                { state with 
+                    Session = Some session; Claims = Some claims;
+                    Child = DashboardRouterModel(tutor_model)}, Cmd.none
         | Error e -> 
             Browser.console.warn e
             {state with Session = None}, Cmd.none 
 
     | CheckSessionFailure session, state ->
         {state with Session = None}, Cmd.none 
-
-    | SignUpMsg signup_msg, {Child = SignUpModel model; Session = None} ->
-        let new_model, cmd = SignUp.update model signup_msg 
-        {state with Child = SignUpModel new_model}, Cmd.map SignUpMsg cmd 
 
     | HomeMsg home_msg, {Child = HomeModel model; Claims = Some claims} ->
         Browser.console.info "HomeMsg with claims"

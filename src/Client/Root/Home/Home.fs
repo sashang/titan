@@ -195,8 +195,6 @@ let footer =
     Footer.footer [ Common.Modifiers [ Modifier.BackgroundColor IsTitanPrimary ] ]
         [ Container.container [ ]
             [ ] ]
-
-
 let view (model : Model) (dispatch : Msg -> unit) =
     [ Section.section 
         [ Section.Modifiers [ ] ]
