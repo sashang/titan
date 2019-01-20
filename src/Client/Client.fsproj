@@ -11,7 +11,6 @@
     <Compile Include="Pages.fs" />
     <Compile Include="CustomColours.fs" />
     <Compile Include="Style.fs" />
-    <Compile Include="Shared.fs" />
     <Compile Include="Root/Home/FirstTime/FirstTime.fs" />
     <Compile Include="Root/Home/Home.fs" />
     <Compile Include="Root/SignOut/SignOut.fs" />
