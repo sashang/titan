@@ -4,16 +4,11 @@ open Client.Style
 open CustomColours
 open Domain
 open Elmish
-open Elmish.Browser.Navigation
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
-open Fable.Import
 open Fable.PowerPack
-open Fable.PowerPack.Fetch
-open Fable.Core.JsInterop
 open Fulma
 open ModifiedFableFetch
-open Shared
 open Thoth.Json
 
 exception SaveEx of APIError
