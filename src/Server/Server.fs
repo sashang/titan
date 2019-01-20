@@ -15,7 +15,6 @@ open Microsoft.Extensions.Configuration
 open Microsoft.IdentityModel.Tokens
 open Saturn
 open Saturn.Auth
-open SchoolView
 open System
 open System.IdentityModel.Tokens.Jwt
 open System.IO

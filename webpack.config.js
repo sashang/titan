@@ -35,6 +35,11 @@ var CONFIG = {
                changeOrigin: true,
                //secure: false
            },
+        '/schools.html': {
+            target: 'http://localhost:' + (process.env.SERVER_PROXY_PORT || "8085"),
+               changeOrigin: false,
+               //secure: false
+           },
         '/signin-google': {
             target: 'http://localhost:' + (process.env.SERVER_PROXY_PORT || "8085"),
                changeOrigin: false,
