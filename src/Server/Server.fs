@@ -1,35 +1,27 @@
+module Server
+
+
 open Database
 open Domain
 open FSharp.Control.Tasks
 open FluentMigrator.Runner
-open FluentMigrator.Runner.Initialization
 open Giraffe
-open Giraffe.Common
 open Giraffe.Serialization
-open Giraffe.ResponseWriters
-open Microsoft.AspNetCore.Authentication
-open Microsoft.AspNetCore.Authentication.JwtBearer
-open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Cors.Infrastructure
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Identity
-open Microsoft.AspNetCore.Identity.UI.Services
-open Microsoft.AspNetCore.Identity.EntityFrameworkCore
 open Microsoft.Extensions.Configuration  
-open Microsoft.EntityFrameworkCore
 open Microsoft.IdentityModel.Tokens
 open Saturn
 open Saturn.Auth
+open SchoolView
 open System
-open System.Data.SqlClient
 open System.IdentityModel.Tokens.Jwt
 open System.IO
 open System.Security.Claims
+
 open Thoth.Json.Net
-open ValueDeclarations
 
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
@@ -174,6 +166,7 @@ let defaultView = router {
     get "/" (json "root")
     get "/index.html" (redirectTo false "/")
     get "/default.html" (redirectTo false "/")
+    get "/schools.html" (SchoolView.view |> htmlView)
 }
 
 let browser = pipeline {

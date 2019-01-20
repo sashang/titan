@@ -13,7 +13,6 @@ open Fable.PowerPack.Fetch
 open Fable.Core.JsInterop
 open Fulma
 open Fable.FontAwesome
-open Shared
 
 open Thoth.Json
 

@@ -12,7 +12,6 @@ open Fable.PowerPack
 open Fable.PowerPack.Fetch
 open Fable.Core.JsInterop
 open Fulma
-open Shared
 open Thoth.Json
 
 
