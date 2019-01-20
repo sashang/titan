@@ -8,6 +8,7 @@ open Microsoft.AspNetCore.Identity.EntityFrameworkCore
 open System.Security.Claims
 open Microsoft.EntityFrameworkCore
 open Models
+open Models
 open System.Threading.Tasks
 
 
@@ -54,7 +55,7 @@ let main args =
             printfn "xavier user id = %s" user_id
             //add a school
             task {
-                let! res = db.insert_school {Models.init with Name="xmansion"; UserId = user_id}
+                let! res = db.insert_school {School.init with Name="xmansion"; UserId = user_id}
                 match res with
                 | Ok _ ->
                     printfn "add xmansion school"

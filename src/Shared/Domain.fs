@@ -1,8 +1,6 @@
 /// Domain model shared between client and server.
 namespace Domain
 
-open Thoth.Json
-
 [<RequireQualifiedAccess>]
 type APICode = 
     | Failure
