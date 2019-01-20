@@ -15,3 +15,5 @@ let list_x x input =
                 | _, ys -> count+1,[List.append ys [value]] 
             | _ -> failwith "Invalid initial state. Should be (0,[[]])") (0,[[]])
     |> (fun (count, result) -> result) //only interested in the result which is a list of lists
+    
+    

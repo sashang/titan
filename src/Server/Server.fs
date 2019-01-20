@@ -129,6 +129,22 @@ let check_session (next : HttpFunc) (ctx : HttpContext) = task {
         return! failwith ("no session for user" )
 }
 
+let render_school_view (next : HttpFunc) (ctx : HttpContext) = task {
+    try
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let config = ctx.GetService<IConfiguration>()
+        let db = ctx.GetService<IDatabase>()
+        let! result = db.get_school_view
+        match result with
+        | Ok schools ->
+            return! (htmlView (SchoolView.view schools)) next ctx
+        | Error message ->
+            return! (htmlString message) next ctx
+                
+    with ex ->
+        return! failwith ("COuld not render the school view" )
+}
+
 
 let handleGetSecured =
     fun (next : HttpFunc) (ctx : HttpContext) ->
@@ -165,7 +181,7 @@ let defaultView = router {
     get "/" (json "root")
     get "/index.html" (redirectTo false "/")
     get "/default.html" (redirectTo false "/")
-    get "/schools.html" (SchoolView.view |> htmlView)
+    get "/schools.html" render_school_view
 }
 
 let browser = pipeline {

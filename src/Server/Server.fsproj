@@ -20,9 +20,9 @@
     <Compile Include="./Migrations/Development.fs" />
     <Compile Include="../Shared/FableJson.fs" />
     <Compile Include="Model/Models.fs" />
+    <Compile Include="SchoolView.fs" />
     <Compile Include="Database.fs" />
     <Compile Include="API.fs" />
-    <Compile Include="SchoolView.fs" />
     <Compile Include="Server.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

@@ -1,6 +1,8 @@
 /// Functions for managing the database.
 module Database
 
+
+
 open Dapper
 open Domain
 open FSharp.Control.Tasks.ContextInsensitive
@@ -10,6 +12,7 @@ open System.Data.SqlClient
 open System.Collections.Generic
 open System.Dynamic
 open System.Threading.Tasks
+
 
 let private dapper_query<'Result> (query:string) (connection:SqlConnection) =
     connection.Query<'Result>(query)
@@ -82,13 +85,34 @@ type IDatabase =
     abstract member update_user : string->string -> string -> Task<Result<unit, string>>
     
     /// update school name given email
-    abstract member update_school_name : string->string -> Task<Result<unit, string>>
+    abstract member update_school_name : string -> string -> Task<Result<unit, string>>
+    
+    /// get list of school names and tutors
+    abstract member get_school_view : Task<Result<SchoolView.Model list, string>>
 
     
 type Database(c : string) = 
     member this.connection = c
 
     interface IDatabase with
+        member this.get_school_view : Task<Result<SchoolView.Model list, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                let sql = """select "School"."Name","User"."FirstName","User"."LastName"
+                             from "School" join "User" on "User"."Id" = "School"."UserId";"""
+                let result = conn
+                             |> dapper_query<SchoolView.Model> sql
+                             |> Seq.toList
+                return Ok result
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
+        
+        
         member this.update_school_name school_name email : Task<Result<unit, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)

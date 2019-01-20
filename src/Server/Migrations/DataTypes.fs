@@ -10,3 +10,7 @@ type TitanClaim =
       Type : string
       Value : string }
       
+type School =
+    { UserId : int
+      Name : string }
+      
