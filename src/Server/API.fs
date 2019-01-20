@@ -247,10 +247,12 @@ let save_tutor (next :HttpFunc) (ctx : HttpContext) = task {
         let! result = db_service.update_user data.FirstName data.LastName user_email
         match result with
         | Ok () ->
-            return! ctx.WriteJsonAsync None
+            let! result = db_service.update_school_name data.SchoolName user_email
+            match result with
+            | Ok () -> return! ctx.WriteJsonAsync None
+            | Error message -> return! ctx.WriteJsonAsync (APIError.init [APICode.Database] [message])
         | Error message ->
-            logger.LogWarning("Failed to save tutor data: " + message)
-            return! ctx.WriteJsonAsync (APIError.init [APICode.Database] [message])
+            return! ctx.WriteJsonAsync (APIError.db message)
     else
         return! ctx.WriteJsonAsync APIError.unauthorized
 }

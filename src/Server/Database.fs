@@ -2,6 +2,7 @@
 module Database
 
 open Dapper
+open Domain
 open FSharp.Control.Tasks.ContextInsensitive
 open Microsoft.Extensions.Logging
 open Npgsql
@@ -79,12 +80,31 @@ type IDatabase =
     
     /// update user given email
     abstract member update_user : string->string -> string -> Task<Result<unit, string>>
+    
+    /// update school name given email
+    abstract member update_school_name : string->string -> Task<Result<unit, string>>
 
     
 type Database(c : string) = 
     member this.connection = c
 
     interface IDatabase with
+        member this.update_school_name school_name email : Task<Result<unit, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                let cmd = """update "School" set "Name" = @Name where "UserId" = (select "Id" from "User" where "Email" = @Email)"""
+                let m = (Map ["Email", email; "Name", school_name])
+                if dapper_map_param_exec cmd m conn = 1 then  
+                    return Ok ()
+                else 
+                    return Error ("Did not update the expected number of records. sql is \"" + cmd + "\"")
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
         member this.update_user first last email : Task<Result<unit, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)

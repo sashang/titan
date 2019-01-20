@@ -31,7 +31,7 @@ type Msg =
     | SetFirstName of string
     | SetLastName of string
     | SetSchoolName of string
-    | Success of APIError
+    | Success of unit
     | Failure of exn
 
 type TutorFormModel =
@@ -69,10 +69,10 @@ let submit_tutor (tutor : TutorRegister) = promise {
         return (raise (RegisterEx (APIError.init [APICode.SchoolName] ["Name cannot be blank"])))
     else
         let request = make_post 4 tutor
-        let decoder = Decode.Auto.generateDecoder<APIError>()
+        let decoder = Decode.Auto.generateDecoder<APIError option>()
         let! response = Fetch.tryFetchAs "/api/register-tutor" decoder request
         Browser.console.info "received response from register-tutor"
-        return unwrap_response response RegisterEx
+        return map_api_error_result response RegisterEx
 }
 
 let private submit_student (student : StudentRegister) = promise {
@@ -80,10 +80,10 @@ let private submit_student (student : StudentRegister) = promise {
         return (raise (RegisterEx (APIError.init [APICode.Failure] ["Invalid input"])))
     else
         let request = make_post 3 student
-        let decoder = Decode.Auto.generateDecoder<APIError>()
+        let decoder = Decode.Auto.generateDecoder<APIError option>()
         let! response = Fetch.tryFetchAs "/api/register-student" decoder request
         Browser.console.info "received response from register-student"
-        return unwrap_response response RegisterEx
+        return map_api_error_result response RegisterEx
 }
 
 let init active claims =

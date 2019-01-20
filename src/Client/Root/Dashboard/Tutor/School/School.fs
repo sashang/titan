@@ -67,13 +67,7 @@ let private save data = promise {
     let request = make_post 3 data
     let decoder = Decode.Auto.generateDecoder<APIError option>()
     let! response = Fetch.tryFetchAs "/api/save-tutor" decoder request
-    match response with
-    | Ok result ->
-        match result with
-        | Some err -> return  raise (SaveEx err)
-        | None -> return ()
-    | Error msg ->
-        return (failwith msg)
+    return map_api_error_result response SaveEx
 }
 
 let init () : Model*Cmd<Msg> =

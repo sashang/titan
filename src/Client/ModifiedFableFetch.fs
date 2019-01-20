@@ -47,11 +47,15 @@ let post_record (url: string) (body: string) (properties: RequestProperties list
         }
     )
 
-let unwrap_response (response : Result<APIError,string>) ex_to_raise  = 
+/// Map the APIError result if it is there to the exeption.
+/// Map the error (i.e. the string part in Result) to the exception
+let map_api_error_result (response : Result<APIError option,string>) ex_to_raise  = 
     match response with
-    | Ok result -> result
+    | Ok result ->
+        match result with
+        | Some api_error -> raise (ex_to_raise api_error)
+        | None -> ()
     | Error e ->
-        Browser.console.warn ("Error: " + e)
         raise (ex_to_raise (APIError.init [APICode.Fetch] [e]))
 
 
