@@ -214,4 +214,23 @@ type SaveRequest =
       SchoolName : string }
     static member init = {FirstName = ""; LastName = ""; SchoolName = ""}
     member this.is_valid = this.FirstName <> "" && this.LastName <> "" && this.SchoolName <> ""
+    
+
+[<CLIMutable>]
+type School =
+    { FirstName : string
+      LastName : string
+      SchoolName : string }
+    static member init first last sn = {FirstName = first; LastName = last; SchoolName = sn}
+    member this.is_valid = this.FirstName <> "" && this.LastName <> "" && this.SchoolName <> ""
+    
+[<CLIMutable>]
+type GetAllSchoolsResult =
+    { Schools : School list
+      Error : APIError option}
+    
+    static member init = {Schools = []; Error = None} 
+    static member db_error msg = {Schools = []; Error = Some (APIError.db msg) } 
+    member this.is_valid = this.Schools |> List.exists (fun x -> not x.is_valid)
+
 

@@ -10,7 +10,6 @@ open Elmish.Browser.Navigation
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.Import
-open Fable.Import
 open Fable.PowerPack
 open Fulma
 open ModifiedFableFetch

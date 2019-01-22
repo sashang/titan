@@ -24,7 +24,7 @@ let init_tutor =
     {Child = TutorModel(tutor_model)}, Cmd.map TutorMsg cmd
     
 let init_student =
-    let student_model, cmd = Student.Dashboard.init
+    let student_model, cmd = Student.Dashboard.init ()
     {Child = StudentModel(student_model)}, Cmd.map StudentMsg cmd
 
 let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =

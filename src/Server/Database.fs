@@ -89,6 +89,7 @@ type IDatabase =
     
     /// get list of school names and tutors
     abstract member get_school_view : Task<Result<Models.SchoolTutor list, string>>
+    
 
     
 type Database(c : string) = 

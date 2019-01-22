@@ -29,7 +29,7 @@ let page_parser : Parser<PageType -> _,_> =
           map PageType.Login (s "login")
           map PageType.Enrol (s "enroll")
           map (PageType.DashboardTutor) (s "dashboard-tutor")
-          map (PageType.DashboardStudent) (s "dashboard-signup")
+          map (PageType.DashboardStudent) (s "dashboard-student")
           map (PageType.DashboardTitan) (s "dashboard-titan") ]
 
 let url_parser location = parseHash page_parser location

@@ -3,13 +3,6 @@ module SchoolView
 open Giraffe.GiraffeViewEngine
 
  
-type Model =
-    {SchoolName : string
-     FirstName : string
-     LastName : string}
-     
-    static member init first last school =
-        {SchoolName = school; FirstName = first; LastName = last}
     
 let navbar_end =
     div [ _class "navbar-end" ] [
@@ -42,7 +35,7 @@ let navbar =
         ]
     ]
 
-let school_tile (s : Model) =
+let school_tile (s : Domain.School) =
     div [_class "box" ] [
         div [_class "card-header has-background-custom-titan-secondary"] [
             p [ _class "card-header-title has-text-white" ] [ str s.SchoolName ]
@@ -80,16 +73,16 @@ let school_tile (s : Model) =
         ]
     ]
 
-let private single_row (schools : Model list) =
+let private single_row (schools : Domain.School list) =
     [for s in schools do yield school_tile s]
 
-let private school_view_body (schools : Model list) =
+let private school_view_body (schools : Domain.School list) =
     let sublists = Seq.chunkBySize 4 schools
     div [_class "container"] [
         yield! [ for s in sublists do yield! single_row (List.ofArray s) ]
     ]
     
-let view (schools : Model list) =
+let view (schools : Domain.School list) =
 
     html [] [
         head [] [

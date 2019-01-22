@@ -257,3 +257,20 @@ let save_tutor (next :HttpFunc) (ctx : HttpContext) = task {
         return! ctx.WriteJsonAsync APIError.unauthorized
 }
 
+let get_all_schools (next : HttpFunc) (ctx : HttpContext) = task {
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        logger.LogInformation("called get_all_schools")
+        let db_service = ctx.GetService<IDatabase>()
+        let! result = db_service.get_school_view
+        match result with
+        | Ok schooltutor ->
+            //bit of a mess...should rethink how we do this so we don't need to convert rfom one type to the other.
+            let mapped_schools = schooltutor |> List.map (fun st -> {School.LastName = st.LastName; School.FirstName = st.FirstName;
+                                                School.SchoolName = st.SchoolName})
+            return! ctx.WriteJsonAsync {GetAllSchoolsResult.init with Schools = mapped_schools }
+        | Error message ->
+            return! ctx.WriteJsonAsync (GetAllSchoolsResult.db_error message)
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
+}

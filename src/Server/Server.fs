@@ -136,7 +136,7 @@ let render_school_view (next : HttpFunc) (ctx : HttpContext) = task {
         let! result = db.get_school_view
         match result with
         | Ok schools ->
-            let converted = schools |> List.map (fun x -> SchoolView.Model.init x.FirstName x.LastName x.SchoolName) 
+            let converted = schools |> List.map (fun x -> Domain.School.init x.FirstName x.LastName x.SchoolName) 
             return! (htmlView (SchoolView.view converted)) next ctx
         | Error message ->
             return! (htmlString message) next ctx
@@ -169,6 +169,7 @@ let titan_api =  router {
     post "/enrol" API.enrol
     get "/load-school" API.load_school
     get "/load-user" API.load_user
+    get "/get-all-schools" API.get_all_schools
     //get "/signin-google" (redirectTo false "/api/secure")
     post "/register-punter" API.register_punter
     post "/register-tutor" API.register_tutor
