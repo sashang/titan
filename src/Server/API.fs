@@ -82,7 +82,7 @@ let register_tutor (next : HttpFunc) (ctx : HttpContext) = task {
         let! result = db.insert_tutor registration.FirstName registration.LastName registration.SchoolName registration.Email 
         match result with
         | Ok () ->
-            return! ctx.WriteJsonAsync APIError.init_empty
+            return! ctx.WriteJsonAsync None
         | Error msg ->
             logger.LogWarning msg
             //clean up this error
@@ -102,7 +102,7 @@ let register_student (next : HttpFunc) (ctx : HttpContext) = task {
         let! result = db.insert_student registration.FirstName registration.LastName registration.Email 
         match result with
         | Ok () ->
-            return! ctx.WriteJsonAsync APIError.init_empty
+            return! ctx.WriteJsonAsync None
         | Error msg ->
             logger.LogWarning msg
             //clean up this error

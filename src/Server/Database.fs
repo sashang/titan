@@ -88,21 +88,21 @@ type IDatabase =
     abstract member update_school_name : string -> string -> Task<Result<unit, string>>
     
     /// get list of school names and tutors
-    abstract member get_school_view : Task<Result<SchoolView.Model list, string>>
+    abstract member get_school_view : Task<Result<Models.SchoolTutor list, string>>
 
     
 type Database(c : string) = 
     member this.connection = c
 
     interface IDatabase with
-        member this.get_school_view : Task<Result<SchoolView.Model list, string>> = task {
+        member this.get_school_view : Task<Result<Models.SchoolTutor list, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
                 let sql = """select "School"."Name","User"."FirstName","User"."LastName"
                              from "School" join "User" on "User"."Id" = "School"."UserId";"""
                 let result = conn
-                             |> dapper_query<SchoolView.Model> sql
+                             |> dapper_query<Models.SchoolTutor> sql
                              |> Seq.toList
                 return Ok result
             with

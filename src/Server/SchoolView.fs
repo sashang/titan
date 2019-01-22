@@ -1,20 +1,21 @@
 module SchoolView
 
 open Giraffe.GiraffeViewEngine
-open Giraffe.GiraffeViewEngine
 
- //Dapper uses reflection when reading the names here to match what
- //we used in the sql string. This means the parameter names in the
- //constructor below must match the names use in the sql string...       
-type Model(Name:string, FirstName:string, LastName:string)=
-    member this.SchoolName = Name
-    member this.FirstName = FirstName
-    member this.LastName = LastName
+ 
+type Model =
+    {SchoolName : string
+     FirstName : string
+     LastName : string}
+     
+    static member init first last school =
+        {SchoolName = school; FirstName = first; LastName = last}
     
 let navbar_end =
     div [ _class "navbar-end" ] [
         div [ _class "navbar-item" ] [
-            button [ _class "button is-custom-titan-info"; _href "/index.html" ] [
+            button [ _class "button is-custom-titan-info"
+                     _onclick "window.location.href='/#login'"] [
                 str "Login"
             ]
         ]
@@ -42,18 +43,50 @@ let navbar =
     ]
 
 let school_tile (s : Model) =
-    div [_class "tile is-3"] [ //grid is 12 columns, is-3 means use 3 of them 
-        str s.SchoolName
-    ]
-
-let private school_view_body (schools : Model list) =
-    section [] [
-        div [_class "container is-fullhd"] [
-            div [_class "tile is-ancestor"] [
-                yield! [ for s in schools do
-                            yield school_tile s ] 
+    div [_class "box" ] [
+        div [_class "card-header has-background-custom-titan-secondary"] [
+            p [ _class "card-header-title has-text-white" ] [ str s.SchoolName ]
+        ]
+        div [_class "card-content"] [
+            div [_class "columns"] [
+                div [_class "column is-2"] [
+                    h3 [_class "subtitle" ] [ str "Tutor" ]
+                ]
+                div [_class "column"] [
+                    h4 [ ] [str s.FirstName; str " "; str s.LastName ]
+                ]
+            ]
+            div [_class "columns"] [
+                div [_class "column is-2"] [
+                    h3 [ _class "subtitle"] [ str "Location" ]
+                ]
+                div [_class "column is-2"] [
+                    h4 [ ] [ ]
+                ]
+            ]
+            div [_class "columns"] [
+                div [_class "column is-2"] [
+                    label [_class "subtitle" ] [ str "Description" ]
+                ]
+                div [_class "content"] [
+                    p [ ] [ str "asdsadasd" ]
+                ]
             ]
         ]
+        div [ _class "card-footer" ] [
+            button [ _class "button is-custom-titan-info is-small"; _onclick "window.location.href='/signin-google'" ] [
+                str "Enrol"
+            ]
+        ]
+    ]
+
+let private single_row (schools : Model list) =
+    [for s in schools do yield school_tile s]
+
+let private school_view_body (schools : Model list) =
+    let sublists = Seq.chunkBySize 4 schools
+    div [_class "container"] [
+        yield! [ for s in sublists do yield! single_row (List.ofArray s) ]
     ]
     
 let view (schools : Model list) =
@@ -69,17 +102,15 @@ let view (schools : Model list) =
             link [_href "https://fonts.googleapis.com/css?family=Montserrat:500|Roboto"; _rel "stylesheet"]
         ]
         body [] [
-            section [ _class "hero is-white has-text-centered" ] [
-                div [ _class "hero-head" ] [
-                    navbar
-                ]
-                div [ _class "hero-body" ] [
-                    school_view_body schools
-                ]
-                div [ _class "hero-foot" ] [
-                    div [ _class "footer has-background-custom-titan-primary" ] [
-                        div [_class "container" ] []
-                    ]
+            div [ _class "hero-head" ] [
+                navbar
+            ]
+            div [ _class "hero-body" ] [
+                school_view_body schools
+            ]
+            div [ _class "hero-foot" ] [
+                div [ _class "footer has-background-custom-titan-primary" ] [
+                    div [_class "container" ] []
                 ]
             ]
         ]

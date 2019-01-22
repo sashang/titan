@@ -53,7 +53,7 @@ which means that the Javascript for all the pages of this site is loaded when
 the user's browser makes the first request. Subsequent pages don't need to
 make requests to the server. Requests to the server are only made for specfic
 data that resides on the database or for authentication with other
-authetication providers like Google.
+authentication providers like Google.
 
 The server side code runs on port `http://localhost:8085`. This is all in F#
 on top of ASP.NET Core.
@@ -95,7 +95,7 @@ set -x ASPNETCORE_ENVIRONMENT Development
 
 #### Google authentication
 This is all in a state of flux so may or not may not work. Set the following
-environment variables: 
+environment variables:
 
 ##### Bash:
 ```
@@ -141,7 +141,7 @@ Server=tcp:titan-sql-server.database.windows.net,1433;Initial Catalog=titan-dev;
 
 #### Migrations
 
-Migrations are handled using Fluentmigrator. 
+Migrations are handled using Fluentmigrator.
 
 * Listing migrations
 ```
@@ -332,14 +332,20 @@ Using a docker image but the fake build.fsx should handle all of that
 fake build --target Bundle
 ```
 
-Then login to azure to configure the resource group settings
+Test with docker locally
+```
+docker run --rm -it -net=host  sashang/titan
+```
 
+If it's ok then push to dockerhub
 ```
-docker run -it --net=host microsoft/azure-cli
+docker push sashang/titan
 ```
 
-```
-bash-4.4# az webapp config appsettings set --resource-group tewtin --name tewtin --settings WEBSITES_PORT=8085
-```
+The login to Azure and create a Web App. Under `OS` select Linux, under `Publish` select Docker image
+Then click configure container and setup the path to dockerhub where azure will fetch the container
+
+Then click `Create`
+
 
 

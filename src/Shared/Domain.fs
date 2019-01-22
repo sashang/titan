@@ -2,7 +2,7 @@
 namespace Domain
 
 [<RequireQualifiedAccess>]
-type APICode = 
+type APICode =
     | Failure
     | Database
     | Fetch
@@ -14,11 +14,11 @@ type APICode =
     | NoSchool
 
 [<CLIMutableAttribute>]
-type APIError = 
+type APIError =
     { Codes : APICode list
       Messages : string list }
     static member init_empty = {Codes = []; Messages = []}
-    
+
     static member init codes messages =
         {Codes = codes; Messages = messages}
     static member unauthorized =
@@ -38,12 +38,18 @@ type Login =
 type LoginCode = Success = 0 | Failure = 1
 
 
+type CallBackCode =
+    | CBLogin
 
 [<CLIMutable>]
-type Session = 
+type CallBack =
+    { Code : CallBackCode }
+
+[<CLIMutable>]
+type Session =
     { Username : string
       Token : string }
-      static member init = 
+      static member init =
         {Username = ""; Token = ""}
 
 
@@ -136,21 +142,21 @@ type GetAllStudentsResult =
       Students : Student list}
 
 [<CLIMutableAttribute>]
-type AddStudentSchool = 
+type AddStudentSchool =
     { Error : APIError option }
 
 
 /// Students who have applied to enrol and are waiting for approval
 [<CLIMutableAttribute>]
-type PendingResult = 
+type PendingResult =
     { Codes : APICode list
       Messages : string list
       Students : Student list }
 
 [<CLIMutableAttribute>]
 type Enrol =
-    { FirstName : string 
-      LastName : string 
+    { FirstName : string
+      LastName : string
       Email : string
       SchoolName : string }
     static member init = {FirstName = ""; LastName = ""; Email = ""; SchoolName = ""}
@@ -200,7 +206,7 @@ type TutorRegister =
       SchoolName : string }
     static member init = {FirstName = ""; LastName = ""; Email = ""; SchoolName = ""}
     member this.is_valid = this.FirstName <> "" && this.LastName <> "" && this.Email <> "" && this.SchoolName <> ""
-    
+
 [<CLIMutable>]
 type SaveRequest =
     { FirstName : string
@@ -208,4 +214,4 @@ type SaveRequest =
       SchoolName : string }
     static member init = {FirstName = ""; LastName = ""; SchoolName = ""}
     member this.is_valid = this.FirstName <> "" && this.LastName <> "" && this.SchoolName <> ""
-      
+

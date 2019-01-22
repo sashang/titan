@@ -19,7 +19,6 @@ open System
 open System.IdentityModel.Tokens.Jwt
 open System.IO
 open System.Security.Claims
-
 open Thoth.Json.Net
 
 let publicPath = Path.GetFullPath "../Client/public"
@@ -137,13 +136,15 @@ let render_school_view (next : HttpFunc) (ctx : HttpContext) = task {
         let! result = db.get_school_view
         match result with
         | Ok schools ->
-            return! (htmlView (SchoolView.view schools)) next ctx
+            let converted = schools |> List.map (fun x -> SchoolView.Model.init x.FirstName x.LastName x.SchoolName) 
+            return! (htmlView (SchoolView.view converted)) next ctx
         | Error message ->
             return! (htmlString message) next ctx
                 
     with ex ->
         return! failwith ("COuld not render the school view" )
 }
+
 
 
 let handleGetSecured =

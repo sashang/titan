@@ -1,5 +1,14 @@
 module Models
 
+ //Dapper uses reflection when reading the names here to match what
+ //we used in the sql string. This means the parameter names in the
+ //constructor below must match the names use in the sql string...
+[<RequireQualifiedAccessAttribute>]
+type SchoolTutor(Name:string, FirstName:string, LastName:string)=
+    member this.SchoolName = Name
+    member this.FirstName = FirstName
+    member this.LastName = LastName
+
 [<CLIMutable>]
 type TitanClaims =
     { Id : int32
@@ -8,7 +17,7 @@ type TitanClaims =
       Value : string }
 
       static member init = {Id = 0; UserId = 0; Type = ""; Value = ""}
-      
+
 [<RequireQualifiedAccessAttribute>]
 [<CLIMutable>]
 type User =

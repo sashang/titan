@@ -4,7 +4,7 @@ _undefined_
 
 ## Parties
 
-**Provider** means **Tewtin Pty Ltd** (ABN 27 522 078 458) of 214/15 Pascoe Street, Pascoe Vale, Victoria, Australia, contactable on support@tewtin.com.
+**Provider** means **Tewtin Pty Ltd** (ABN 27 522 078 458)
 
 **Customer** means you, the person getting Provider's Service.
 

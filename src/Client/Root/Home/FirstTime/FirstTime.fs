@@ -6,12 +6,12 @@ open CustomColours
 open Domain
 open Elmish
 open Elmish.React
+open Elmish.Browser.Navigation
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.Import
+open Fable.Import
 open Fable.PowerPack
-open Fable.PowerPack.Fetch
-open Fable.Core.JsInterop
 open Fulma
 open ModifiedFableFetch
 open Thoth.Json
@@ -168,7 +168,6 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | model, ClickCancel -> {model with Active = false}, Cmd.none
 
     | {Accepted = false; SubForm = Some (TutorForm _)} , ClickGo ->
-        Browser.console.info "user must accept terms before proceeding"
         model, Cmd.none
         
     | {Accepted = true; SubForm = Some (TutorForm tutor_model)} , ClickGo ->
@@ -182,15 +181,12 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
                     Failure
 
     | {Consent = false; Accepted = _; SubForm = Some (StudentForm _)}, ClickGo ->
-        Browser.console.info "studnet must obtain consent before proceeding"
         model, Cmd.none
 
     | {Consent = _; Accepted = false; SubForm = Some(StudentForm _)}, ClickGo ->
-        Browser.console.info "student must accept terms before proceeding"
         model, Cmd.none
 
     | {Consent = true; Accepted = true; SubForm = Some(StudentForm student_model)}, ClickGo ->
-       Browser.console.info "student must accept terms before proceeding"
        {model with Active = true}, 
        Cmd.ofPromise submit_student 
           {StudentRegister.FirstName = student_model.FirstName
@@ -198,7 +194,12 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
            StudentRegister.Email = student_model.Email } Success Failure
 
     | model, Success _ ->
-        {model with Active = false}, Cmd.none
+        {model with Active = false
+                    SubForm = None},
+        Navigation.newUrl (Pages.to_path (match model.SubForm with
+                                          | Some (TutorForm model) -> Pages.DashboardTutor
+                                          | Some (StudentForm model) -> Pages.DashboardStudent
+                                          | None -> Pages.Home))
 
     | model, Failure e ->
         match e with
@@ -235,3 +236,7 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
 
     | model, ClickConsent ->
         {model with Consent = not model.Consent}, Cmd.none
+    
+    | _, msg ->
+        Browser.console.warn(sprintf "message not handled %A" msg)
+        model,Cmd.none

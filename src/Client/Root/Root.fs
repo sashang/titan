@@ -117,6 +117,12 @@ let private nav_item_button_url page (text : string) =
               Button.OnClick (goto_url page) ]
             [ str text ] ]
 
+let private nav_item_button_href href (text : string) =
+    Navbar.Item.div [ ]
+        [ Button.a 
+            [ Button.Color IsWhite
+              Button.Props [ Props.Href href ] ]
+            [ str text ] ]
 
 let dashboard_button (claims : TitanClaim) =
     if claims.IsTutor then
@@ -149,7 +155,8 @@ let view model dispatch =
                     Navbar.End.div []
                         [ match model.Session with
                           | None -> 
-                                yield nav_item_button_url Pages.Enrol "Enrol"
+                                //yield nav_item_button_url Pages.Enrol "Enrol"
+                                yield nav_item_button_href "/schools.html" "Schools"
                                 yield nav_item_button_url Pages.Login "Login"
                           | Some session ->
                                 yield! List.append [ match model.Claims with
@@ -159,18 +166,17 @@ let view model dispatch =
                 ]
             ]
         ]
-        Hero.body [ ] 
-            [ 
-                match model.Child with
-                | LoginModel -> 
-                    yield Login.view
-                | DashboardRouterModel model ->
-                    yield DashboardRouter.view model (DashboardRouterMsg >> dispatch) 
-                | HomeModel model ->
-                    yield! Home.view model (HomeMsg  >> dispatch)
+        Hero.body [ ] [ 
+            match model.Child with
+            | LoginModel -> 
+                yield Login.view
+            | DashboardRouterModel model ->
+                yield DashboardRouter.view model (DashboardRouterMsg >> dispatch) 
+            | HomeModel model ->
+                yield! Home.view model (HomeMsg  >> dispatch)
 (*                | EnrolModel model ->
-                    yield! Enrol.view model (EnrolMsg  >> dispatch)*)
-            ]
+                yield! Enrol.view model (EnrolMsg  >> dispatch)*)
+        ]
         Hero.foot [ ] [ Home.footer ]
     ]
 
@@ -211,6 +217,11 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
                 { state with 
                     Session = Some session; Claims = Some claims;
                     Child = DashboardRouterModel(tutor_model)}, Cmd.map DashboardRouterMsg cmd
+            | model when claims.IsStudent  ->
+                let student_model, cmd = DashboardRouter.init_student
+                { state with 
+                    Session = Some session; Claims = Some claims;
+                    Child = DashboardRouterModel(student_model)}, Cmd.map DashboardRouterMsg cmd
         | Error e -> 
             Browser.console.warn e
             {state with Session = None}, Cmd.none 
