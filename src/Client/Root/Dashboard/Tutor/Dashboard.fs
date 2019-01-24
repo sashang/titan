@@ -69,8 +69,18 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         {model with Class = new_state}, Cmd.map ClassMsg cmd
     | StudentMsg msg ->
         let new_state, cmd = StudentsComponent.update model.Students msg
-        {model with Students = new_state}, Cmd.map ClassMsg cmd
+        {model with Students = new_state}, Cmd.map StudentMsg cmd
     | PendingMsg msg ->
-        let new_state, cmd = PendingStudents.update model.Pending msg
-        {model with Pending = new_state}, Cmd.map PendingMsg cmd
+        match msg with
+        | PendingStudents.ApprovePendingSuccess () ->
+            let new_student_state, student_cmd = StudentsComponent.update model.Students StudentsComponent.GetAllStudents
+            let new_pending_state, pending_cmd = PendingStudents.update model.Pending msg
+            {model with Pending = new_pending_state
+                        Students = new_student_state},
+            Cmd.batch [Cmd.map PendingMsg pending_cmd; Cmd.map StudentMsg student_cmd]
+        | _ ->
+            let new_pending_state, pending_cmd = PendingStudents.update model.Pending msg
+            {model with Pending = new_pending_state}, Cmd.map PendingMsg pending_cmd
+            
+            
 

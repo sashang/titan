@@ -4,59 +4,68 @@ module StudentsComponent
 open CustomColours
 open Domain
 open Elmish
-open Elmish.Browser.Navigation
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.Import
 open Fable.PowerPack
-open Fable.PowerPack.Fetch
-open Fable.Core.JsInterop
 open Fulma
+open ModifiedFableFetch
 open Thoth.Json
 
 
 type Model =
     { Students : Domain.Student list
       //result of interaction with the api
-      Result : GetAllStudentsResult option}
+      Error : APIError option}
 
 
-exception GetAllStudentsEx of GetAllStudentsResult
+exception GetAllStudentsEx of APIError
 
 type Msg =
-    | LoadStudents of Student list
+    | LoadStudentsSuccess of Student list
     | LoadStudentsFailure  of exn
+    | GetAllStudents
 
-let private get_all_students () = promise {
-    let props =
-        [ RequestProperties.Method HttpMethod.GET
-          RequestProperties.Credentials RequestCredentials.Include
-          requestHeaders [ HttpRequestHeaders.ContentType "application/json"
-                           HttpRequestHeaders.Accept "application/json" ]]
+let get_all_students () = promise {
     let decoder = Decode.Auto.generateDecoder<Domain.GetAllStudentsResult>()
-    let! response = Fetch.tryFetchAs "/api/secure/get-all-students" decoder props
-    return failwith "need to complete this"
+    let! response = Fetch.tryFetchAs "/api/get-all-students" decoder make_get
+    match response with
+    | Ok result ->
+        match result.Error with
+        | Some error ->
+            Browser.console.error ("get_all_students: " + (List.head error.Messages))
+            return (raise (GetAllStudentsEx error))
+        | None ->
+            return result.Students
+    | Error e ->
+        return raise (GetAllStudentsEx (APIError.init [APICode.Fetch] [e]))
 }
+
 let init () =
-    { Students = [ ]; Result = None },
-    Cmd.ofPromise get_all_students () LoadStudents LoadStudentsFailure
+    { Students = [ ]; Error = None },
+    Cmd.ofPromise get_all_students () LoadStudentsSuccess LoadStudentsFailure
 
 let update (model : Model) (msg : Msg) =
     match msg with
-    | LoadStudents students ->
+    | GetAllStudents ->
+        model, Cmd.ofPromise get_all_students () LoadStudentsSuccess LoadStudentsFailure
+        
+    | LoadStudentsSuccess students ->
         {model with Students = students}, Cmd.none
     | LoadStudentsFailure e ->
         match e with 
         | :? GetAllStudentsEx as ex ->
             Browser.console.warn "Received GetAllStudentsEx"
-            { model with Result = Some ex.Data0 }, Cmd.none
+            { model with Error = Some ex.Data0 }, Cmd.none
         | e ->
-            Browser.console.warn "Received general exception"
+            Browser.console.warn ("Received general exception: " + e.Message)
             model, Cmd.none
 
 
 let private student_content (student : Student) =
-      [ Text.div [ Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [ str student.Email ] ]
+      [ Text.div
+            [ Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
+            [ str student.Email ] ]
 
 let private single_student model dispatch (student : Domain.Student) = 
     Column.column [ Column.Width (Screen.All, Column.Is3) ]
@@ -68,11 +77,15 @@ let private single_student model dispatch (student : Domain.Student) =
             Card.content [  ] [ yield! student_content student ] ] ]
 
 let private render_all_students (model : Model) (dispatch : Msg->unit) =
-    let l4 = model.Students |> Homeless.list_x 4
-    [for l in l4 do
-        yield Columns.columns [ ]
-            [ for x in l do
-                yield single_student model dispatch x] ]
+    match model.Students with
+    | [] ->
+        [nothing]
+    | _ ->
+        let l4 = Homeless.chunk 4 model.Students
+        [for l in l4 do
+                yield Columns.columns [ ]
+                    [ for x in l do
+                        yield single_student model dispatch x] ]
 
 let private students_level =
     Level.level [ ] 

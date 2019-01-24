@@ -3,6 +3,7 @@
 namespace TitanMigrations
 
 open FluentMigrator
+open Microsoft.EntityFrameworkCore.Internal
 
 
 [<Migration(20181221120907L)>]
@@ -14,6 +15,7 @@ type Initial() =
         this.Create.Table("User")
             .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable().Unique()
             .WithColumn("Email").AsString().NotNullable().Unique()
+            .WithColumn("Phone").AsString().NotNullable()
             .WithColumn("FirstName").AsString().NotNullable()
             .WithColumn("LastName").AsString().NotNullable() |> ignore
 
@@ -21,17 +23,29 @@ type Initial() =
         this.Create.Table("School")
             .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable().Unique()
             .WithColumn("UserId").AsInt32().ForeignKey().Unique()
-            .WithColumn("Name").AsString().Unique().NotNullable() |> ignore
+            .WithColumn("Name").AsString().NotNullable() |> ignore
 
         this.Create.ForeignKey("FKSchoolUser").FromTable("School") .ForeignColumn("UserId")
             .ToTable("User").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
+        
+        
+        //tbale to map students in the User table to schools
+        this.Create.Table("Student")
+            .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable().Unique()
+            .WithColumn("SchoolId").AsInt32().ForeignKey()
+            .WithColumn("UserId").AsInt32().ForeignKey() |> ignore
+            
+        this.Create.ForeignKey("FKStudentUser").FromTable("Student")
+            .ForeignColumn("UserId").ToTable("User").PrimaryColumn("Id") |> ignore
+        this.Create.ForeignKey("FKStudentSchool").FromTable("Student")
+            .ForeignColumn("SchoolId").ToTable("School").PrimaryColumn("Id") |> ignore
 
         //Class descriptions linked to a school.
         this.Create.Table("ClassType")
             .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable().Unique()
             .WithColumn("SchoolId").AsInt32().ForeignKey().NotNullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("Description").AsString().Nullable() |> ignore
+            .WithColumn("Name").AsString().NotNullable()
+            .WithColumn("Description").AsString().NotNullable() |> ignore
 
         this.Create.ForeignKey("FKClassTypeSchool").FromTable("ClassType")
             .ForeignColumn("SchoolId").ToTable("School").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
@@ -59,24 +73,16 @@ type Initial() =
         this.Create.UniqueConstraint("ConStudentClassSchedule").OnTable("ClassScheduleStudent")
             .Columns([|"ClassScheduleId"; "UserId"|]) |> ignore
 
-        //table for those registering interest in the app.
-        this.Create.Table("Punter")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable().Unique()
-            .WithColumn("Email").AsString() |> ignore
-
         //students wanting to enrol at a school
         this.Create.Table("Pending")
             .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable().Unique()
-            .WithColumn("Email").AsString().NotNullable()
-            .WithColumn("FirstName").AsString().NotNullable()
-            .WithColumn("LastName").AsString().NotNullable()
-            .WithColumn("SchoolId").AsInt32().NotNullable() |> ignore
-
-        this.Create.UniqueConstraint("ConPending").OnTable("Pending")
-            .Columns([|"Email"; "SchoolId"|]) |> ignore
+            .WithColumn("UserId").AsInt32().NotNullable().ForeignKey()
+            .WithColumn("SchoolId").AsInt32().NotNullable().ForeignKey() |> ignore
+            
+        this.Create.ForeignKey("FKPendingUser").FromTable("Pending")
+            .ForeignColumn("UserId").ToTable("User").PrimaryColumn("Id") |> ignore
         this.Create.ForeignKey("FKPendingSchool").FromTable("Pending")
-            .ForeignColumn("SchoolId").ToTable("School").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
-
+            .ForeignColumn("SchoolId").ToTable("School").PrimaryColumn("Id") |> ignore
 
         this.Create.Table("TitanClaims")
             .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable()
@@ -88,7 +94,8 @@ type Initial() =
             .ForeignColumn("UserId").ToTable("User").PrimaryColumn("Id").OnDelete(System.Data.Rule.Cascade) |> ignore
 
 
-        this.Insert.IntoTable("User").Row({Email = "sashang@tewtin.com"; FirstName = "Sashan"; LastName = "Govender"}) |> ignore
+        this.Insert.IntoTable("User").Row({Email = "sashang@tewtin.com"; FirstName = "Sashan";
+                                           LastName = "Govender"; Phone = ""}) |> ignore
         this.Insert.IntoTable("TitanClaims").Row({UserId = 1; Type = "IsTitan"; Value = "true"})|> ignore
         
     override this.Down() =
@@ -96,7 +103,7 @@ type Initial() =
         this.Delete.Table("ClassSchedule") |> ignore
         this.Delete.Table("ClassType") |> ignore
         this.Delete.Table("Pending") |> ignore
+        this.Delete.Table("Student") |> ignore
         this.Delete.Table("School") |> ignore
-        this.Delete.Table("Punter") |> ignore
         this.Delete.Table("TitanClaims") |> ignore
         this.Delete.Table("User") |> ignore

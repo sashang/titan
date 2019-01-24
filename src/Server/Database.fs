@@ -47,8 +47,6 @@ type IDatabase =
     /// Query the database to see if a school is linked to a user
     abstract member user_has_school: string -> Task<Result<bool, string>>
 
-    abstract member query_id: string -> Task<Result<string, string>>
-
     /// Update a school given the user id
     abstract member update_school_by_user_id: Models.School -> Task<Result<bool, string>>
 
@@ -61,19 +59,17 @@ type IDatabase =
     ///register interested partys
     abstract member register_punters: Models.Punter -> Task<Result<bool, string>>
 
-    /// query to get all students
-    abstract member query_all_students : Task<Result<Models.Student list, string>>
-
+    /// query to get all students for a tutor
+    abstract member query_students : string -> Task<Result<Domain.Student list, string>>
+    
+    /// 
     abstract member query_all_schools : Task<Result<Models.School list, string>>
 
     /// query to get all pending students
-    abstract member query_pending : Task<Result<Models.Student list, string>>
+    abstract member query_pending : string -> Task<Result<Models.PendingStudent list, string>>
 
     /// insert student school mapping
     abstract member insert_student_school : string -> string -> Task<Result<unit, string>>
-
-    /// insert student into pending table for enrollement approval 
-    abstract member insert_pending : Models.Student -> string -> Task<Result<unit, string>>
 
     /// delete pending student with given email
     abstract member delete_pending : string -> Task<Result<unit, string>>
@@ -89,6 +85,12 @@ type IDatabase =
     
     /// get list of school names and tutors
     abstract member get_school_view : Task<Result<Models.SchoolTutor list, string>>
+    
+    abstract member insert_enrol_request : string -> string -> Task<Result<unit, string>>
+    
+    //approve enrol request. Means creating a user in the school table that the user wants to
+    //enrol with, then removing the user from the pending table
+    abstract member approve_enrol_request : string -> string -> Task<Result<unit, string>>
     
 
     
@@ -147,12 +149,29 @@ type Database(c : string) =
                 return Error e.Message
         }
         
+        member this.insert_enrol_request student_email school_name : Task<Result<unit, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                let cmd = """insert into "Pending" ("UserId", "SchoolId") values ((select "Id" from "User" where "Email" = @Email),
+                             (select "Id" from "School" where "Name" = @Name))"""
+                let m = (Map ["Email", student_email; "Name", school_name])
+                if dapper_map_param_exec cmd m conn = 1 then  
+                    return Ok ()
+                else 
+                    return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
         member this.insert_tutor first last schoolname email : Task<Result<unit, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
-                let cmd = """insert into "User" ("FirstName","LastName","Email") VALUES (@FirstName, @LastName, @Email)"""
-                let m = (Map ["Email", email; "FirstName", first; "LastName", last])
+                let cmd = """insert into "User" ("FirstName","LastName","Email", "Phone") VALUES (@FirstName, @LastName, @Email, @Phone)"""
+                let m = (Map ["Email", email; "FirstName", first; "LastName", last; "Phone", ""])
                 if dapper_map_param_exec cmd m conn = 1 then  
                     let cmd = """insert into "TitanClaims" ("UserId","Type","Value") VALUES
                         ((select "Id" from "User" where "Email" = @Email), 'IsTutor', 'true')"""
@@ -179,8 +198,8 @@ type Database(c : string) =
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
-                let cmd = """insert into "User" ("FirstName","LastName","Email") VALUES (@FirstName, @LastName, @Email)"""
-                let m = (Map ["Email", email; "FirstName", first; "LastName", last])
+                let cmd = """insert into "User" ("FirstName","LastName","Email","Phone") VALUES (@FirstName, @LastName, @Email, @Phone)"""
+                let m = (Map ["Email", email; "FirstName", first; "LastName", last; "Phone", ""])
                 if dapper_map_param_exec cmd m conn = 1 then  
                     let cmd = """insert into "TitanClaims" ("UserId","Type","Value") VALUES
                         ((select "Id" from "User" where "Email" = @Email), 'IsStudent', 'true')"""
@@ -268,41 +287,15 @@ type Database(c : string) =
                 return Error e.Message
         }
 
-        member this.insert_pending (student : Models.Student) (school_name : string) : Task<Result<unit, string>> = task {
-            try
-                //postgres treats empty strings and null as different. AN empty string is a value in postgres
-                //so we have to explicity check this here.
-                if student.FirstName = "" || student.LastName = "" then 
-                    raise (failwith "First name or last name cannot be empty")
 
-                //normally we validate the email address using asp.net but incase that doesn't happen
-                //and we call this function with an empty email then this will trigger.
-                if student.Email = "" then
-                    raise (failwith "Email cannot be empty")
-                use conn = new SqlConnection(this.connection)
-                conn.Open()
-                let cmd = """insert into "Pending" ("FirstName","LastName","Email","SchoolId") VALUES (@FirstName, @LastName, @Email,(select "School"."Id" from "School" where "School"."Name" = @SchoolName))"""
-                let m = (Map ["Email", student.Email; "FirstName", student.FirstName; "LastName", student.FirstName; "SchoolName", school_name ])
-                if dapper_map_param_exec cmd m conn = 1 then  
-                //if conn.Execute(cmd, m) = 1 then  
-                    return Ok ()
-                else
-                    return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
-            with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
-            |  e ->
-                return Error e.Message
-        }
-
-
-        member this.query_pending : Task<Result<Models.Student list, string>> = task {
+        member this.query_pending tutor_email : Task<Result<Models.PendingStudent list, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
-                let sql = """select "FirstName", "LastName", "Email" from "Pending";"""
+                let sql = """select "User"."FirstName","User"."LastName", "User"."Phone", "User"."Email"
+                             from "Pending" join "User" on "User"."Id" = "Pending"."UserId";"""
                 let result = conn
-                             |> dapper_query<Models.Student> sql
+                             |> dapper_query<Models.PendingStudent> sql
                              |> Seq.toList
                 return Ok result
             with
@@ -329,30 +322,19 @@ type Database(c : string) =
                 return Error e.Message
         }
 
-        member this.query_all_students : Task<Result<Models.Student list, string>> = task {
+        member this.query_students tutor_email : Task<Result<Domain.Student list, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
-                let sql = """select "FirstName", "LastName", "Email" from "Student";"""
+                //holy fucking shit sql can get complicated. I built this up backwards, i.e. worked it out from the last
+                //select statememt.
+                let sql = """select "User"."FirstName","User"."LastName","User"."Email","User"."Phone" from "User" join "Student"
+                             on "User"."Id" = "Student"."UserId" where "Student"."SchoolId" =
+                             (select "School"."Id" from "School" where "School"."UserId" =
+                             (select "User"."Id" from "User" where "User"."Email" = @Email));"""
                 let result = conn
-                             |> dapper_query<Models.Student> sql
+                             |> dapper_map_param_query<Domain.Student> sql (Map["Email", tutor_email])
                              |> Seq.toList
-                return Ok result
-            with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
-            |  e ->
-                return Error e.Message
-        }
-
-        member this.query_id (username : string) : Task<Result<string, string>> = task {
-            try
-                use conn = new SqlConnection(this.connection)
-                conn.Open()
-                let sql = """select "Id" from "AspNetUsers" where "UserName" = @UserName"""
-                let result = conn
-                             |> dapper_map_param_query<string> sql (Map ["UserName", username])
-                             |> Seq.head
                 return Ok result
             with
             | :? Npgsql.PostgresException as e ->
@@ -465,6 +447,41 @@ type Database(c : string) =
                 let sql = """select "Name", "Principal" from "School" where "UserId" = @UserId"""
                 let result = conn.QueryFirst<Models.School>(sql, {Models.School.init with Models.School.UserId = user_id})
                 return Ok result
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
+        
+        //aproving an enrolment means adding a user to the school and then removing the request.
+        member this.approve_enrol_request (tutor_email : string) (student_email : string) : Task<Result<unit, string>> = task {
+            try 
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                let sql = """select "Id" from "User" where "User"."Email" = @Email"""
+                let student_id = conn
+                                |> dapper_map_param_query<int> sql (Map ["Email", student_email])
+                                |> Seq.head
+                //we have the id of the student - lets add the student to the tutor's school
+                let sql = """select "Id" from "School" where "School"."UserId" = (select "Id" from "User" where "User"."Email" = @Email)"""
+                let tutor_id = conn
+                               |> dapper_map_param_query<int> sql (Map ["Email", tutor_email])
+                               |> Seq.head
+                
+                let cmd = """insert into "Student"("UserId", "SchoolId") values(@UserId,@SchoolId)"""
+                let m = (Map ["UserId", student_id; "SchoolId", tutor_id])
+                if dapper_map_param_exec cmd m conn = 1 then  
+                    //delete student from pending table
+                    let cmd = """delete from "Pending" where "UserId" = @UserId"""
+                    let m = (Map ["UserId", student_id])
+                    if dapper_map_param_exec cmd m conn = 1 then  
+                        return Ok ()
+                    else
+                        return Error ("Failed to delete user. sql is \"" + cmd + "\"")
+                else
+                    return Error ("Failed to insert user. sql is \"" + cmd + "\"")
+                    
             with
             | :? Npgsql.PostgresException as e ->
                 return Error e.MessageText

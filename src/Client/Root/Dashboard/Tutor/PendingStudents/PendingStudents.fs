@@ -13,22 +13,27 @@ open Fable.PowerPack.Fetch
 open Fable.Core.JsInterop
 open Fulma
 open Fable.FontAwesome
+open ModifiedFableFetch
 
+open Domain
 open Thoth.Json
 
 type Model =
     { Pending : Domain.Student list
       //result of interaction with the api
-      Result : PendingResult option}
+      Error : APIError option}
 
-exception PendingEx of PendingResult
+exception PendingEx of APIError
 exception ApprovePendingEx of APIError
 exception DismissPendingEx of APIError
+
+type Inter =
+    RefreshStudent
 
 type Msg =
     | GetPendingSuccess of Student list
     | GetPendingFailure  of exn
-    | ApprovePendingSuccess of string
+    | ApprovePendingSuccess of unit
     | ApprovePendingFailure of exn
     | DismissPendingSuccess of string
     | DismissPendingFailure of exn
@@ -36,26 +41,20 @@ type Msg =
     | ApprovePending of Student
 
 let private approve_pending (pending : ApprovePendingRequest) = promise {
-    let body = Encode.Auto.toString (3, pending)
-    let props =
-        [ RequestProperties.Method HttpMethod.POST
-          RequestProperties.Credentials RequestCredentials.Include
-          requestHeaders [ HttpRequestHeaders.ContentType "application/json"
-                           HttpRequestHeaders.Accept "application/json"]
-          RequestProperties.Body !^(body) ] 
-    let decoder = Decode.Auto.generateDecoder<Domain.ApprovePendingResult>()
-    let! response = Fetch.tryFetchAs "/api/secure/approve-pending" decoder props
+    let request = make_post 3 pending
+    let decoder = Decode.Auto.generateDecoder<APIError option>()
+    let! response = Fetch.tryFetchAs "/api/approve-pending" decoder request
     match response with
     | Ok result ->
-        match result.Error with
-        | Some error -> 
+        match result with
+        | Some error ->
             Browser.console.info ("got some error: " + (List.head error.Messages))
             return (raise (ApprovePendingEx error))
-        | _ ->
-            return pending.Email //return email, use it to id the student to remove from the model
+        | None ->
+            return ()
     | Error e ->
         Browser.console.info ("got generic error: " + e)
-        return (raise (ApprovePendingEx (APIError.init [APICode.Fetch] [e])))
+        return raise (ApprovePendingEx (APIError.init [APICode.Fetch] [e]))
 }
 
 let private dismiss_pending (pending : DismissPendingRequest) = promise {
@@ -67,12 +66,12 @@ let private dismiss_pending (pending : DismissPendingRequest) = promise {
                            HttpRequestHeaders.Accept "application/json"]
           RequestProperties.Body !^(body) ] 
     let decoder = Decode.Auto.generateDecoder<DismissPendingResult>()
-    let! response = Fetch.tryFetchAs "/api/secure/dismiss-pending" decoder props
+    let! response = Fetch.tryFetchAs "/api/dismiss-pending" decoder props
     match response with
     | Ok result ->
         match result.Error with
         | Some error -> 
-            Browser.console.info ("got some error: " + (List.head error.Messages))
+            Browser.console.error ("dismiss_pending: " + (List.head error.Messages))
             return (raise (DismissPendingEx error))
         | _ ->
             return pending.Email //return email, use it to id the student to remove from the model
@@ -82,20 +81,19 @@ let private dismiss_pending (pending : DismissPendingRequest) = promise {
 }
 
 let private get_pending () = promise {
-    let props =
-        [ RequestProperties.Method HttpMethod.GET
-          RequestProperties.Credentials RequestCredentials.Include
-          requestHeaders [ HttpRequestHeaders.ContentType "application/json"
-                           HttpRequestHeaders.Accept "application/json" ]]
-
+    let request = make_get
     let decoder = Decode.Auto.generateDecoder<Domain.PendingResult>()
-    let! response = Fetch.tryFetchAs "/api/secure/get-pending" decoder props
+    let! response = Fetch.tryFetchAs "/api/get-pending" decoder request
     match response with
     | Ok result ->
-        return (raise (PendingEx result))
+        match result.Error with
+        | Some error ->
+            Browser.console.error ("get_pending: " + (List.head error.Messages))
+            return (raise (PendingEx error))
+        | None ->
+            return result.Students
     | Error e ->
-        return (raise (PendingEx {Codes = [APICode.Fetch]; Messages = [e];
-            Students = []}))
+        return raise (PendingEx (APIError.init [APICode.Fetch] [e]))
 }
 
 let private remove_student (email : string) (students : Student list) =
@@ -103,51 +101,54 @@ let private remove_student (email : string) (students : Student list) =
     |> List.filter (fun x -> x.Email <> email)
 
 let init () =
-    { Pending = [ ]; Result = None },
+    { Pending = [ ]; Error = None },
     Cmd.ofPromise get_pending () GetPendingSuccess GetPendingFailure
 
-let update (model : Model) (msg : Msg) =
+let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     match msg with
     | ApprovePending student ->
         model, Cmd.ofPromise approve_pending (ApprovePendingRequest.of_student student)
                ApprovePendingSuccess ApprovePendingFailure
     | ApprovePendingSuccess student ->
-        Browser.console.info ("Aprroved student: " + student)
-        {model with Pending = model.Pending |> remove_student student }, Cmd.none
+        Browser.console.info ("Approved student")
+        model, Cmd.ofPromise get_pending () GetPendingSuccess GetPendingFailure
+        
     | ApprovePendingFailure e ->
         Browser.console.warn ("Failed to approve pending student: " + e.Message)
         match e with 
         | :? PendingEx as ex ->
-            Browser.console.warn "Received PendingEx"
-            { model with Result = Some ex.Data0 }, Cmd.none
+            Browser.console.warn ("Received PendingEx: " + ex.Message)
+            { model with Error = Some ex.Data0 }, Cmd.none
         | e ->
-            Browser.console.warn "Received general exception"
-            { model with Result = Some { Codes = [APICode.Failure]; Messages = ["Unknown errror"]; Students = [ ] }}, Cmd.none
+            Browser.console.warn ("Received general exception: " + e.Message)
+            { model with Error = Some (APIError.init [APICode.Failure] [e.Message])}, Cmd.none
 
     | GetPendingSuccess students ->
         {model with Pending = students}, Cmd.none
     | GetPendingFailure e ->
         match e with 
         | :? PendingEx as ex ->
-            Browser.console.warn "Received PendingEx"
-            { model with Result = Some ex.Data0 }, Cmd.none
+            Browser.console.warn ("Received PendingEx: " + ex.Message)
+            { model with Error = Some ex.Data0 }, Cmd.none
         | e ->
-            Browser.console.warn "Received general exception"
-            { model with Result = Some { Codes = [APICode.Failure]; Messages = ["Unknown errror"]; Students = [ ] }}, Cmd.none
+            Browser.console.warn ("Received general exception: " + e.Message)
+            { model with Error = Some (APIError.init [APICode.Failure] [e.Message])}, Cmd.none
 
     | DismissPending student ->
         model, Cmd.ofPromise dismiss_pending (DismissPendingRequest.of_student student)
                DismissPendingSuccess DismissPendingFailure
+               
     | DismissPendingSuccess email ->
         {model with Pending = model.Pending |> remove_student email }, Cmd.none
+        
     | DismissPendingFailure e ->
         match e with 
         | :? PendingEx as ex ->
-            Browser.console.warn ("Failed to dismiss pending student: " + e.Message)
-            { model with Result = Some ex.Data0 }, Cmd.none
+            Browser.console.warn ("Received PendingEx: " + ex.Message)
+            { model with Error = Some ex.Data0 }, Cmd.none
         | e ->
-            Browser.console.warn "Received general exception"
-            { model with Result = Some { Codes = [APICode.Failure]; Messages = ["Unknown errror"]; Students = [ ] }}, Cmd.none
+            Browser.console.warn ("Received general exception: " + e.Message)
+            { model with Error = Some (APIError.init [APICode.Failure] [e.Message])}, Cmd.none
 
 let private student_content (student : Student) =
       [ Text.div [ Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [ str student.Email ] ]
@@ -179,11 +180,15 @@ let private single_student (dispatch : Msg -> unit) (student : Student) =
             [ yield! card_footer student dispatch ] ]
 
 let private render_all_students (model : Model) (dispatch : Msg->unit) =
-    let l4 = model.Pending |> Homeless.list_x 4
-    [for l in l4 do
-        yield Columns.columns [ ]
-            [ for x in l do
-                yield single_student dispatch x] ]
+    (match model.Pending with
+     | [] ->
+         [nothing]
+     | pending ->
+        let l4 = pending |> Homeless.chunk 4
+        [for l in l4 do
+            yield Columns.columns [ ]
+                [ for x in l do
+                    yield single_student dispatch x] ])
 
 let private students_level =
     Level.level [ ] 

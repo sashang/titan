@@ -123,10 +123,11 @@ type BetaRegistrationResult =
 type Student =
     { FirstName : string
       LastName : string
+      Phone : string
       Email : string }
 
       static member init =
-        {FirstName = ""; LastName = ""; Email = ""}
+        {FirstName = ""; LastName = ""; Email = ""; Phone = ""}
 
 [<CLIMutable>]
 type UserResponse =
@@ -135,11 +136,13 @@ type UserResponse =
       Error : APIError option }
     static member init =
         {FirstName = ""; LastName = ""; Error = None}
-
+        
 [<CLIMutable>]
 type GetAllStudentsResult =
     { Error : APIError option
       Students : Student list}
+    static member init = {Error = None; Students = []}
+    static member db_error msg = {Students = []; Error = Some (APIError.db msg) } 
 
 [<CLIMutableAttribute>]
 type AddStudentSchool =
@@ -149,35 +152,24 @@ type AddStudentSchool =
 /// Students who have applied to enrol and are waiting for approval
 [<CLIMutableAttribute>]
 type PendingResult =
-    { Codes : APICode list
-      Messages : string list
+    { Error : APIError option
       Students : Student list }
+    static member init = {Error = None; Students = []}
 
+//assume student is logged in when enrolling so we have the user info (name, email etc... already in the claims)
 [<CLIMutableAttribute>]
-type Enrol =
-    { FirstName : string
-      LastName : string
-      Email : string
-      SchoolName : string }
-    static member init = {FirstName = ""; LastName = ""; Email = ""; SchoolName = ""}
-
-
-[<CLIMutableAttribute>]
-type EnrolResult =
-    { Error : APIError option}
+type EnrolRequest =
+    { SchoolName : string }
+    static member init = {SchoolName = ""}
+//no enrol result other than APIError
 
 
 [<CLIMutableAttribute>]
 type ApprovePendingRequest =
-    { Email : string
-      FirstName : string
-      LastName : string }
-    static member init = {FirstName = ""; LastName = ""; Email = ""}
-    static member of_student (student : Student) = {FirstName = student.FirstName; LastName = student.LastName; Email = student.Email}
+    { Email : string }
+    static member init = {Email = ""}
+    static member of_student (student : Student) = {Email = student.Email}
 
-[<CLIMutableAttribute>]
-type ApprovePendingResult =
-    { Error : APIError option}
 
 type DismissPendingRequest =
     { Email : string

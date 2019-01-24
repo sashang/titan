@@ -166,14 +166,17 @@ let api_pipeline = pipeline {
 let titan_api =  router {
     not_found_handler (json "resource not found")
     //pipe_through api_pipeline
-    post "/enrol" API.enrol
     get "/load-school" API.load_school
     get "/load-user" API.load_user
     get "/get-all-schools" API.get_all_schools
+    get "/get-all-students" API.get_all_students
+    get "/get-pending" API.get_pending
     //get "/signin-google" (redirectTo false "/api/secure")
+    post "/enrol-student" API.enrol
     post "/register-punter" API.register_punter
     post "/register-tutor" API.register_tutor
     post "/register-student" API.register_student
+    post "/approve-pending" API.approve_enrolment_request
     post "/save-tutor" API.save_tutor
 }
 

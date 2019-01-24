@@ -1,5 +1,6 @@
 module ValueDeclarations
 
+
 ///commercial name of the product/service 
 [<Literal>]
 let MAIN_NAME = "tewtin"
@@ -12,3 +13,4 @@ let ACCEPT_TERMS = "By checking this box you agree to the Terms and Conditions, 
 
 [<Literal>]
 let CONSENT = "By checking this box you agree that your parent or guardian has approved you using this site."
+

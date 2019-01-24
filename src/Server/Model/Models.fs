@@ -2,13 +2,22 @@ module Models
 
  //Dapper uses reflection when reading the names here to match what
  //we used in the sql string. This means the parameter names in the
- //constructor below must match the names use in the sql string...
+ //constructor below must match the names use in the sql string, so we use
+ //Pascal case in teh constructor...
 [<RequireQualifiedAccessAttribute>]
 type SchoolTutor(Name:string, FirstName:string, LastName:string)=
     member this.SchoolName = Name
     member this.FirstName = FirstName
     member this.LastName = LastName
+    
+[<RequireQualifiedAccessAttribute>]
+type PendingStudent(FirstName:string, LastName:string, Phone:string, Email:string)=
+    member this.Phone = Phone
+    member this.Email = Email
+    member this.FirstName = FirstName
+    member this.LastName = LastName
 
+[<RequireQualifiedAccessAttribute>]
 [<CLIMutable>]
 type TitanClaims =
     { Id : int32
@@ -30,6 +39,7 @@ type User =
 
 //databse model of the school table.
 [<CLIMutable>]
+[<RequireQualifiedAccessAttribute>]
 type School =
     { Id : int32
       UserId : string
@@ -49,5 +59,6 @@ type Student =
     { Id : int32
       FirstName : string
       Email : string
+      Phone : string
       LastName : string }
-    static member init = {Id = 0; FirstName = ""; LastName = ""; Email = ""}
+    static member init = {Id = 0; FirstName = ""; LastName = ""; Email = ""; Phone = ""}

@@ -68,6 +68,16 @@ let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMs
                                  Cmd.map (DashboardRouterMsg << DashboardRouter.TutorMsg) cmd
         | {Session = None} ->
             model, Cmd.none
+            
+    | Some Pages.DashboardStudent ->
+        match model with
+        | {Session = Some session} ->
+            let new_model, cmd = Student.Dashboard.init ()
+            { model with Child = (DashboardRouterModel ({Child = DashboardRouter.StudentModel new_model}))},
+                                 Cmd.map (DashboardRouterMsg << DashboardRouter.StudentMsg) cmd
+        | {Session = None} ->
+            model, Cmd.none
+
 
     //these pages we don't care about the token. We can go to them with or without one.
     | Some Pages.PageType.Home ->

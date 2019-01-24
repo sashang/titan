@@ -12,34 +12,25 @@ open System
 
 
 let enrol (next : HttpFunc) (ctx : HttpContext) = task {
-    let logger = ctx.GetLogger<Debug.DebugLogger>()
-    try
-        let! info = ctx.BindJsonAsync<Domain.Enrol>()
-        let _ = MailAddress(info.Email)//test that the email is valid.
+    if ctx.User.Identity.IsAuthenticated then
+        let! enrol_request = ctx.BindJsonAsync<Domain.EnrolRequest>()
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        logger.LogInformation("processing enrol request")
         let db = ctx.GetService<IDatabase>()
-        let m = { Models.Student.init with Email = info.Email; LastName = info.LastName; FirstName = info.FirstName }
-        logger.LogInformation("enrolling " + m.FirstName + " in school " + info.SchoolName)
-        let! result = db.insert_pending m info.SchoolName
+        let student_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        let! result = db.insert_enrol_request student_email enrol_request.SchoolName 
         match result with
         | Ok () ->
-            return! ctx.WriteJsonAsync {EnrolResult.Error = None}
-        | Error e -> 
-            logger.LogInformation("Enrolment failed: " + e)
-            let api_error = {EnrolResult.Error = Some (APIError.init [APICode.Database] [e])}
-            return! ctx.WriteJsonAsync api_error
-    with
-        | :? FormatException as e ->
-            logger.LogInformation("enrolee has bad email")
-            let api_error = {EnrolResult.Error = Some (APIError.init [APICode.Failure] [e.Message])}
-            return! ctx.WriteJsonAsync api_error
-        | :? ArgumentException as e ->
-            logger.LogInformation("enrolee has bad email")
-            let api_error = {EnrolResult.Error = Some (APIError.init [APICode.Failure] [e.Message])}
-            return! ctx.WriteJsonAsync api_error
-        | e ->
-            logger.LogInformation("failed to enrol")
-            let api_error = {EnrolResult.Error = Some (APIError.init [APICode.Failure] [e.Message])}
-            return! ctx.WriteJsonAsync api_error
+            return! ctx.WriteJsonAsync None
+        | Error msg ->
+            logger.LogWarning msg
+            //clean up this error
+            return! if msg.Contains("duplicate") then 
+                       ctx.WriteJsonAsync (APIError.init [APICode.Email] ["Duplicate email address"] )
+                    else 
+                        ctx.WriteJsonAsync (APIError.db msg)
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
 }
 
 let dismiss_pending (next :HttpFunc) (ctx : HttpContext) = task {
@@ -58,20 +49,44 @@ let dismiss_pending (next :HttpFunc) (ctx : HttpContext) = task {
         return! ctx.WriteJsonAsync {DismissPendingResult.Error = None}
 }
 
+let approve_enrolment_request (next : HttpFunc) (ctx : HttpContext) = task {
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let db = ctx.GetService<IDatabase>()
+        let tutor_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        let! student = ctx.BindJsonAsync<Domain.ApprovePendingRequest>()
+        let! result = db.approve_enrol_request tutor_email student.Email
+        match result with
+        | Ok () ->
+            return! ctx.WriteJsonAsync ()
+            
+        | Error message ->
+            logger.LogWarning("Could not enrol student")
+            return! ctx.WriteJsonAsync (APIError.db message)
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
+}
+
 let get_pending (next : HttpFunc) (ctx : HttpContext) = task {
-    let logger = ctx.GetLogger<Debug.DebugLogger>()
-    let db = ctx.GetService<IDatabase>()
-    let! result = db.query_pending
-    match result with
-    | Ok students ->
-        return! ctx.WriteJsonAsync 
-            {GetAllStudentsResult.Error = None
-             Students = students |> List.map (fun x -> {FirstName = x.FirstName; LastName = x.LastName; Email = x.Email})}
-    | Error err ->
-        logger.LogInformation("Could not get students")
-        return! ctx.WriteJsonAsync 
-            {GetAllStudentsResult.Error = None
-             Students = []}
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let db = ctx.GetService<IDatabase>()
+        let tutor_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        let! result = db.query_pending tutor_email
+        match result with
+        | Ok students ->
+            return! ctx.WriteJsonAsync 
+                {PendingResult.Error = None;
+                 PendingResult.Students = students
+                                          |> List.map (fun x -> {FirstName = x.FirstName; LastName = x.LastName;
+                                                                 Phone = x.Phone; Email = x.Email})}
+        | Error err ->
+            logger.LogInformation("Could not get students")
+            return! ctx.WriteJsonAsync 
+                {PendingResult.Error = None
+                 Students = []}
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
 }
 
 let register_tutor (next : HttpFunc) (ctx : HttpContext) = task {
@@ -128,22 +143,6 @@ let add_student_to_school (next : HttpFunc) (ctx : HttpContext) = task {
         logger.LogWarning e
         return! ctx.WriteJsonAsync {AddStudentSchool.Error = Some (APIError.init [APICode.Database] [e])}
 
-}
- 
-let get_all_students (next : HttpFunc) (ctx : HttpContext) = task {
-    let logger = ctx.GetLogger<Debug.DebugLogger>()
-    let db = ctx.GetService<IDatabase>()
-    let! result = db.query_all_students
-    match result with
-    | Ok students ->
-        return! ctx.WriteJsonAsync 
-            {GetAllStudentsResult.Error = None
-             Students = students |> List.map (fun x -> {FirstName = x.FirstName; LastName = x.LastName; Email = x.Email})}
-    | Error err ->
-        logger.LogInformation("Could not get students")
-        return! ctx.WriteJsonAsync 
-            {GetAllStudentsResult.Error = Some (APIError.init [APICode.Database] ["Failed to get students from database"])
-             Students = []}
 }
 
 let register_punter (next : HttpFunc) (ctx : HttpContext) = task {
@@ -271,6 +270,23 @@ let get_all_schools (next : HttpFunc) (ctx : HttpContext) = task {
             return! ctx.WriteJsonAsync {GetAllSchoolsResult.init with Schools = mapped_schools }
         | Error message ->
             return! ctx.WriteJsonAsync (GetAllSchoolsResult.db_error message)
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
+}
+
+let get_all_students (next : HttpFunc) (ctx : HttpContext) = task {
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        logger.LogInformation("called get_all_students")
+        let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        let db_service = ctx.GetService<IDatabase>()
+        let! result = db_service.query_students user_email
+        match result with
+        | Ok students ->
+            //bit of a mess...should rethink how we do this so we don't need to convert rfom one type to the other.
+            return! ctx.WriteJsonAsync {GetAllStudentsResult.init with Students = students }
+        | Error message ->
+            return! ctx.WriteJsonAsync (GetAllStudentsResult.db_error message)
     else
         return! ctx.WriteJsonAsync APIError.unauthorized
 }

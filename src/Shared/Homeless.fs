@@ -3,7 +3,7 @@ module Homeless
 
 //make a list that breaks the original list into one that contains x elem list
 //of the original value
-let list_x x input =
+let chunk x input =
     input
     |> List.fold
          (fun (count,result) value ->
