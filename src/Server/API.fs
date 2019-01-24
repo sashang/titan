@@ -2,6 +2,7 @@ module API
 
 open Database
 open Domain
+open Domain
 open FSharp.Control.Tasks.ContextInsensitive
 open Giraffe
 open Microsoft.AspNetCore.Http
@@ -287,6 +288,23 @@ let get_all_students (next : HttpFunc) (ctx : HttpContext) = task {
             return! ctx.WriteJsonAsync {GetAllStudentsResult.init with Students = students }
         | Error message ->
             return! ctx.WriteJsonAsync (GetAllStudentsResult.db_error message)
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
+}
+
+let dismiss_student (next : HttpFunc) (ctx : HttpContext) = task {
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        logger.LogInformation("called dismiss_student")
+        let! data = ctx.BindJsonAsync<DismissStudentRequest>()
+        let tutor_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        let db_service = ctx.GetService<IDatabase>()
+        let! result = db_service.delete_student_from_school tutor_email data.Email
+        match result with
+        | Ok students ->
+            return! ctx.WriteJsonAsync ()
+        | Error message ->
+            return! ctx.WriteJsonAsync (APIError.db message)
     else
         return! ctx.WriteJsonAsync APIError.unauthorized
 }

@@ -37,6 +37,7 @@ let private dapper_map_param_exec(sql : string) (param : Map<string,_>) (connect
 
 type IDatabase =
 
+    abstract member delete_student_from_school: string -> string -> Task<Result<unit, string>>
     /// get a list of claims for the user based on their email
     abstract member query_claims: string -> Task<Result<Models.TitanClaims list, string>>
 
@@ -98,6 +99,26 @@ type Database(c : string) =
     member this.connection = c
 
     interface IDatabase with
+        member this.delete_student_from_school tutor_email student_email : Task<Result<unit, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                let sql = """delete from "Student" where "Student"."UserId" =
+                             (select "Id" from "User" where "User"."Email" = @StudentEmail) and
+                             "Student"."SchoolId" = (select "Id" from "School" where "School"."UserId" =
+                             (select "User"."Id" from "User" where "User"."Email" = @TutorEmail))"""
+                let m = (Map ["StudentEmail", student_email; "TutorEmail", tutor_email])
+                if dapper_map_param_exec sql m conn = 1 then  
+                    return Ok ()
+                else 
+                    return Error ("Did not insert the expected number of records. sql is \"" + sql + "\"")
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
+        
         member this.get_school_view : Task<Result<Models.SchoolTutor list, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)

@@ -8,6 +8,7 @@ open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.Import
 open Fable.PowerPack
+open Fable.FontAwesome
 open Fulma
 open ModifiedFableFetch
 open Thoth.Json
@@ -20,11 +21,32 @@ type Model =
 
 
 exception GetAllStudentsEx of APIError
+exception DismissStudentEx of APIError
 
 type Msg =
     | LoadStudentsSuccess of Student list
     | LoadStudentsFailure  of exn
     | GetAllStudents
+    | DismissStudent of Student
+    | GraduateStudent of Student
+    | DismissStudentSuccess of unit
+    | DismissStudentFailure of exn
+
+let dismiss_student (student : DismissStudentRequest) = promise {
+    let request = make_post 1 student
+    let decoder = Decode.Auto.generateDecoder<APIError option>()
+    let! response = Fetch.tryFetchAs "/api/dismiss-student" decoder request
+    match response with
+    | Ok result ->
+        match result with
+        | Some error ->
+            Browser.console.error ("dismiss_student: " + (List.head error.Messages))
+            return (raise (DismissStudentEx error))
+        | None ->
+            return ()
+    | Error e ->
+        return raise (DismissStudentEx (APIError.init [APICode.Fetch] [e]))
+}
 
 let get_all_students () = promise {
     let decoder = Decode.Auto.generateDecoder<Domain.GetAllStudentsResult>()
@@ -60,12 +82,41 @@ let update (model : Model) (msg : Msg) =
         | e ->
             Browser.console.warn ("Received general exception: " + e.Message)
             model, Cmd.none
+    | DismissStudent student ->
+        model, Cmd.ofPromise dismiss_student {Email = student.Email} (DismissStudentSuccess) (DismissStudentFailure)
+        
+    | DismissStudentSuccess () ->
+        model, Cmd.ofPromise get_all_students () LoadStudentsSuccess LoadStudentsFailure
+        
+    | DismissStudentFailure e ->
+        match e with 
+        | :? DismissStudentEx as ex ->
+            Browser.console.warn "Received DismissStudentEx"
+            { model with Error = Some ex.Data0 }, Cmd.none
+        | e ->
+            Browser.console.warn ("Received general exception: " + e.Message)
+            model, Cmd.none
 
 
+let private card_footer (student : Student) (dispatch : Msg -> unit) =
+    [ Card.Footer.div [ ]
+        [ Button.button [ Button.Color IsTitanInfo
+                          Button.Props [ OnClick (fun _ -> dispatch (GraduateStudent student)) ] ]
+            [ Icon.icon [ ]
+                [ Fa.i [ Fa.Solid.GraduationCap ]
+                    [ ] ] ] ]
+      Card.Footer.div [ ]
+        [ Button.button [ Button.Color IsTitanInfo
+                          Button.Props [ OnClick (fun _ -> dispatch (DismissStudent student)) ] ]
+            [ Icon.icon [ ]
+                [ Fa.i [ Fa.Solid.Trash ]
+                    [ ] ] ] ] ]
+    
 let private student_content (student : Student) =
-      [ Text.div
-            [ Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
-            [ str student.Email ] ]
+      Text.div
+        [ Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
+        [ Label.label [ ] [ str "Email" ]
+          Text.div [ ] [ str student.Email ] ]
 
 let private single_student model dispatch (student : Domain.Student) = 
     Column.column [ Column.Width (Screen.All, Column.Is3) ]
@@ -74,7 +125,9 @@ let private single_student model dispatch (student : Domain.Student) =
               [ Card.Header.title 
                     [ Card.Header.Title.Modifiers [ Modifier.TextColor IsWhite ] ] 
                     [ str (student.FirstName + " " + student.LastName) ] ]
-            Card.content [  ] [ yield! student_content student ] ] ]
+            Card.content [  ] [ yield student_content student ]
+            Card.footer [ ]
+                [ yield! card_footer student dispatch ] ] ]
 
 let private render_all_students (model : Model) (dispatch : Msg->unit) =
     match model.Students with

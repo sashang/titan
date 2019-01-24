@@ -226,3 +226,6 @@ type GetAllSchoolsResult =
     member this.is_valid = this.Schools |> List.exists (fun x -> not x.is_valid)
 
 
+[<CLIMutable>]
+type DismissStudentRequest =
+    { Email : string }

@@ -4,7 +4,6 @@ module PendingStudents
 open CustomColours
 open Domain
 open Elmish
-open Elmish.Browser.Navigation
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.Import

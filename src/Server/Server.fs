@@ -177,6 +177,7 @@ let titan_api =  router {
     post "/register-tutor" API.register_tutor
     post "/register-student" API.register_student
     post "/approve-pending" API.approve_enrolment_request
+    post "/dismiss-student" API.dismiss_student
     post "/save-tutor" API.save_tutor
 }
 
