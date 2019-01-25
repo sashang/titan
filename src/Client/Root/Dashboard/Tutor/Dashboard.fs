@@ -47,10 +47,8 @@ let view (model : Model) (dispatch : Msg -> unit) =
      Container.container
         //fluid to take up the width of the screen
         [ Container.IsFluid ]
-        //yield! because the result of the expression is a list.
-        //[ yield! (model.ChildElements |> List.map (dispatch_view model dispatch)) ]
         [ Columns.columns [ ]
-            [ Column.column [ Column.Width (Screen.All, Column.Is3) ]
+            [ Column.column [ Column.Width (Screen.All, Column.Is6) ]
                 [ yield! School.view model.School (SchoolMsg >> dispatch) ]
               Column.column [ ]
                 [ yield! Class.view model.Class (ClassMsg >> dispatch) ] ]

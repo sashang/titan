@@ -48,12 +48,13 @@ type IDatabase =
     /// Query the database to see if a school is linked to a user
     abstract member user_has_school: string -> Task<Result<bool, string>>
 
+    abstract member handle_save_request: string -> SaveRequest -> Task<Result<unit, string>>
     /// Update a school given the user id
     abstract member update_school_by_user_id: Models.School -> Task<Result<bool, string>>
 
     abstract member school_from_user_id: string -> Task<Result<Models.School, string>>
     
-    abstract member school_from_email: string -> Task<Result<Models.School, string>>
+    abstract member school_from_email: string -> Task<Result<SchoolResponse, string>>
     
     abstract member user_from_email: string -> Task<Result<Models.User, string>>
 
@@ -85,7 +86,7 @@ type IDatabase =
     abstract member update_school_name : string -> string -> Task<Result<unit, string>>
     
     /// get list of school names and tutors
-    abstract member get_school_view : Task<Result<Models.SchoolTutor list, string>>
+    abstract member get_school_view : Task<Result<School list, string>>
     
     abstract member insert_enrol_request : string -> string -> Task<Result<unit, string>>
     
@@ -119,15 +120,16 @@ type Database(c : string) =
                 return Error e.Message
         }
         
-        member this.get_school_view : Task<Result<Models.SchoolTutor list, string>> = task {
+        member this.get_school_view : Task<Result<School list, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
-                let sql = """select "School"."Name","User"."FirstName","User"."LastName"
-                             from "School" join "User" on "User"."Id" = "School"."UserId";"""
+                let sql = """select "School"."Name","User"."FirstName","User"."LastName","School"."Info",
+                             "School"."Subjects" from "School" join "User" on "User"."Id" = "School"."UserId";"""
                 let result = conn
                              |> dapper_query<Models.SchoolTutor> sql
                              |> Seq.toList
+                             |> List.map (fun x -> School.init x.FirstName x.LastName x.SchoolName x.Info x.Subjects)
                 return Ok result
             with
             | :? Npgsql.PostgresException as e ->
@@ -153,6 +155,30 @@ type Database(c : string) =
             |  e ->
                 return Error e.Message
         }
+        member this.handle_save_request tutor_email request : Task<Result<unit, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                let cmd = """update "School" set "Name" = @Name, "Info" = @Info, "Subjects" = @Subjects
+                             where "UserId" = (select "Id" from "User" where "Email" = @Email)"""
+                let m = (Map ["Email", tutor_email; "Name", request.SchoolName; "Info", request.Info; "Subjects", request.Subjects])
+                if dapper_map_param_exec cmd m conn = 1 then  
+                    let cmd = """update "User" set "FirstName" = @FirstName, "LastName" = @LastName
+                                 where "Email" = @Email"""
+                    let m = (Map ["Email", tutor_email; "FirstName", request.FirstName; "LastName", request.LastName])
+                    if dapper_map_param_exec cmd m conn = 1 then  
+                        return Ok ()
+                    else 
+                        return Error ("Did not update the expected number of records. sql is \"" + cmd + "\"")
+                else
+                    return Error ("Did not update the expected number of records. sql is \"" + cmd + "\"")
+            with
+            | :? Npgsql.PostgresException as e ->
+                return Error e.MessageText
+            |  e ->
+                return Error e.Message
+        }
+        
         member this.update_user first last email : Task<Result<unit, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
@@ -198,9 +224,9 @@ type Database(c : string) =
                         ((select "Id" from "User" where "Email" = @Email), 'IsTutor', 'true')"""
                     let m = (Map ["Email", email])
                     if dapper_map_param_exec cmd m conn = 1 then  
-                        let cmd = """insert into "School" ("UserId","Name")
-                            VALUES ((select "User"."Id" from "User" where "Email" = @Email), @Name)"""
-                        let m = (Map ["Email", email;"Name", schoolname])
+                        let cmd = """insert into "School" ("UserId","Name","Info","Subjects")
+                            VALUES ((select "User"."Id" from "User" where "Email" = @Email), @Name, @Info, @Subjects)"""
+                        let m = (Map ["Email", email;"Name", schoolname;"Info", "";"Subjects", ""])
                         if dapper_map_param_exec cmd m conn = 1 then  
                             return Ok ()
                         else 
@@ -411,14 +437,16 @@ type Database(c : string) =
                 return Error e.Message
         }
 
-        member this.school_from_email (email : string) : Task<Result<Models.School, string>> = task {
+        member this.school_from_email (email : string) : Task<Result<SchoolResponse, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
-                let cmd = """select * from "School" where "School"."UserId" = (select "Id" from "User" where "Email" = @Email)"""
+                let cmd = """select "Name","Info","Subjects" from "School" where "School"."UserId" = (select "Id" from "User" where "Email" = @Email)"""
                 let result = conn
-                                |> dapper_map_param_query<Models.School> cmd (Map ["Email", email])
+                                |> dapper_map_param_query<Models.SchoolFromEmail> cmd (Map ["Email", email])
                                 |> Seq.head
+                                |> (fun (x : Models.SchoolFromEmail) -> {SchoolResponse.Info = x.Info; SchoolResponse.Subjects = x.Subjects
+                                                                         SchoolResponse.SchoolName = x.SchoolName; Error = None })
                 return Ok result
             with
             | :? Npgsql.PostgresException as e ->

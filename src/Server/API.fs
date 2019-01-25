@@ -202,21 +202,21 @@ let get_name  (next :HttpFunc) (ctx : HttpContext) = task {
 
 /// Load the user's school.
 let load_school (next :HttpFunc) (ctx : HttpContext) = task {
-    let logger = ctx.GetLogger<Debug.DebugLogger>()
-    logger.LogInformation("called load_school")
-    let db_service = ctx.GetService<IDatabase>()
-    let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
-    let! result = db_service.school_from_email user_email
-    match result with
-    | Ok db_school ->
-        let the_school = {Domain.SchoolResponse.SchoolName = db_school.Name; Error = None}
-        return! ctx.WriteJsonAsync the_school
-                                   
-    | Error message ->
-        logger.LogWarning("Failed to load school: " + message)
-        return! ctx.WriteJsonAsync {SchoolResponse.SchoolName = "";
-                                    Error = Some (APIError.init [APICode.Database] [message])}
-
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        logger.LogInformation("called load_school")
+        let db_service = ctx.GetService<IDatabase>()
+        let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        let! result = db_service.school_from_email user_email
+        match result with
+        | Ok school ->
+            return! ctx.WriteJsonAsync school
+                                       
+        | Error message ->
+            logger.LogWarning("Failed to load school: " + message)
+            return! ctx.WriteJsonAsync {SchoolResponse.init with Error = (Some (APIError.db message))}
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
 }
 
 let load_user (next :HttpFunc) (ctx : HttpContext) = task {
@@ -241,16 +241,15 @@ let save_tutor (next :HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
         let logger = ctx.GetLogger<Debug.DebugLogger>()
         logger.LogInformation("called save_tutor")
-        let! data = ctx.BindJsonAsync<Domain.SaveRequest>()
+        let! data = ctx.BindJsonAsync<SaveRequest>()
         let db_service = ctx.GetService<IDatabase>()
         let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
-        let! result = db_service.update_user data.FirstName data.LastName user_email
+        logger.LogInformation(sprintf "subjects = %s" data.Subjects)
+        logger.LogInformation(sprintf "info = %s" data.Info)
+        let! result = db_service.handle_save_request user_email data
         match result with
         | Ok () ->
-            let! result = db_service.update_school_name data.SchoolName user_email
-            match result with
-            | Ok () -> return! ctx.WriteJsonAsync None
-            | Error message -> return! ctx.WriteJsonAsync (APIError.init [APICode.Database] [message])
+            return! ctx.WriteJsonAsync None
         | Error message ->
             return! ctx.WriteJsonAsync (APIError.db message)
     else
@@ -264,11 +263,8 @@ let get_all_schools (next : HttpFunc) (ctx : HttpContext) = task {
         let db_service = ctx.GetService<IDatabase>()
         let! result = db_service.get_school_view
         match result with
-        | Ok schooltutor ->
-            //bit of a mess...should rethink how we do this so we don't need to convert rfom one type to the other.
-            let mapped_schools = schooltutor |> List.map (fun st -> {School.LastName = st.LastName; School.FirstName = st.FirstName;
-                                                School.SchoolName = st.SchoolName})
-            return! ctx.WriteJsonAsync {GetAllSchoolsResult.init with Schools = mapped_schools }
+        | Ok schools ->
+            return! ctx.WriteJsonAsync {GetAllSchoolsResult.init with Schools = schools }
         | Error message ->
             return! ctx.WriteJsonAsync (GetAllSchoolsResult.db_error message)
     else

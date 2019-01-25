@@ -11,6 +11,8 @@ open Fulma
 open Fulma.Extensions
 module R = Fable.Helpers.React
 open CustomColours
+open Fulma
+open Fulma
 
 let goToUrl (e: React.MouseEvent) =
     e.preventDefault()
@@ -62,6 +64,7 @@ let private help text =
                    Help.Modifiers 
                         [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
                         [ R.str text ]
+                        
 let private make_help (code : APICode) (error : APIError) = 
     List.fold2 (fun acc the_code msg ->
          if code = the_code then List.append acc [(help msg)] else acc)
@@ -102,16 +105,28 @@ let input_field (error : APIError option) (code : APICode) =
     match error with
     | Some error -> input_field_with_error error code
     | _ -> input_field_without_error
-        
+    
+let text_area_without_error (label: string) (text : string) on_change  =
+    Field.div [Field.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left)] ] [
+        Label.label [] [ R.str label ]
+        Control.div [ ] [
+            Textarea.textarea [ Textarea.Value text
+                                Textarea.OnChange on_change ] [ ]
+        ]
+    ]
+
 
 let notification (code : APICode) (error : APIError option) =
     
     match error with
     | Some e ->
+        Browser.console.warn ("notification: " + List.head (e.Messages))
         if List.contains code e.Codes then
             let zipped = List.zip e.Codes e.Messages
-            Notification.notification [ Notification.Color IsTitanError ]
-              [ for (c,m) in zipped do yield (if c = code then R.str m else R.nothing) ]
+            Notification.notification [ Notification.Color IsTitanError ] [
+                yield! [for (c,m) in zipped do yield (if c = code then R.str m else R.nothing)]
+            ]
+            
         else
             R.nothing
     | _ -> R.nothing

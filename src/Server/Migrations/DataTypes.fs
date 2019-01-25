@@ -13,6 +13,8 @@ type TitanClaim =
       
 type School =
     { UserId : int
+      Info : string
+      Subjects : string
       Name : string }
     
 type Student =

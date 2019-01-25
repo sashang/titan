@@ -136,8 +136,7 @@ let render_school_view (next : HttpFunc) (ctx : HttpContext) = task {
         let! result = db.get_school_view
         match result with
         | Ok schools ->
-            let converted = schools |> List.map (fun x -> Domain.School.init x.FirstName x.LastName x.SchoolName) 
-            return! (htmlView (SchoolView.view converted)) next ctx
+            return! (htmlView (SchoolView.view schools)) next ctx
         | Error message ->
             return! (htmlString message) next ctx
                 

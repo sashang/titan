@@ -59,10 +59,18 @@ let school_tile (s : Domain.School) =
             ]
             div [_class "columns"] [
                 div [_class "column is-2"] [
-                    label [_class "subtitle" ] [ str "Description" ]
+                    label [_class "subtitle" ] [ str "Subjects" ]
                 ]
                 div [_class "content"] [
-                    p [ ] [ str "asdsadasd" ]
+                    p [ ] [ str s.Subjects ]
+                ]
+            ]
+            div [_class "columns"] [
+                div [_class "column is-2"] [
+                    label [_class "subtitle" ] [ str "Info" ]
+                ]
+                div [_class "content"] [
+                    p [ ] [ str s.Info ]
                 ]
             ]
         ]

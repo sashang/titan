@@ -23,6 +23,8 @@ type Initial() =
         this.Create.Table("School")
             .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable().Unique()
             .WithColumn("UserId").AsInt32().ForeignKey().Unique()
+            .WithColumn("Subjects").AsString() //comma separated keywords
+            .WithColumn("Info").AsCustom("text")
             .WithColumn("Name").AsString().NotNullable() |> ignore
 
         this.Create.ForeignKey("FKSchoolUser").FromTable("School") .ForeignColumn("UserId")

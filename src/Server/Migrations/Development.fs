@@ -2,23 +2,33 @@ namespace TitanMigrations
 
 open FluentMigrator
 
+
 [<Profile("Development")>]
 type Development() =
     inherit Migration()
 
     override this.Up() =    
+        let lorem = """Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur ut ipsum eu dui sagittis rutrum.
+                       Nullam vel lacus vel elit sollicitudin pretium. Quisque scelerisque vitae libero sed maximus.
+                       Nam at nisi laoreet, ultricies nulla non, elementum enim. Integer vulputate eleifend lorem eget fermentum.
+                       Nullam id lacus quis enim auctor euismod vel a nisi. Integer congue mauris neque, at scelerisque augue dictum ac.
+                       Praesent tempus dolor eleifend tortor volutpat lacinia. In nec finibus felis. Vestibulum maximus
+                       ligula vel bibendum aliquam. Nulla facilisi."""
+        let subjects1 = "Mathematics,Chemistry"
+        let subjects2 = "English,VCE,English Literature"
+        let subjects3 = "Physics"
         //make some teachers
         this.Insert.IntoTable("User")
             .Row({Email = "charles@xmansion.com"; FirstName = "Charles"; LastName = "Xavier"; Phone = "2928092"}) |> ignore
         this.Insert.IntoTable("TitanClaims")
             .Row({UserId = 2; Type = "IsTutor"; Value = "yes"}) |> ignore
         this.Insert.IntoTable("School")
-            .Row({UserId = 2; Name = "Charles' School for the Gifted"}) |> ignore
+            .Row({UserId = 2; Name = "Charles' School for the Gifted"; Info = lorem; Subjects = subjects1}) |> ignore
             
         this.Insert.IntoTable("User")
             .Row({Email = "darth@deathstar.com"; FirstName = "Darth"; LastName = "Vader"; Phone = "2928092"}) |> ignore
         this.Insert.IntoTable("School")
-            .Row({UserId = 3; Name = "Deathstar"}) |> ignore
+            .Row({UserId = 3; Name = "Deathstar"; Info = lorem; Subjects = subjects1}) |> ignore
         this.Insert.IntoTable("TitanClaims")
             .Row({UserId = 3; Type = "IsTutor"; Value = "yes"}) |> ignore
             
@@ -27,42 +37,42 @@ type Development() =
         this.Insert.IntoTable("TitanClaims")
             .Row({UserId = 4; Type = "IsTutor"; Value = "yes"}) |> ignore
         this.Insert.IntoTable("School")
-            .Row({UserId = 4; Name = "The Shire"}) |> ignore
+            .Row({UserId = 4; Name = "The Shire"; Info = lorem; Subjects = subjects3}) |> ignore
             
         this.Insert.IntoTable("User")
             .Row({Email = "william@theglobe.com"; FirstName = "William"; LastName = "Shakespeare"; Phone = "2928092"}) |> ignore
         this.Insert.IntoTable("TitanClaims")
             .Row({UserId = 5; Type = "IsTutor"; Value = "yes"}) |> ignore
         this.Insert.IntoTable("School")
-            .Row({UserId = 5; Name = "The Globe"}) |> ignore
+            .Row({UserId = 5; Name = "The Globe"; Info = lorem; Subjects = subjects3}) |> ignore
 
         this.Insert.IntoTable("User")
             .Row({Email = "marie@radium.com"; FirstName = "Marie"; LastName = "Curie"; Phone = "2928092"}) |> ignore
         this.Insert.IntoTable("TitanClaims")
             .Row({UserId = 6; Type = "IsTutor"; Value = "yes"}) |> ignore
         this.Insert.IntoTable("School")
-            .Row({UserId = 6; Name = "Radium"}) |> ignore
+            .Row({UserId = 6; Name = "Radium"; Info = lorem; Subjects = subjects3}) |> ignore
             
         this.Insert.IntoTable("User")
             .Row({Email = "emily@bronte.com"; FirstName = "Emily"; LastName = "Bronte"; Phone = "2928092"}) |> ignore
         this.Insert.IntoTable("TitanClaims")
             .Row({UserId = 7; Type = "IsTutor"; Value = "yes"}) |> ignore
         this.Insert.IntoTable("School")
-            .Row({UserId = 7; Name = "The Heights"}) |> ignore
+            .Row({UserId = 7; Name = "The Heights"; Info = lorem; Subjects = subjects3}) |> ignore
             
         this.Insert.IntoTable("User")
             .Row({Email = "rajas@english.com"; FirstName = "Rajas"; LastName = "Govender"; Phone = "2928092"}) |> ignore
         this.Insert.IntoTable("TitanClaims")
             .Row({UserId = 8; Type = "IsTutor"; Value = "yes"}) |> ignore
         this.Insert.IntoTable("School")
-            .Row({UserId = 8; Name = "English Achievers"}) |> ignore
+            .Row({UserId = 8; Name = "English Achievers"; Info = lorem; Subjects = subjects3}) |> ignore
             
         this.Insert.IntoTable("User")
             .Row({Email = "kurt@logically.com"; FirstName = "Kurt"; LastName = "Goedel"; Phone = "2928092"}) |> ignore
         this.Insert.IntoTable("TitanClaims")
             .Row({UserId = 9; Type = "IsTutor"; Value = "yes"}) |> ignore
         this.Insert.IntoTable("School")
-            .Row({UserId = 9; Name = "Logically"}) |> ignore
+            .Row({UserId = 9; Name = "Logically"; Info = lorem; Subjects = subjects3}) |> ignore
             
         //make some students
         this.Insert.IntoTable("User")

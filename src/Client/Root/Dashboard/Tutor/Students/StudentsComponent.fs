@@ -28,7 +28,6 @@ type Msg =
     | LoadStudentsFailure  of exn
     | GetAllStudents
     | DismissStudent of Student
-    | GraduateStudent of Student
     | DismissStudentSuccess of unit
     | DismissStudentFailure of exn
 
@@ -36,16 +35,7 @@ let dismiss_student (student : DismissStudentRequest) = promise {
     let request = make_post 1 student
     let decoder = Decode.Auto.generateDecoder<APIError option>()
     let! response = Fetch.tryFetchAs "/api/dismiss-student" decoder request
-    match response with
-    | Ok result ->
-        match result with
-        | Some error ->
-            Browser.console.error ("dismiss_student: " + (List.head error.Messages))
-            return (raise (DismissStudentEx error))
-        | None ->
-            return ()
-    | Error e ->
-        return raise (DismissStudentEx (APIError.init [APICode.Fetch] [e]))
+    return map_api_error_result response DismissStudentEx
 }
 
 let get_all_students () = promise {
@@ -101,12 +91,6 @@ let update (model : Model) (msg : Msg) =
 let private card_footer (student : Student) (dispatch : Msg -> unit) =
     [ Card.Footer.div [ ]
         [ Button.button [ Button.Color IsTitanInfo
-                          Button.Props [ OnClick (fun _ -> dispatch (GraduateStudent student)) ] ]
-            [ Icon.icon [ ]
-                [ Fa.i [ Fa.Solid.GraduationCap ]
-                    [ ] ] ] ]
-      Card.Footer.div [ ]
-        [ Button.button [ Button.Color IsTitanInfo
                           Button.Props [ OnClick (fun _ -> dispatch (DismissStudent student)) ] ]
             [ Icon.icon [ ]
                 [ Fa.i [ Fa.Solid.Trash ]
@@ -114,9 +98,24 @@ let private card_footer (student : Student) (dispatch : Msg -> unit) =
     
 let private student_content (student : Student) =
       Text.div
-        [ Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
-        [ Label.label [ ] [ str "Email" ]
-          Text.div [ ] [ str student.Email ] ]
+        [ Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [
+            Columns.columns [] [
+                Column.column [] [
+                    Label.label [ ] [ str "Email" ]
+                ]
+                Column.column [] [
+                    Text.div [ ] [ str student.Email ]
+                ]
+            ]
+            Columns.columns [] [
+                Column.column [] [
+                    Label.label [ ] [ str "Phone" ]
+                ]
+                Column.column [] [
+                    Text.div [ ] [ str student.Phone ]
+                ]
+            ]
+        ]
 
 let private single_student model dispatch (student : Domain.Student) = 
     Column.column [ Column.Width (Screen.All, Column.Is3) ]

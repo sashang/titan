@@ -150,7 +150,26 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
             { model with Error = Some (APIError.init [APICode.Failure] [e.Message])}, Cmd.none
 
 let private student_content (student : Student) =
-      [ Text.div [ Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [ str student.Email ] ]
+      [
+        Text.div [ Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [
+            Columns.columns [] [
+                Column.column [] [
+                    Label.label [ ] [ str "Email" ]
+                ]
+                Column.column [] [
+                    Text.div [ ] [ str student.Email ]
+                ]
+            ]
+            Columns.columns [] [
+                Column.column [] [
+                    Label.label [ ] [ str "Phone" ]
+                ]
+                Column.column [] [
+                    Text.div [ ] [ str student.Phone ]
+                ]
+            ]
+        ]
+      ]
 
 let private card_footer (student : Student) (dispatch : Msg -> unit) =
     [ Card.Footer.div [ ]

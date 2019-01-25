@@ -58,7 +58,6 @@ let map_api_error_result (response : Result<APIError option,string>) ex_to_raise
     | Error e ->
         raise (ex_to_raise (APIError.init [APICode.Fetch] [e]))
 
-
 let make_post (count : int) (data : 'a) =
     let body = Encode.Auto.toString (count, data)
     let props =

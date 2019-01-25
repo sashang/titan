@@ -98,7 +98,10 @@ type SchoolRequest =
 [<CLIMutable>]
 type SchoolResponse =
     { SchoolName : string
+      Subjects : string
+      Info : string
       Error : APIError option }
+    static member init = {SchoolName = ""; Subjects = ""; Info = ""; Error = None}
 
 [<CLIMutable>]
 type LoadSchoolResult =
@@ -203,8 +206,10 @@ type TutorRegister =
 type SaveRequest =
     { FirstName : string
       LastName : string
+      Info : string
+      Subjects : string
       SchoolName : string }
-    static member init = {FirstName = ""; LastName = ""; SchoolName = ""}
+    static member init = {FirstName = ""; LastName = ""; SchoolName = ""; Info = ""; Subjects = ""}
     member this.is_valid = this.FirstName <> "" && this.LastName <> "" && this.SchoolName <> ""
     
 
@@ -212,8 +217,11 @@ type SaveRequest =
 type School =
     { FirstName : string
       LastName : string
+      Info : string
+      Subjects : string
       SchoolName : string }
-    static member init first last sn = {FirstName = first; LastName = last; SchoolName = sn}
+    static member init first last sn info subjects =
+        {FirstName = first; LastName = last; SchoolName = sn; Info = info; Subjects = subjects}
     member this.is_valid = this.FirstName <> "" && this.LastName <> "" && this.SchoolName <> ""
     
 [<CLIMutable>]
