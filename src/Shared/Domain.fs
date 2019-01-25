@@ -12,6 +12,7 @@ type APICode =
     | FirstName
     | LastName
     | NoSchool
+    | Location
 
 [<CLIMutableAttribute>]
 type APIError =
@@ -99,9 +100,10 @@ type SchoolRequest =
 type SchoolResponse =
     { SchoolName : string
       Subjects : string
+      Location : string
       Info : string
       Error : APIError option }
-    static member init = {SchoolName = ""; Subjects = ""; Info = ""; Error = None}
+    static member init = {SchoolName = ""; Subjects = ""; Info = ""; Location = ""; Error = None}
 
 [<CLIMutable>]
 type LoadSchoolResult =
@@ -207,10 +209,11 @@ type SaveRequest =
     { FirstName : string
       LastName : string
       Info : string
+      Location : string
       Subjects : string
       SchoolName : string }
-    static member init = {FirstName = ""; LastName = ""; SchoolName = ""; Info = ""; Subjects = ""}
-    member this.is_valid = this.FirstName <> "" && this.LastName <> "" && this.SchoolName <> ""
+    static member init = {FirstName = ""; LastName = ""; SchoolName = ""; Info = ""; Subjects = ""; Location = ""}
+    member this.is_valid = this.FirstName <> "" && this.LastName <> "" && this.SchoolName <> "" && this.Location <> ""
     
 
 [<CLIMutable>]
@@ -219,10 +222,11 @@ type School =
       LastName : string
       Info : string
       Subjects : string
+      Location : string
       SchoolName : string }
-    static member init first last sn info subjects =
-        {FirstName = first; LastName = last; SchoolName = sn; Info = info; Subjects = subjects}
-    member this.is_valid = this.FirstName <> "" && this.LastName <> "" && this.SchoolName <> ""
+    static member init first last sn info subjects location =
+        {FirstName = first; LastName = last; SchoolName = sn; Info = info; Subjects = subjects; Location = location}
+    member this.is_valid = this.FirstName <> "" && this.LastName <> "" && this.SchoolName <> "" && this.Location = ""
     
 [<CLIMutable>]
 type GetAllSchoolsResult =

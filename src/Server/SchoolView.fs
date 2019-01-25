@@ -54,7 +54,7 @@ let school_tile (s : Domain.School) =
                     h3 [ _class "subtitle"] [ str "Location" ]
                 ]
                 div [_class "column is-2"] [
-                    h4 [ ] [ ]
+                    p [ ] [ str s.Location ]
                 ]
             ]
             div [_class "columns"] [

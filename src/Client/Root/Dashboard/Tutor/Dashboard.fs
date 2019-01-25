@@ -1,9 +1,6 @@
 module Tutor.Dashboard
 
-open Domain
 open Elmish
-open Elmish.Browser
-open Elmish.Browser.Navigation
 open Elmish.React
 open Fable.Helpers.React.Props
 open Fulma
@@ -48,7 +45,7 @@ let view (model : Model) (dispatch : Msg -> unit) =
         //fluid to take up the width of the screen
         [ Container.IsFluid ]
         [ Columns.columns [ ]
-            [ Column.column [ Column.Width (Screen.All, Column.Is6) ]
+            [ Column.column [ Column.Width (Screen.All, Column.Is4) ]
                 [ yield! School.view model.School (SchoolMsg >> dispatch) ]
               Column.column [ ]
                 [ yield! Class.view model.Class (ClassMsg >> dispatch) ] ]

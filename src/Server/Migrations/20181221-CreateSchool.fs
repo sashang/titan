@@ -24,6 +24,7 @@ type Initial() =
             .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable().Unique()
             .WithColumn("UserId").AsInt32().ForeignKey().Unique()
             .WithColumn("Subjects").AsString() //comma separated keywords
+            .WithColumn("Location").AsString()
             .WithColumn("Info").AsCustom("text")
             .WithColumn("Name").AsString().NotNullable() |> ignore
 

@@ -125,11 +125,11 @@ type Database(c : string) =
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
                 let sql = """select "School"."Name","User"."FirstName","User"."LastName","School"."Info",
-                             "School"."Subjects" from "School" join "User" on "User"."Id" = "School"."UserId";"""
+                             "School"."Subjects", "School"."Location" from "School" join "User" on "User"."Id" = "School"."UserId";"""
                 let result = conn
                              |> dapper_query<Models.SchoolTutor> sql
                              |> Seq.toList
-                             |> List.map (fun x -> School.init x.FirstName x.LastName x.SchoolName x.Info x.Subjects)
+                             |> List.map (fun x -> School.init x.FirstName x.LastName x.SchoolName x.Info x.Subjects x.Location)
                 return Ok result
             with
             | :? Npgsql.PostgresException as e ->
@@ -159,13 +159,14 @@ type Database(c : string) =
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
-                let cmd = """update "School" set "Name" = @Name, "Info" = @Info, "Subjects" = @Subjects
+                let cmd = """update "School" set "Name" = @Name, "Info" = @Info, "Subjects" = @Subjects, "Location" = @Location
                              where "UserId" = (select "Id" from "User" where "Email" = @Email)"""
-                let m = (Map ["Email", tutor_email; "Name", request.SchoolName; "Info", request.Info; "Subjects", request.Subjects])
+                let m = (Map ["Email", tutor_email; "Name", request.SchoolName; "Info", request.Info; "Subjects", request.Subjects;
+                              "Location", request.Location])
                 if dapper_map_param_exec cmd m conn = 1 then  
                     let cmd = """update "User" set "FirstName" = @FirstName, "LastName" = @LastName
                                  where "Email" = @Email"""
-                    let m = (Map ["Email", tutor_email; "FirstName", request.FirstName; "LastName", request.LastName])
+                    let m = (Map ["Email", tutor_email; "FirstName", request.FirstName; "LastName", request.LastName;])
                     if dapper_map_param_exec cmd m conn = 1 then  
                         return Ok ()
                     else 
@@ -224,9 +225,9 @@ type Database(c : string) =
                         ((select "Id" from "User" where "Email" = @Email), 'IsTutor', 'true')"""
                     let m = (Map ["Email", email])
                     if dapper_map_param_exec cmd m conn = 1 then  
-                        let cmd = """insert into "School" ("UserId","Name","Info","Subjects")
-                            VALUES ((select "User"."Id" from "User" where "Email" = @Email), @Name, @Info, @Subjects)"""
-                        let m = (Map ["Email", email;"Name", schoolname;"Info", "";"Subjects", ""])
+                        let cmd = """insert into "School" ("UserId","Name","Info","Subjects","Location")
+                            VALUES ((select "User"."Id" from "User" where "Email" = @Email), @Name, @Info, @Subjects, @Location)"""
+                        let m = (Map ["Email", email;"Name", schoolname;"Info", "";"Subjects", ""; "Location", ""])
                         if dapper_map_param_exec cmd m conn = 1 then  
                             return Ok ()
                         else 
@@ -441,12 +442,13 @@ type Database(c : string) =
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
-                let cmd = """select "Name","Info","Subjects" from "School" where "School"."UserId" = (select "Id" from "User" where "Email" = @Email)"""
+                let cmd = """select "Name","Info","Subjects","Location" from "School" where "School"."UserId" = (select "Id" from "User" where "Email" = @Email)"""
                 let result = conn
                                 |> dapper_map_param_query<Models.SchoolFromEmail> cmd (Map ["Email", email])
                                 |> Seq.head
                                 |> (fun (x : Models.SchoolFromEmail) -> {SchoolResponse.Info = x.Info; SchoolResponse.Subjects = x.Subjects
-                                                                         SchoolResponse.SchoolName = x.SchoolName; Error = None })
+                                                                         SchoolResponse.SchoolName = x.SchoolName;
+                                                                         SchoolResponse.Location = x.Location; Error = None })
                 return Ok result
             with
             | :? Npgsql.PostgresException as e ->

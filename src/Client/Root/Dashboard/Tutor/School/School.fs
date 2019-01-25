@@ -1,6 +1,5 @@
 module School
 
-open Client
 open Client.Style
 open CustomColours
 open Domain
@@ -9,8 +8,6 @@ open Fable.Helpers.React
 open Fable.Import
 open Fable.Helpers.React.Props
 open Fable.PowerPack
-open Fulma
-open Fulma
 open Fulma
 open ModifiedFableFetch
 open Thoth.Json
@@ -23,12 +20,14 @@ type Model =
     { SchoolName : string
       FirstName : string
       Subjects : string
+      Location : string
       LastName : string
       Info : string
       Error : APIError option}
 
 type Msg =
     | SetSchoolName of string
+    | SetLocation of string
     | SetFirstName of string
     | SetLastName of string
     | SetInfo of string
@@ -69,9 +68,7 @@ let private load_user () = promise {
 }
 
 let private save (data : SaveRequest) = promise {
-    let request = make_post 5 data
-    Browser.console.info (sprintf "request.Subjects = %A" data.Subjects)
-    Browser.console.info (sprintf "request.info = %A" data.Info)
+    let request = make_post 6 data
     let decoder = Decode.Auto.generateDecoder<APIError option>()
     let! response = Fetch.tryFetchAs "/api/save-tutor" decoder request
     return map_api_error_result response SaveEx
@@ -79,7 +76,7 @@ let private save (data : SaveRequest) = promise {
 
 let init () : Model*Cmd<Msg> =
     {SchoolName = ""; Error = None; Subjects = ""
-     FirstName = ""; LastName = ""; Info = ""},
+     FirstName = ""; LastName = ""; Info = ""; Location = ""},
      Cmd.batch [Cmd.ofPromise load_school () Success Failure
                 Cmd.ofPromise load_user () LoadUserSuccess Failure]
 
@@ -143,9 +140,13 @@ let school_content (model : Model) (dispatch : Msg->unit) =
     [ Columns.columns [ ]
         [ Column.column [ ]
             [ yield! input_field model.Error APICode.FirstName "First Name" model.FirstName (fun e -> dispatch (SetFirstName e.Value))
-              yield! input_field model.Error APICode.LastName "Last Name" model.LastName (fun e -> dispatch (SetLastName e.Value))
-              yield! input_field model.Error APICode.SchoolName "School Name" model.SchoolName (fun e -> dispatch (SetSchoolName e.Value))
-              yield text_area_without_error "Info" model.Info (fun (e : React.FormEvent) -> dispatch (SetInfo e.Value)) ] ] ]
+              yield! input_field model.Error APICode.LastName "Last Name" model.LastName (fun e -> dispatch (SetLastName e.Value)) ]
+          Column.column []
+            [ yield! input_field model.Error APICode.SchoolName "School Name" model.SchoolName (fun e -> dispatch (SetSchoolName e.Value))
+              yield! input_field model.Error APICode.Location "Location" model.Location (fun e -> dispatch (SetLocation e.Value)) ] ]
+      Columns.columns [ ]
+        [ Column.column []
+            [ yield text_area_without_error "Info" model.Info (fun (e : React.FormEvent) -> dispatch (SetInfo e.Value)) ] ] ]
 
 
 let private save_button dispatch msg text =
@@ -181,13 +182,15 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     match msg with
     | ClickSave ->
         let save_request = {SaveRequest.init with FirstName = model.FirstName
-                                                  LastName = model.LastName; Info = model.Info; Subjects = ""
-                                                  SchoolName = model.SchoolName}
+                                                  LastName = model.LastName; Info = model.Info; Subjects = model.Subjects
+                                                  SchoolName = model.SchoolName; Location = model.Location}
         model, Cmd.ofPromise save save_request SaveSuccess Failure
     | SaveSuccess () ->
         model, Cmd.none
     | SetFirstName name ->
         {model with FirstName = name}, Cmd.none
+    | SetLocation location ->
+        {model with Location = location}, Cmd.none
     | SetLastName name ->
         {model with LastName = name}, Cmd.none
     | SetInfo info ->
@@ -195,7 +198,7 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     | SetSchoolName name ->
         {model with SchoolName = name}, Cmd.none
     | Success result ->
-        {model with SchoolName = result.SchoolName; Info = result.Info; Subjects = result.Subjects}, Cmd.none
+        {model with SchoolName = result.SchoolName; Info = result.Info; Subjects = result.Subjects; Location = result.Location}, Cmd.none
     | LoadUserSuccess result ->
         {model with FirstName = result.FirstName; LastName = result.LastName}, Cmd.none
     | Failure e ->

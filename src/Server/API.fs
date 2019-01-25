@@ -244,8 +244,6 @@ let save_tutor (next :HttpFunc) (ctx : HttpContext) = task {
         let! data = ctx.BindJsonAsync<SaveRequest>()
         let db_service = ctx.GetService<IDatabase>()
         let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
-        logger.LogInformation(sprintf "subjects = %s" data.Subjects)
-        logger.LogInformation(sprintf "info = %s" data.Info)
         let! result = db_service.handle_save_request user_email data
         match result with
         | Ok () ->

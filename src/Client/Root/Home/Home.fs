@@ -12,6 +12,9 @@ open Fable.Helpers.React.Props
 open Fable.Import
 open Fable.PowerPack
 open Fable.PowerPack.Fetch
+open Fulma
+open Fulma
+open Fulma
 open Thoth.Json
 open ValueDeclarations
 
@@ -109,6 +112,24 @@ let first_impression =
                     [ Image.IsSquare ] 
                     [ img [ Props.Src "Images/teacher.png" ] ] ] ] ]
 
+let private goto_url page e =
+    Navigation.newUrl (Pages.to_path page) |> List.map (fun f -> f ignore) |> ignore
+    
+let curious =
+    Container.container 
+        [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
+        [ Columns.columns [ ]
+            [ Column.column [ ]
+                    [ Heading.h1 [ Heading.Modifiers
+                                           [ Modifier.TextWeight TextWeight.Bold
+                                             Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ] 
+                            [ str "Want to know more?" ]
+                      Button.button 
+                        [ Button.Color IsTitanInfo
+                          Button.Size IsLarge
+                          Button.OnClick (goto_url Pages.Login) ]
+                        [ str "Sign in to find out" ] ] ] ]
+    
 let target_audience =
     Container.container 
         [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
@@ -116,17 +137,24 @@ let target_audience =
             [ Column.column [ ]
                     [ Box.box' [ Common.Props [ Props.Style [ Props.CSSProp.Height "100%" ] ] ]
                         [ Heading.h3 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] 
-                            [ str "For Tutors" ]
+                            [ str "Increase students. Grow your classroom." ]
                           Text.div 
                             [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4) ] ]
-                            [ str "Powerful tools to manage your students, schedule classes, and live stream lessons" ] ] ]
+                            [ str "Video conference with remote students" ] ] ]
               Column.column [ ]
                     [ Box.box' [ Common.Props [ Props.Style [ Props.CSSProp.Height "100%" ] ] ]
                         [ Heading.h3 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ]
-                            [ str "For Students" ]
+                            [ str "Optimize your workflow" ]
                           Text.div 
                             [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4) ] ]
-                            [ str "Connect with tutors who know your curriculum." ] ] ] ] ]
+                            [ str "Mangage your students with powerful tools." ] ] ]
+              Column.column [ ]
+                    [ Box.box' [ Common.Props [ Props.Style [ Props.CSSProp.Height "100%" ] ] ]
+                        [ Heading.h3 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ]
+                            [ str "Free to enrol." ]
+                          Text.div 
+                            [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4) ] ]
+                            [ str "Contact tutors free of charge." ] ] ] ] ]
 
 let testimonials =
     Container.container 
@@ -206,5 +234,6 @@ let view (model : Model) (dispatch : Msg -> unit) =
         [ Section.Modifiers [ Modifier.BackgroundColor IsTitanPrimary ] ]
         [ target_audience ]
       Section.section 
-        [ Section.Modifiers [ ] ]
-        [ beta_program model dispatch ] ]
+        [ Section.Modifiers [ Modifier.BackgroundColor IsWhite ] ]
+        [ curious ]
+    ]
