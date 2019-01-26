@@ -15,6 +15,7 @@ open Fable.PowerPack.Fetch
 open Fulma
 open Fulma
 open Fulma
+open Fulma
 open Thoth.Json
 open ValueDeclarations
 
@@ -115,6 +116,22 @@ let first_impression =
 let private goto_url page e =
     Navigation.newUrl (Pages.to_path page) |> List.map (fun f -> f ignore) |> ignore
     
+let pricing =
+    Container.container 
+        [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
+        [ Columns.columns [ Columns.IsVCentered ]
+            [ Column.column [ ]
+                    [ Image.image 
+                        [ ] 
+                        [ img [ Props.Src "Images/greenback.png" ] ] ]
+              Column.column [ ]
+                    [ Heading.h1 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ]
+                        [ str "Pricing" ]
+                      Text.div 
+                        [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4)
+                                             Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
+                        [ str "Currently Tewtin is undergoing a trial phase where all services are free of charge!" ] ] ] ]
+                
 let curious =
     Container.container 
         [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
@@ -126,6 +143,7 @@ let curious =
                     Box.box' [ ] [
                         Heading.h1 [ Heading.Modifiers
                                                [ Modifier.TextWeight TextWeight.Bold
+                                                 Modifier.TextColor IsBlack
                                                  Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ] 
                                 [ str "Want to know more?" ]
                         Button.button 
@@ -149,7 +167,7 @@ let archived_video =
                       Text.div 
                         [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4)
                                              Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
-                        [ str "Make videos of the lesson available for private viewing later." ] ] ]
+                        [ str "Make videos of the lesson available for private viewing." ] ] ]
                   ]
             
 let target_audience =
@@ -258,6 +276,9 @@ let view (model : Model) (dispatch : Msg -> unit) =
       Section.section 
         [ Section.Modifiers [ Modifier.BackgroundColor IsWhite ] ]
         [ archived_video ]
+      Section.section 
+        [ Section.Modifiers [ Modifier.BackgroundColor IsWhite ] ]
+        [ pricing ]
       Section.section 
         [ Section.Modifiers [ Modifier.BackgroundColor IsTitanPrimary ] ]
         [ curious ]
