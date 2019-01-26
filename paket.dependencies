@@ -3,7 +3,7 @@ nuget jose-jwt
 clitool FluentMigrator.Console
 group Server
     source https://api.nuget.org/v3/index.json
-    framework: netcoreapp2.1
+    framework: netcoreapp2.2
     storage: none
 
     nuget Dapper 1.50.5
@@ -16,15 +16,6 @@ group Server
     nuget Fable.JsonConverter //fable.JsonConverter only works on the server. don't try it in the client.
     nuget Saturn.Extensions.Authorization 0.8.0
     nuget Thoth.Json.Net
-
-group Populate
-    source https://api.nuget.org/v3/index.json
-    framework: netcoreapp2.1
-    storage: none
-
-    nuget Microsoft.Extensions.DependencyInjection 2.2.0
-    nuget TaskBuilder.fs ~> 2
-    nuget Dapper 1.50.5
 
 group Client
     source https://api.nuget.org/v3/index.json
@@ -58,5 +49,5 @@ group Build
     nuget Fake.Core.Environment
     nuget Fake.Core.Trace
     nuget Fake.IO.Zip
-nuget Microsoft.Azure.Management.ResourceManager.Fluent
+    nuget Microsoft.Azure.Management.ResourceManager.Fluent
     github CompositionalIT/fshelpers src/FsHelpers/ArmHelper/ArmHelper.fs
