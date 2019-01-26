@@ -1,4 +1,0 @@
-group Populate
-TaskBuilder.fs
-Dapper
-Microsoft.Extensions.DependencyInjection
