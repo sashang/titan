@@ -1,6 +1,7 @@
 /// Domain model shared between client and server.
 namespace Domain
 
+///Flexible API error codes. Interpreted by the client side code depending on context.
 [<RequireQualifiedAccess>]
 type APICode =
     | Failure
@@ -13,6 +14,7 @@ type APICode =
     | LastName
     | NoSchool
     | Location
+    | TitanOpenTok
 
 [<CLIMutableAttribute>]
 type APIError =
@@ -27,24 +29,22 @@ type APIError =
     static member db msg =
         {Codes = [APICode.Database]; Messages = [msg]}
 
-// Login credentials.
-[<CLIMutable>] //needed for BindJsonAync to work
-type Login =
-    { username : string
-      password : string }
-
-    member this.is_valid() =
-        not (this.username <> "test@test"  || this.password <> "test")
-
-type LoginCode = Success = 0 | Failure = 1
-
-
-type CallBackCode =
-    | CBLogin
+    static member titan_open_tok msg =
+        {Codes = [APICode.TitanOpenTok]; Messages = [msg]}
 
 [<CLIMutable>]
-type CallBack =
-    { Code : CallBackCode }
+type OpenTokInfo = 
+    { SessionId : string
+      Token : string
+      Key : string }
+    static member init = {SessionId = ""; Token = ""; Key = ""}
+
+[<CLIMutable>]
+type GoLiveResponse =
+    { Info : OpenTokInfo option
+      Error : APIError option}
+    static member init = { Info = None; Error = None}
+
 
 [<CLIMutable>]
 type Session =
@@ -52,17 +52,6 @@ type Session =
       Token : string }
       static member init =
         {Username = ""; Token = ""}
-
-
-[<CLIMutable>]
-type LoginResult =
-    { code : LoginCode list
-      message : string list
-      token : string
-      username : string }
-
-type SignUpCode = Success = 0 | BadPassword = 1 | BadUsername = 2 | BadEmail = 3
-                  | DatabaseError = 4 | UnknownIdentityError = 5
 
 type TitanRole =
     | Student
@@ -80,12 +69,6 @@ type SignUp =
 type SignOutCode =
     | Success = 0
     | Failure = 1
-
-/// Result of the sign-up action.
-[<CLIMutable>]
-type SignUpResult =
-    { code : SignUpCode list
-      message : string list }
 
 [<CLIMutable>]
 type SignOutResult =

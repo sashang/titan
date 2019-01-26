@@ -10,7 +10,24 @@ open Microsoft.Extensions.Logging
 open System.Security.Claims
 open System.Net.Mail
 open System
+open TitanOpenTok
 
+
+let go_live (next : HttpFunc) (ctx : HttpContext) = task {
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        logger.LogInformation("going live")
+        let titan_open_tok = ctx.GetService<ITitanOpenTok>()
+        let! result = titan_open_tok.get_token()
+        match result with
+        | Ok tok_info ->
+            return! ctx.WriteJsonAsync {Info = Some tok_info; Error = None}
+        | Error msg ->
+            logger.LogError("Failed to get session info from opentok")
+            return! ctx.WriteJsonAsync ({Info = None; Error = Some (APIError.titan_open_tok msg)})
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
+}
 
 let enrol (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then

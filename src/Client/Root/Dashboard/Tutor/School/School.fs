@@ -32,6 +32,7 @@ type Msg =
     | SetLastName of string
     | SetInfo of string
     | ClickSave
+    | ClickGoLive
     | SaveSuccess of unit
     | Success of SchoolResponse
     | LoadUserSuccess of UserResponse
@@ -152,6 +153,12 @@ let school_content (model : Model) (dispatch : Msg->unit) =
 let private save_button dispatch msg text =
     Button.button [
         Button.Color IsTitanInfo
+        Button.OnClick (fun _ -> (dispatch msg))
+    ] [ str text ]
+
+let private go_live dispatch msg text =
+    Button.button [
+        Button.Color IsTitanSuccess
         Button.OnClick (fun _ -> (dispatch msg))
     ] [ str text ]
 

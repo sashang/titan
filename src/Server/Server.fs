@@ -20,7 +20,7 @@ open System.IdentityModel.Tokens.Jwt
 open System.IO
 open System.Security.Claims
 open Thoth.Json.Net
-//open Server.TitanOpenTok
+open TitanOpenTok
 
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
@@ -147,8 +147,6 @@ let render_school_view (next : HttpFunc) (ctx : HttpContext) = task {
         return! failwith ("COuld not render the school view" )
 }
 
-
-
 let handleGetSecured =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         let username = ctx.User.FindFirst ClaimTypes.Name
@@ -173,6 +171,8 @@ let titan_api =  router {
     get "/get-all-schools" API.get_all_schools
     get "/get-all-students" API.get_all_students
     get "/get-pending" API.get_pending
+    get "/go-live" API.go_live
+
     //get "/signin-google" (redirectTo false "/api/secure")
     post "/enrol-student" API.enrol
     post "/register-punter" API.register_punter
@@ -217,7 +217,7 @@ let configure_services startup_options (services:IServiceCollection) =
     fableJsonSettings.Converters.Add(Fable.JsonConverter())
     services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
     services.AddSingleton<IDatabase>(Database(startup_options.ConnectionString)) |> ignore
-(*    services.AddSingleton<ITitanOpenTok>(TitanOpenTok(startup_options.OpenTokKey, startup_options.OpenTokSecret)) |> ignore*)
+    services.AddSingleton<ITitanOpenTok>(TitanOpenTok(startup_options.OpenTokKey, startup_options.OpenTokSecret)) |> ignore
 
     services.AddFluentMigratorCore()
             .ConfigureRunner(fun rb ->

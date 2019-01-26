@@ -14,6 +14,7 @@ type PageModel =
 type Msg =
     | TutorMsg of Tutor.Dashboard.Msg
     | StudentMsg of Student.Dashboard.Msg
+    | GoLive
 
 
 type Model =
@@ -37,6 +38,10 @@ let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
         let new_model, cmd = Student.Dashboard.update model msg
         {Child = StudentModel new_model}, Cmd.map StudentMsg cmd
         
+    | {Child = TutorModel model }, GoLive ->
+        let new_model, cmd = Tutor.Dashboard.update model Tutor.Dashboard.GoLive
+        {Child = TutorModel new_model}, Cmd.map TutorMsg cmd
+
 let view (model : Model) (dispatch : Msg -> unit) =
     match model with
     | {Child = TutorModel model} ->
