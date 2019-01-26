@@ -14,7 +14,7 @@ yarn install bulma --dev
 
 ## Build
 
-Ensure you have the dotnet sdk 2.1.500 installed. I've found that exporting the
+Ensure you have the dotnet sdk 2.2.103 installed. I've found that exporting the
 following variables will ensure a headache free existance:
 
 ```
