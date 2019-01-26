@@ -95,7 +95,7 @@ let private of_beta_result (code : BetaRegistrationCode) (result : BetaRegistrat
 
 let first_impression =
     Container.container [ Container.IsFullHD ] 
-        [ Columns.columns [ ] 
+        [ Columns.columns [ Columns.IsVCentered ] 
             [ Column.column []  
                   [ Heading.h1 
                         [ Heading.Modifiers [ Modifier.TextColor IsBlack
@@ -118,18 +118,40 @@ let private goto_url page e =
 let curious =
     Container.container 
         [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
-        [ Columns.columns [ ]
-            [ Column.column [ ]
-                    [ Heading.h1 [ Heading.Modifiers
-                                           [ Modifier.TextWeight TextWeight.Bold
-                                             Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ] 
-                            [ str "Want to know more?" ]
-                      Button.button 
-                        [ Button.Color IsTitanInfo
-                          Button.Size IsLarge
-                          Button.OnClick (goto_url Pages.Login) ]
-                        [ str "Sign in to find out" ] ] ] ]
-    
+            [ Columns.columns [ ]
+                [ Column.column [
+                    Column.Offset (Screen.All, Column.Is4)
+                    Column.Width (Screen.All, Column.Is4)
+                ] [
+                    Box.box' [ ] [
+                        Heading.h1 [ Heading.Modifiers
+                                               [ Modifier.TextWeight TextWeight.Bold
+                                                 Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ] 
+                                [ str "Want to know more?" ]
+                        Button.button 
+                            [ Button.Color IsTitanInfo
+                              Button.Size IsLarge
+                              Button.OnClick (goto_url Pages.Login) ]
+                            [ str "Sign in to find out" ] ] ] ] ]
+        
+let archived_video =
+    Container.container
+        [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
+            [ Columns.columns [ Columns.IsVCentered ]
+                [ Column.column [ ] [
+                      Image.image 
+                        [ Image.IsSquare ] 
+                        [ img [ Props.Src "Images/film-clip.png" ] ]
+                  ]
+                  Column.column [ ] [
+                      Heading.h1 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] 
+                        [ str "Private video archive" ]
+                      Text.div 
+                        [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4)
+                                             Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
+                        [ str "Make videos of the lesson available for private viewing later." ] ] ]
+                  ]
+            
 let target_audience =
     Container.container 
         [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
@@ -235,5 +257,8 @@ let view (model : Model) (dispatch : Msg -> unit) =
         [ target_audience ]
       Section.section 
         [ Section.Modifiers [ Modifier.BackgroundColor IsWhite ] ]
+        [ archived_video ]
+      Section.section 
+        [ Section.Modifiers [ Modifier.BackgroundColor IsTitanPrimary ] ]
         [ curious ]
     ]
