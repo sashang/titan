@@ -3,7 +3,6 @@
 namespace TitanMigrations
 
 open FluentMigrator
-open Microsoft.EntityFrameworkCore.Internal
 
 
 [<Migration(20181221120907L)>]

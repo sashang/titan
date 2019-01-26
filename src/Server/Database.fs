@@ -6,8 +6,6 @@ module Database
 open Dapper
 open Domain
 open FSharp.Control.Tasks.ContextInsensitive
-open Microsoft.Extensions.Logging
-open Npgsql
 open System.Data.SqlClient
 open System.Collections.Generic
 open System.Dynamic
@@ -114,8 +112,6 @@ type Database(c : string) =
                 else 
                     return Error ("Did not insert the expected number of records. sql is \"" + sql + "\"")
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -132,8 +128,6 @@ type Database(c : string) =
                              |> List.map (fun x -> School.init x.FirstName x.LastName x.SchoolName x.Info x.Subjects x.Location)
                 return Ok result
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -150,8 +144,6 @@ type Database(c : string) =
                 else 
                     return Error ("Did not update the expected number of records. sql is \"" + cmd + "\"")
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -174,8 +166,6 @@ type Database(c : string) =
                 else
                     return Error ("Did not update the expected number of records. sql is \"" + cmd + "\"")
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -191,8 +181,6 @@ type Database(c : string) =
                 else 
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -209,8 +197,6 @@ type Database(c : string) =
                 else 
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -237,8 +223,6 @@ type Database(c : string) =
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -259,8 +243,6 @@ type Database(c : string) =
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -275,8 +257,6 @@ type Database(c : string) =
                              |> Seq.toList
                 return Ok result
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -292,8 +272,6 @@ type Database(c : string) =
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -309,8 +287,6 @@ type Database(c : string) =
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -329,8 +305,6 @@ type Database(c : string) =
                 else
                     return Error ("Did not delete the expected number of records. sql is \"" + cmd + "\"")
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -347,8 +321,6 @@ type Database(c : string) =
                              |> Seq.toList
                 return Ok result
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -364,8 +336,6 @@ type Database(c : string) =
                              |> Seq.toList
                 return Ok result
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -385,8 +355,6 @@ type Database(c : string) =
                              |> Seq.toList
                 return Ok result
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -401,8 +369,6 @@ type Database(c : string) =
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -416,8 +382,6 @@ type Database(c : string) =
                              |> Seq.head
                 return Ok exists
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -432,8 +396,6 @@ type Database(c : string) =
                                 |> Seq.head
                 return Ok result
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -451,8 +413,6 @@ type Database(c : string) =
                                                                          SchoolResponse.Location = x.Location; Error = None })
                 return Ok result
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -468,8 +428,6 @@ type Database(c : string) =
                 else
                     return Error ("Did not update the expected number of records. sql is \"" + cmd + "\"")
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -485,8 +443,6 @@ type Database(c : string) =
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
 
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -499,8 +455,6 @@ type Database(c : string) =
                 let result = conn.QueryFirst<Models.School>(sql, {Models.School.init with Models.School.UserId = user_id})
                 return Ok result
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }
@@ -534,8 +488,6 @@ type Database(c : string) =
                     return Error ("Failed to insert user. sql is \"" + cmd + "\"")
                     
             with
-            | :? Npgsql.PostgresException as e ->
-                return Error e.MessageText
             |  e ->
                 return Error e.Message
         }

@@ -20,6 +20,7 @@ open System.IdentityModel.Tokens.Jwt
 open System.IO
 open System.Security.Claims
 open Thoth.Json.Net
+//open Server.TitanOpenTok
 
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
@@ -31,6 +32,8 @@ type RecStartupOptions = {
     ConnectionString : string
     GoogleClientId : string
     GoogleSecret : string
+    OpenTokSecret : string
+    OpenTokKey : int
 }
 
 let print_user_details : HttpHandler =
@@ -214,6 +217,7 @@ let configure_services startup_options (services:IServiceCollection) =
     fableJsonSettings.Converters.Add(Fable.JsonConverter())
     services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
     services.AddSingleton<IDatabase>(Database(startup_options.ConnectionString)) |> ignore
+(*    services.AddSingleton<ITitanOpenTok>(TitanOpenTok(startup_options.OpenTokKey, startup_options.OpenTokSecret)) |> ignore*)
 
     services.AddFluentMigratorCore()
             .ConfigureRunner(fun rb ->

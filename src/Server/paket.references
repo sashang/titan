@@ -5,15 +5,10 @@ Fable.JsonConverter
 jose-jwt
 Saturn.Extensions.Authorization
 Microsoft.Extensions.DependencyInjection
-Microsoft.EntityFrameworkCore
-Npgsql.EntityFrameworkCore.PostgreSQL
-Microsoft.AspNetCore.Identity.EntityFrameworkCore
 FluentMigrator
 FluentMigrator.Runner
 FluentMigrator.Runner.Postgres
 Dapper
-Npgsql
 System.Runtime.CompilerServices.Unsafe
-Microsoft.AspNetCore.Identity.UI
 Microsoft.Extensions.Configuration.Json
 Thoth.Json.Net
