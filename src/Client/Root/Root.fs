@@ -28,6 +28,7 @@ let from_base64 (s:string) : string = jsNative
 
 type RootMsg =
     | ClickSignOut
+    | ClickStopLive
     | ClickTitle
     | FirstTime of TitanClaim
     | CheckSessionSuccess of Session
@@ -125,6 +126,13 @@ let private  nav_item_button (dispatch : RootMsg -> unit) (msg : RootMsg) (text 
               Button.OnClick (fun e -> dispatch msg)  ]
             [ str text ] ]
 
+let private  nav_item_stop_button (dispatch : RootMsg -> unit) =
+    Navbar.Item.div [ ]
+        [ Button.button 
+            [ Button.Color IsDanger
+              Button.OnClick (fun e -> dispatch ClickStopLive)  ]
+            [ str "Stop" ] ]
+
 let private nav_item_button_url page (text : string) =
     Navbar.Item.div [ ]
         [ Button.button 
@@ -140,10 +148,14 @@ let private nav_item_button_href href (text : string) =
             [ str text ] ]
 
 
-let dashboard_button dispatch (claims : TitanClaim) =
+let dashboard_button (model : State) dispatch (claims : TitanClaim) =
     if claims.IsTutor then
          [ nav_item_button_url Pages.DashboardTutor "Dashboard"
-           nav_item_button dispatch ClickGoLiveTutor "Go Live!" ]
+           (match model.BCast with
+           | Some bcast ->
+                nav_item_stop_button dispatch 
+           | None ->
+                nav_item_button dispatch ClickGoLiveTutor "Go Live!")]
     else
         [ nothing ]
     
@@ -177,7 +189,7 @@ let view model dispatch =
                                 yield nav_item_button_url Pages.Login "Login"
                           | Some session ->
                                 yield! List.append [ match model.Claims with
-                                                     | Some claims -> yield! dashboard_button dispatch claims
+                                                     | Some claims -> yield! dashboard_button model dispatch claims
                                                      | None -> yield nothing]
                                                    [ yield nav_item_button dispatch ClickSignOut "Sign Out" ] ]
                 ]
@@ -210,6 +222,10 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         //assume that signing out worked so we delete the sesison
         { Child = HomeModel (Home.init ()); Session = None; Claims = None;
           BCast = None}, Cmd.map SignOutMsg cmd
+
+    | ClickStopLive, {Child = DashboardRouterModel model} ->
+        let new_model, new_cmd = DashboardRouter.update model DashboardRouter.StopLive
+        {state with BCast = None}, Cmd.map DashboardRouterMsg new_cmd
 
     | ClickGoLiveTutor, {Child = DashboardRouterModel model} ->
         let new_model, new_cmd = DashboardRouter.update model DashboardRouter.GoLive

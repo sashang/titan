@@ -23,12 +23,12 @@ module.exports = {
           alert(error.message);
         }
     },
-    initialize_session: function(key, session_id, token) {
-        // Subscribe to a newly created stream
-        var session = OT.initSession(key, session_id);
-      
+    disconnect: function(session) {
+        session.disconnect();
+    },
+    init_pub: function(div_id) {
         // Create a publisher
-        var publisher = OT.initPublisher('publisher', {
+        var publisher = OT.initPublisher(div_id, {
           insertMode: 'append',
           width: '100%',
           height: '100%'
@@ -40,14 +40,16 @@ module.exports = {
                 console.log("Publisher initialized.");
             }
           });
-      
+        return publisher;
+    },
+    connect_session: function(session, publisher, token) {
         // Connect to the session
         session.connect(token, function(error) {
-          // If the connection is successful, publish to the session
-          if (error) {
-            alert(error.message);
-            console.log(error.message);
-          } else {
+            // If the connection is successful, publish to the session
+            if (error) {
+                alert(error.message);
+                console.log(error.message);
+            } else {
             session.publish(publisher, function(error) {
                 if (error) {
                     alert(error.message);
@@ -55,9 +57,12 @@ module.exports = {
                 } else {
                     console.log("Published session");
                 }
-            });
-          }
-        });
+            })}});
+    },
+    init_session: function(key, session_id) {
+        var session = OT.initSession(key, session_id);
+
+        return session;
     }
 
 }

@@ -15,6 +15,7 @@ type Msg =
     | TutorMsg of Tutor.Dashboard.Msg
     | StudentMsg of Student.Dashboard.Msg
     | GoLive
+    | StopLive
 
 
 type Model =
@@ -40,6 +41,10 @@ let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
         
     | {Child = TutorModel model }, GoLive ->
         let new_model, cmd = Tutor.Dashboard.update model Tutor.Dashboard.GoLive
+        {Child = TutorModel new_model}, Cmd.map TutorMsg cmd
+
+    | {Child = TutorModel model }, StopLive ->
+        let new_model, cmd = Tutor.Dashboard.update model Tutor.Dashboard.StopLive
         {Child = TutorModel new_model}, Cmd.map TutorMsg cmd
 
 let view (model : Model) (dispatch : Msg -> unit) =

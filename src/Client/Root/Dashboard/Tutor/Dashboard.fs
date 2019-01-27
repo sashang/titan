@@ -31,6 +31,7 @@ type Msg =
     | ClassMsg of Class.Msg
     | StudentMsg of StudentsComponent.Msg
     | GoLive
+    | StopLive
     | GoLiveSuccess of OpenTokInfo
     | GoLiveFailure of exn
 
@@ -103,6 +104,8 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         | _ ->
             let new_pending_state, pending_cmd = PendingStudents.update model.Pending msg
             {model with Pending = new_pending_state}, Cmd.map PendingMsg pending_cmd
+    | StopLive ->
+        {model with Live = Off}, Cmd.ofMsg (ClassMsg (Class.StopLive))
     | GoLive ->
         {model with Live = Transition}, Cmd.ofPromise get_live_session_id () GoLiveSuccess GoLiveFailure
     | GoLiveSuccess info ->
