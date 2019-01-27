@@ -57,7 +57,9 @@ let private get_live_session_id () = promise {
     | Ok result ->
         match result.Error with
         | None -> 
-            return result.Info
+            match result.Info with
+            | Some oti -> return oti
+            | None -> return failwith ("Expected opentok info but got nothing")
         | Some api_error ->
             return raise (GoLiveEx api_error)
     | Error msg ->
@@ -104,7 +106,7 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | GoLive ->
         {model with Live = Transition}, Cmd.ofPromise get_live_session_id () GoLiveSuccess GoLiveFailure
     | GoLiveSuccess info ->
-        {model with Live = On; CurrentSession = Some info}, Cmd.none
+        {model with Live = On; CurrentSession = Some info}, Cmd.ofMsg (ClassMsg (Class.GoLive info))
     | GoLiveFailure e ->
         match e with
         | :? GoLiveEx as ex ->
