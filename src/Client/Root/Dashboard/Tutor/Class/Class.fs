@@ -63,6 +63,7 @@ let update (model : Model) (msg : Msg) =
             {model with OTI = None}, Cmd.none
 
 let view (model : Model) (dispatch : Msg -> unit) =
-    [ Box.box' [ Common.Props [ HTMLAttr.Id "publisher" ]  ]
+    [ Box.box' [ Common.Props [ HTMLAttr.Id "publisher"
+                                Style [ CSSProp.Height "100%" ]  ] ]
         [ ] ]
 
