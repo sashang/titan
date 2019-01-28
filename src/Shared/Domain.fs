@@ -206,10 +206,10 @@ type School =
       Info : string
       Subjects : string
       Location : string
-      SchoolName : string }
-    static member init first last sn info subjects location =
-        {FirstName = first; LastName = last; SchoolName = sn; Info = info; Subjects = subjects; Location = location}
-    member this.is_valid = this.FirstName <> "" && this.LastName <> "" && this.SchoolName <> "" && this.Location = ""
+      SchoolName : string
+      Email : string }
+    static member init first last sn info subjects location email =
+        {FirstName = first; LastName = last; SchoolName = sn; Info = info; Subjects = subjects; Location = location; Email = email}
     
 [<CLIMutable>]
 type GetAllSchoolsResult =
@@ -218,9 +218,13 @@ type GetAllSchoolsResult =
     
     static member init = {Schools = []; Error = None} 
     static member db_error msg = {Schools = []; Error = Some (APIError.db msg) } 
-    member this.is_valid = this.Schools |> List.exists (fun x -> not x.is_valid)
 
 
 [<CLIMutable>]
 type DismissStudentRequest =
     { Email : string }
+
+[<CLIMutable>]
+type JoinLiveRequest =
+    { TutorEmail : string }
+

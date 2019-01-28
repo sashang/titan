@@ -172,6 +172,7 @@ let titan_api =  router {
     get "/get-all-students" API.get_all_students
     get "/get-pending" API.get_pending
     get "/go-live" API.go_live
+    get "/get-enroled-schools" API.get_enroled_schools
 
     //get "/signin-google" (redirectTo false "/api/secure")
     post "/enrol-student" API.enrol
@@ -181,6 +182,7 @@ let titan_api =  router {
     post "/approve-pending" API.approve_enrolment_request
     post "/dismiss-student" API.dismiss_student
     post "/save-tutor" API.save_tutor
+    post "/join-live" API.join_live
 }
 
 ///Define the pipeline that http request headers will see

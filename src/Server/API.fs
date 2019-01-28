@@ -13,6 +13,40 @@ open System
 open TitanOpenTok
 
 
+let get_enroled_schools (next : HttpFunc) (ctx : HttpContext) = task {
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        logger.LogInformation("getting enroled schools")
+        let student_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        let db = ctx.GetService<IDatabase>()
+        let! result = db.get_enroled_schools student_email
+        match result with
+        | Ok schools ->
+            return! ctx.WriteJsonAsync {GetAllSchoolsResult.init with Schools = schools ; Error = None}
+        | Error msg ->
+            logger.LogError("Failed to get session info from opentok")
+            return! ctx.WriteJsonAsync ({Info = None; Error = Some (APIError.titan_open_tok msg)})
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
+}
+
+let join_live (next : HttpFunc) (ctx : HttpContext) = task {
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let! request = ctx.BindJsonAsync<JoinLiveRequest>()
+        logger.LogInformation("subscribing to session")
+        let titan_open_tok = ctx.GetService<ITitanOpenTok>()
+        let! result = titan_open_tok.get_token()
+        match result with
+        | Ok tok_info ->
+            return! ctx.WriteJsonAsync {Info = Some tok_info; Error = None}
+        | Error msg ->
+            logger.LogError("Failed to get session info from opentok")
+            return! ctx.WriteJsonAsync ({Info = None; Error = Some (APIError.titan_open_tok msg)})
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
+}
+
 let go_live (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
         let logger = ctx.GetLogger<Debug.DebugLogger>()
@@ -319,3 +353,4 @@ let dismiss_student (next : HttpFunc) (ctx : HttpContext) = task {
     else
         return! ctx.WriteJsonAsync APIError.unauthorized
 }
+

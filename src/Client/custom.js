@@ -1,4 +1,11 @@
 
+function handle_error(error) {
+    if (error) {
+        alert(error.message);
+        console.log(error.message);
+    }
+}
+
 module.exports = {
     
     byte2string:  function(input) {
@@ -18,12 +25,8 @@ module.exports = {
         }
         return result;
     },
-    handleError: function(error) {
-        if (error) {
-          alert(error.message);
-        }
-    },
     disconnect: function(session) {
+        console.log("disconnecting session");
         session.disconnect();
     },
     init_pub: function(div_id) {
@@ -51,18 +54,38 @@ module.exports = {
                 console.log(error.message);
             } else {
             session.publish(publisher, function(error) {
-                if (error) {
-                    alert(error.message);
-                    console.log(error.message);
-                } else {
-                    console.log("Published session");
-                }
+                handle_error(error)
             })}});
+    },
+    connect_subscriber: function(session, token) {
+        // Connect to the session
+        session.connect(token, function(error) {
+            // If the connection is successful, publish to the session
+            if (error) {
+                alert(error.message);
+                console.log(error.message);
+            } else {
+                session.on('streamCreated', function(event) {
+                    session.subscribe(event.stream, 'subscriber', {
+                    insertMode: 'append',
+                    width: '100%',
+                    height: '100%'
+                    }, handle_error);
+                });
+            }});
+    },
+    callback_stream_create: function(session) {
+        session.on('streamCreated', function(event) {
+            session.subscribe(event.stream, 'subscriber', {
+              insertMode: 'append',
+              width: '100%',
+              height: '100%'
+            }, handle_error);
+          });
     },
     init_session: function(key, session_id) {
         var session = OT.initSession(key, session_id);
 
         return session;
     }
-
 }

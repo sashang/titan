@@ -7,10 +7,8 @@ open Fable.Import
 open Fable.PowerPack
 open Fable.Helpers.React
 open Fulma
-open Fulma
-open Fulma
-open Fulma
 open ModifiedFableFetch
+open StudentSchools
 open Thoth.Json
 
 type Model =
@@ -19,12 +17,16 @@ type Model =
       Phone : string
       Email : string
       EnrolError : APIError option
+      EnroledSchools : StudentSchools.Model
+      Live : Live.Model
       Result : GetAllSchoolsResult}
 
 type Msg =
     | ClickEnrol of string
     | GetAllSchoolsSuccess of GetAllSchoolsResult
     | EnrolSuccess of unit
+    | StudentSchoolsMsg of StudentSchools.Msg
+    | LiveMsg of Live.Msg
     | Failure of exn
 
 exception GetAllSchoolsEx of APIError
@@ -34,7 +36,7 @@ let private get_all_schools () = promise {
     let request = make_get
     let decoder = Decode.Auto.generateDecoder<GetAllSchoolsResult>()
     let! response = Fetch.tryFetchAs "/api/get-all-schools" decoder request
-    Browser.console.info "received response from register-student"
+    Browser.console.info "received response from get-all-schools"
     match response with
     | Ok result ->
         match result.Error with
@@ -59,9 +61,14 @@ let private enrol_student er = promise {
 }
 
 
-let init () = {FirstName = ""; LastName = ""; Phone = ""; EnrolError = None;
-               Email =""; Result = GetAllSchoolsResult.init},
-              Cmd.ofPromise get_all_schools () GetAllSchoolsSuccess Failure
+let init () = 
+    let your_schools, ss_cmd = StudentSchools.init ()
+    let live_model, live_cmd = Live.init ()
+    {FirstName = ""; LastName = ""; Phone = ""; EnrolError = None;
+     Email =""; EnroledSchools = your_schools; Result = GetAllSchoolsResult.init; Live = live_model},
+              Cmd.batch [ Cmd.ofPromise get_all_schools () GetAllSchoolsSuccess Failure
+                          Cmd.map LiveMsg live_cmd
+                          Cmd.map StudentSchoolsMsg ss_cmd ]
 
 let update model msg =
     match model, msg with
@@ -70,9 +77,22 @@ let update model msg =
         
     | model, GetAllSchoolsSuccess result ->
         {model with Result = result}, Cmd.none
-        
-    | model, EnrolSuccess () ->
-        model, Cmd.none
+
+    //intercept this specific StudentSchoolsMsg, reroute it ot hte live component    
+    | {Live = live_model}, StudentSchoolsMsg (StudentSchools.Unsubscribe) ->
+        Browser.console.info ("Unsubscribe message")
+        let new_live_model, new_cmd = Live.update live_model (Live.StopLive)
+        {model with Live = new_live_model}, Cmd.map LiveMsg new_cmd
+
+    | {Live = live_model}, StudentSchoolsMsg (StudentSchools.Subscribe oti) ->
+        Browser.console.info ("Subscribe message")
+        let new_live_model, new_cmd = Live.update live_model (Live.GoLive oti)
+        {model with Live = new_live_model}, Cmd.map LiveMsg new_cmd
+
+    | {EnroledSchools = enroled_model}, StudentSchoolsMsg  msg ->
+        Browser.console.info ("STudentSchools message")
+        let new_model, new_cmd = StudentSchools.update enroled_model msg
+        {model with EnroledSchools = new_model}, Cmd.map StudentSchoolsMsg new_cmd
     
     | model, Failure e ->
         match e with
@@ -116,8 +136,14 @@ let single_row (school : School) (dispatch : Msg -> unit) =
     
     
 let view (model : Model) (dispatch : Msg -> unit) =
-     let schools = model.Result.Schools
-     Container.container [ Container.IsFullHD ] [
-        yield! [ for s in schools do yield single_row s dispatch ]
+     Container.container [ Container.IsFluid ] [
+        Columns.columns [ ] [
+            Column.column [ Column.Width (Screen.All, Column.Is4) ] [
+                StudentSchools.view model.EnroledSchools (StudentSchoolsMsg >> dispatch)
+            ]
+            Column.column [ Column.Width (Screen.All, Column.Is4) ] [
+                yield! Live.view model.Live (LiveMsg >> dispatch)
+            ]
+        ]
      ]
     

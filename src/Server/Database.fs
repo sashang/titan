@@ -92,12 +92,31 @@ type IDatabase =
     //enrol with, then removing the user from the pending table
     abstract member approve_enrol_request : string -> string -> Task<Result<unit, string>>
     
-
+    abstract member get_enroled_schools : string -> Task<Result<School list, string>>
     
 type Database(c : string) = 
     member this.connection = c
 
     interface IDatabase with
+        member this.get_enroled_schools student_email : Task<Result<School list, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                let sql = """select "School"."Name","User"."FirstName","User"."LastName","School"."Info",
+                             "School"."Subjects", "School"."Location", "User"."Email" from "User"
+                             join "School" on "User"."Id" = "School"."UserId"
+                             join "Student" on "School"."Id" = "Student"."SchoolId"
+                             join "User" as "SU" on "Student"."UserId" = "SU"."Id" where "SU"."Email" = @Email;"""
+                let result = conn
+                             |> dapper_map_param_query<Models.SchoolTutor> sql (Map["Email", student_email])
+                             |> Seq.toList
+                             |> List.map (fun x -> School.init x.FirstName x.LastName x.SchoolName x.Info x.Subjects x.Location x.Email)
+                return Ok result
+            with
+            |  e ->
+                return Error e.Message
+        }
+
         member this.delete_student_from_school tutor_email student_email : Task<Result<unit, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
@@ -121,11 +140,11 @@ type Database(c : string) =
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
                 let sql = """select "School"."Name","User"."FirstName","User"."LastName","School"."Info",
-                             "School"."Subjects", "School"."Location" from "School" join "User" on "User"."Id" = "School"."UserId";"""
+                             "School"."Subjects", "School"."Location", "School"."Email" from "School" join "User" on "User"."Id" = "School"."UserId";"""
                 let result = conn
                              |> dapper_query<Models.SchoolTutor> sql
                              |> Seq.toList
-                             |> List.map (fun x -> School.init x.FirstName x.LastName x.SchoolName x.Info x.Subjects x.Location)
+                             |> List.map (fun x -> School.init x.FirstName x.LastName x.SchoolName x.Info x.Subjects x.Location x.Email)
                 return Ok result
             with
             |  e ->

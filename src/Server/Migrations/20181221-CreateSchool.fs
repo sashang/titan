@@ -21,7 +21,7 @@ type Initial() =
 
         this.Create.Table("School")
             .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable().Unique()
-            .WithColumn("UserId").AsInt32().ForeignKey().Unique()
+            .WithColumn("UserId").AsInt32().ForeignKey().Unique() //tutors user id
             .WithColumn("Subjects").AsString() //comma separated keywords
             .WithColumn("Location").AsString()
             .WithColumn("Info").AsCustom("text")
@@ -35,7 +35,7 @@ type Initial() =
         this.Create.Table("Student")
             .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable().Unique()
             .WithColumn("SchoolId").AsInt32().ForeignKey()
-            .WithColumn("UserId").AsInt32().ForeignKey() |> ignore
+            .WithColumn("UserId").AsInt32().ForeignKey() |> ignore //students user id
             
         this.Create.ForeignKey("FKStudentUser").FromTable("Student")
             .ForeignColumn("UserId").ToTable("User").PrimaryColumn("Id") |> ignore

@@ -5,13 +5,14 @@ module Models
  //constructor below must match the names use in the sql string, so we use
  //Pascal case in teh constructor...
 [<RequireQualifiedAccessAttribute>]
-type SchoolTutor(Name:string, FirstName:string, LastName:string, Info:string, Subjects:string, Location:string)=
+type SchoolTutor(Name:string, FirstName:string, LastName:string, Info:string, Subjects:string, Location:string, Email:string)=
     member this.SchoolName = Name
     member this.FirstName = FirstName
     member this.LastName = LastName
     member this.Info = Info
     member this.Location = Location
     member this.Subjects = Subjects
+    member this.Email = Email
     
 [<RequireQualifiedAccessAttribute>]
 type PendingStudent(FirstName:string, LastName:string, Phone:string, Email:string)=
