@@ -1,6 +1,7 @@
 module Client.Shared
 
 open Domain
+open Fable.Core.JsInterop
 open Thoth.Json
 
 /// Claim info that's shared between pages on the client side.
@@ -30,3 +31,23 @@ type TitanClaim =
                   IsStudent = get.Optional.Field "IsStudent" Decode.string = Some "true"
                   IsTitan = get.Optional.Field "IsTitan" Decode.string = Some "true" })
     member this.is_first_time = not (this.IsStudent || this.IsTitan || this.IsTutor)
+
+module OpenTokJSInterop =
+
+    let init_session (key:string) (session_id:string) : obj =
+        import "init_session" "./custom.js"
+
+    let init_pub (div_id : string) : obj =
+        import "init_pub" "./custom.js"
+
+    let connect_session_with_pub (session:obj) (publisher:obj) (token:string) : unit =
+        import "connect_session_with_pub" "./custom.js"
+
+    let disconnect (session : obj) : unit =
+        import "disconnect" "./custom.js"
+
+    let connect (session : obj) (token : obj) : unit =
+        import "connect" "./custom.js"
+
+    let connect_session_with_sub (session:obj) (token:obj) : unit =
+        import "connect_session_with_sub" "./custom.js"

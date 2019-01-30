@@ -13,6 +13,7 @@ open Fable.PowerPack.Fetch
 open Fable.Core.JsInterop
 open Fulma
 open System
+open Client.Shared
 open Thoth.Json
 
 type Model =
@@ -31,33 +32,29 @@ let init () =
     { Students = []; StartTime = None; EndTime = None; OTI = None;
       Publisher = None; Session = None }, Cmd.none
 
-let init_session (key:string) (session_id:string) (token:string) : obj =
-    import "init_session" "../../../../custom.js"
-
-let disconnect_session (session : obj) : unit =
-    import "disconnect" "../../../../custom.js"
-
-let init_pub (div_id : string) : obj =
-    import "init_pub" "../../../../custom.js"
-
-let connect_session (session:obj) (publisher:obj) (token:string) : unit =
-    import "connect_session" "../../../../custom.js"
 
 let update (model : Model) (msg : Msg) =
     match msg with
 
     | GoLive open_tok_info ->
         Browser.console.info ("Going live")
-        let session = init_session open_tok_info.Key open_tok_info.SessionId open_tok_info.Token
-        let publisher = init_pub "publisher"
-        connect_session session publisher open_tok_info.Token
-        {model with OTI = Some open_tok_info; Session = Some session; Publisher = Some publisher }, Cmd.none
+        match model.Session with
+        | None ->
+            let session = OpenTokJSInterop.init_session open_tok_info.Key open_tok_info.SessionId
+            if session = null then failwith "failed to get js session"
+            let publisher = OpenTokJSInterop.init_pub "publisher"
+            OpenTokJSInterop.connect_session_with_pub session publisher open_tok_info.Token
+            {model with OTI = Some open_tok_info; Session = Some session; Publisher = Some publisher }, Cmd.none
+
+        | Some session ->
+            OpenTokJSInterop.connect session model.OTI.Value.Token
+            model, Cmd.none
 
     | StopLive ->
         match model.Session with
         | Some session ->
             Browser.console.info ("Stopping live stream")
-            disconnect_session session
+            OpenTokJSInterop.disconnect session
             {model with OTI = None; Session = None; Publisher = None}, Cmd.none
         | _ ->
             {model with OTI = None}, Cmd.none

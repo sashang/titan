@@ -6,6 +6,8 @@ function handle_error(error) {
     }
 }
 
+var subscriber = null;
+
 module.exports = {
     
     byte2string:  function(input) {
@@ -25,9 +27,14 @@ module.exports = {
         }
         return result;
     },
+    connect: function(session, token) {
+        if (session)
+            session.connect(token, handle_error);
+    },
     disconnect: function(session) {
         console.log("disconnecting session");
-        session.disconnect();
+        if (session)
+            session.disconnect();
     },
     init_pub: function(div_id) {
         // Create a publisher
@@ -45,7 +52,7 @@ module.exports = {
           });
         return publisher;
     },
-    connect_session: function(session, publisher, token) {
+    connect_session_with_pub: function(session, publisher, token) {
         // Connect to the session
         session.connect(token, function(error) {
             // If the connection is successful, publish to the session
@@ -57,7 +64,7 @@ module.exports = {
                 handle_error(error)
             })}});
     },
-    connect_subscriber: function(session, token) {
+    connect_session_with_sub: function(session, token) {
         // Connect to the session
         session.connect(token, function(error) {
             // If the connection is successful, publish to the session
@@ -66,7 +73,7 @@ module.exports = {
                 console.log(error.message);
             } else {
                 session.on('streamCreated', function(event) {
-                    session.subscribe(event.stream, 'subscriber', {
+                    subscriber = session.subscribe(event.stream, 'subscriber', {
                     insertMode: 'append',
                     width: '100%',
                     height: '100%'
@@ -74,18 +81,9 @@ module.exports = {
                 });
             }});
     },
-    callback_stream_create: function(session) {
-        session.on('streamCreated', function(event) {
-            session.subscribe(event.stream, 'subscriber', {
-              insertMode: 'append',
-              width: '100%',
-              height: '100%'
-            }, handle_error);
-          });
-    },
     init_session: function(key, session_id) {
         var session = OT.initSession(key, session_id);
 
         return session;
-    }
+    },
 }
