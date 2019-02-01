@@ -177,24 +177,24 @@ let target_audience =
             [ Column.column [ ]
                     [ Box.box' [ Common.Props [ Props.Style [ Props.CSSProp.Height "100%" ] ] ]
                         [ Heading.h3 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] 
-                            [ str "Increase students. Grow your classroom." ]
+                            [ str "Grow your classroom." ]
                           Text.div 
                             [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4) ] ]
-                            [ str "Video conference with remote students" ] ] ]
+                            [ str "Seamless video conferencing with students. No need to dial them in, they just join!" ] ] ]
               Column.column [ ]
                     [ Box.box' [ Common.Props [ Props.Style [ Props.CSSProp.Height "100%" ] ] ]
                         [ Heading.h3 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ]
-                            [ str "Optimize your workflow" ]
+                            [ str "Manage enrolments" ]
                           Text.div 
                             [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4) ] ]
-                            [ str "Mangage your students with powerful tools." ] ] ]
+                            [ str "A guided enrolment process ensures places you in control." ] ] ]
               Column.column [ ]
                     [ Box.box' [ Common.Props [ Props.Style [ Props.CSSProp.Height "100%" ] ] ]
                         [ Heading.h3 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ]
-                            [ str "Free to enrol." ]
+                            [ str "Free to make contact." ]
                           Text.div 
                             [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4) ] ]
-                            [ str "Contact tutors free of charge." ] ] ] ] ]
+                            [ str "Students contact tutors free of charge, and vice versa!" ] ] ] ] ]
 
 let testimonials =
     Container.container 

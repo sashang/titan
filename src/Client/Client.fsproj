@@ -7,8 +7,8 @@
     <Compile Include="../Shared/ValueDeclarations.fs" />
     <Compile Include="../Shared/Homeless.fs" />
     <Compile Include="ModifiedFableFetch.fs" />
-    <Compile Include="CustomColours.fs" />
     <Compile Include="Pages.fs" />
+    <Compile Include="CustomColours.fs" />
     <Compile Include="Style.fs" />
     <Compile Include="Shared.fs" />
     <Compile Include="Root/Home/FirstTime/FirstTime.fs" />

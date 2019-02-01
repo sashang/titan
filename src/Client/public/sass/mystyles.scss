@@ -30,6 +30,31 @@ $custom-colors: (
   "custom-titan-error": ($custom-titan-error, $custom-titan-error-invert),
 );
 
+#videos {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+#subscriber {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+}
+#publisher {
+    position: absolute;
+    width: 360px;
+    height: 240px;
+    bottom: 40px; //bit of a hack .. it's this high so it doesn't overlap with the box's border
+    right: 10px;
+    z-index: 100;
+    border: 3px solid white;
+    border-radius: 3px;
+}
 // Import the derived variables from Bulma
 // It will use our $custom-colors
 @import "../../../../node_modules/bulma/sass/utilities/derived-variables";

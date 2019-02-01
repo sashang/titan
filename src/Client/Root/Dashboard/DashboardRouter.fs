@@ -4,6 +4,7 @@ open Elmish
 open Elmish.React
 open Fable.Helpers.React.Props
 open Fulma
+open Fable.Import
 open Fable.Helpers.React
 
 type PageModel =
@@ -14,8 +15,8 @@ type PageModel =
 type Msg =
     | TutorMsg of Tutor.Dashboard.Msg
     | StudentMsg of Student.Dashboard.Msg
-    | GoLive
-    | StopLive
+    | ClickGoLiveTutor
+    | ClickStopLiveTutor
 
 
 type Model =
@@ -35,18 +36,26 @@ let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
         let new_model, cmd = Tutor.Dashboard.update model msg
         {Child = TutorModel new_model}, Cmd.map TutorMsg cmd
 
+    | _, TutorMsg _  ->
+        Browser.console.error("Received bad message.")
+        model, Cmd.none
+
+    | model, ClickGoLiveTutor ->
+        Browser.console.info("DashboardRouter.ClickGoLiveTutor.")
+        model, Cmd.ofMsg (TutorMsg Tutor.Dashboard.GoLive)
+
+    | model, ClickStopLiveTutor ->
+        Browser.console.info("DashboardRouter.ClickStopLiveTutor.")
+        model, Cmd.ofMsg (TutorMsg Tutor.Dashboard.StopLive)
+
     | {Child = StudentModel model}, StudentMsg msg  ->
         let new_model, cmd = Student.Dashboard.update model msg
         {Child = StudentModel new_model}, Cmd.map StudentMsg cmd
+
+    | _, StudentMsg _  ->
+        Browser.console.error("Received bad message.")
+        model, Cmd.none
         
-    | {Child = TutorModel model }, GoLive ->
-        let new_model, cmd = Tutor.Dashboard.update model Tutor.Dashboard.GoLive
-        {Child = TutorModel new_model}, Cmd.map TutorMsg cmd
-
-    | {Child = TutorModel model }, StopLive ->
-        let new_model, cmd = Tutor.Dashboard.update model Tutor.Dashboard.StopLive
-        {Child = TutorModel new_model}, Cmd.map TutorMsg cmd
-
 let view (model : Model) (dispatch : Msg -> unit) =
     match model with
     | {Child = TutorModel model} ->
@@ -54,3 +63,7 @@ let view (model : Model) (dispatch : Msg -> unit) =
         
     | {Child = StudentModel model} ->
         Student.Dashboard.view model (dispatch << StudentMsg)
+
+    | {Child = TitanModel } ->
+        Browser.console.warn ("No Titan role implemented yet.")
+        failwith "No Titan role implemented yet"

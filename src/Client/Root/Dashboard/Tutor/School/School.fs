@@ -32,7 +32,6 @@ type Msg =
     | SetLastName of string
     | SetInfo of string
     | ClickSave
-    | ClickGoLive
     | SaveSuccess of unit
     | Success of SchoolResponse
     | LoadUserSuccess of UserResponse

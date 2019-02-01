@@ -12,55 +12,101 @@ open Fable.PowerPack
 open Fable.PowerPack.Fetch
 open Fable.Core.JsInterop
 open Fulma
+open ModifiedFableFetch
 open System
 open Client.Shared
 open Thoth.Json
 
 type Model =
     { Students : Student list
-      StartTime : DateTimeOffset option
       OTI : OpenTokInfo option
+      StartTime : DateTimeOffset option
+      Error : APIError option
       Session : obj option
-      Publisher : obj option
       EndTime : DateTimeOffset  option }
 
 type Msg =
+    | GoLive
     | StopLive
-    | GoLive of OpenTokInfo
+    | GetSessionSuccess of OpenTokInfo
+    | GetSessionFailure of exn
+
+
+exception GoLiveEx of APIError
+
+let private get_live_session_id () = promise {
+    let request = make_get 
+    let decoder = Decode.Auto.generateDecoder<GoLiveResponse>()
+    let! response = Fetch.tryFetchAs "/api/go-live" decoder request
+    match response with
+    | Ok result ->
+        match result.Error with
+        | None -> 
+            match result.Info with
+            | Some oti -> return oti
+            | None -> return failwith ("Expected opentok info but got nothing")
+        | Some api_error ->
+            return raise (GoLiveEx api_error)
+    | Error msg ->
+        return failwith ("Failed to go live: " + msg)
+}
 
 let init () =
-    { Students = []; StartTime = None; EndTime = None; OTI = None;
-      Publisher = None; Session = None }, Cmd.none
-
+    { Session = None; Students = []; StartTime = None; EndTime = None; OTI = None; Error = None},
+     Cmd.ofPromise get_live_session_id () GetSessionSuccess GetSessionFailure
 
 let update (model : Model) (msg : Msg) =
     match msg with
 
-    | GoLive open_tok_info ->
-        Browser.console.info ("Going live")
-        match model.Session with
-        | None ->
-            let session = OpenTokJSInterop.init_session open_tok_info.Key open_tok_info.SessionId
-            if session = null then failwith "failed to get js session"
-            let publisher = OpenTokJSInterop.init_pub "publisher"
-            OpenTokJSInterop.connect_session_with_pub session publisher open_tok_info.Token
-            {model with OTI = Some open_tok_info; Session = Some session; Publisher = Some publisher }, Cmd.none
+    | GetSessionSuccess oti ->
+        Browser.console.info ("Got session id")
+        let session = OpenTokJSInterop.init_session oti.Key oti.SessionId
+        if session = null then failwith "failed to get js session"
+        {model with OTI = Some oti; Session = Some session}, Cmd.none
 
-        | Some session ->
-            OpenTokJSInterop.connect session model.OTI.Value.Token
+    | GetSessionFailure e ->
+        match e with
+        | :? GoLiveEx as ex ->
+            Browser.console.warn ("Failed to go live: " + List.head ex.Data0.Messages)
+            model , Cmd.none
+        | e ->
+            Browser.console.warn ("Failed to go live: " + e.Message)
             model, Cmd.none
 
+    | GoLive ->
+        let publisher = OpenTokJSInterop.init_pub "publisher"
+        OpenTokJSInterop.connect_session_with_pub model.Session.Value publisher model.OTI.Value.Token
+        model, Cmd.none
+
     | StopLive ->
-        match model.Session with
-        | Some session ->
-            Browser.console.info ("Stopping live stream")
-            OpenTokJSInterop.disconnect session
-            {model with OTI = None; Session = None; Publisher = None}, Cmd.none
-        | _ ->
-            {model with OTI = None}, Cmd.none
+        OpenTokJSInterop.disconnect model.Session.Value
+        model, Cmd.none
 
+
+let private classroom_level =
+    Level.level [ ] 
+        [ Level.left [ ]
+            [ Level.title [ Common.Modifiers [ Modifier.TextTransform TextTransform.UpperCase
+                                               Modifier.TextSize (Screen.All, TextSize.Is5) ]
+                            Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "classroom" ] ] ]
+
+let private students_in_room (model : Model) =
+    match model.Students with
+    | [] -> str "Nobody here"
+    | students -> nothing
+
+let private video = 
+    div [ HTMLAttr.Id "videos"] [
+        div [ HTMLAttr.Id "publisher"
+              Style [ ] ] [
+
+        ]
+        div [ HTMLAttr.Id "subscriber" ] [
+
+        ]
+    ]
 let view (model : Model) (dispatch : Msg -> unit) =
-    [ Box.box' [ Common.Props [ HTMLAttr.Id "publisher"
+    [ Box.box' [ Common.Props [ HTMLAttr.Id ""
                                 Style [ CSSProp.Height "100%" ]  ] ]
-        [ ] ]
-
+        [ classroom_level 
+          video ] ]

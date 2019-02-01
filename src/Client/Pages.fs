@@ -6,7 +6,6 @@ open Elmish.Browser.UrlParser
 type PageType =
     | Home
     | Login
-    | Enrol
     | DashboardTutor
     | DashboardStudent
     | DashboardTitan
@@ -19,7 +18,6 @@ let to_path =
     | PageType.DashboardTutor -> "#dashboard-tutor"
     | PageType.DashboardStudent -> "#dashboard-student"
     | PageType.DashboardTitan -> "#dashboard-titan"
-    | PageType.Enrol -> "#enroll"
 
 
 /// The URL is turned into a Result.
@@ -27,7 +25,6 @@ let page_parser : Parser<PageType -> _,_> =
     oneOf
         [ map PageType.Home (s "home")
           map PageType.Login (s "login")
-          map PageType.Enrol (s "enroll")
           map (PageType.DashboardTutor) (s "dashboard-tutor")
           map (PageType.DashboardStudent) (s "dashboard-student")
           map (PageType.DashboardTitan) (s "dashboard-titan") ]

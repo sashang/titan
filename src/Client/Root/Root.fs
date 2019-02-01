@@ -92,6 +92,11 @@ let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMs
     | Some Pages.PageType.Login ->
         { model with Child = LoginModel}, Cmd.none 
 
+    | Some Pages.DashboardTitan ->
+        let message = "DashboardTitan page not implemented"
+        Browser.console.error message
+        failwith message
+
 (*    | Some Pages.PageType.Enrol ->
         let new_model, cmd = Enrol.init ()
         { model with Child = EnrolModel new_model}, Cmd.map EnrolMsg cmd*)
@@ -169,6 +174,11 @@ let view model dispatch =
                 Container.container [ Container.Props [ Style [ ] ] ] [
                     Navbar.Brand.div [ ] [
                         Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
+                            Image.image [ Image.IsSquare; Image.Is24x24 ] [
+                                img [ Src "Images/tewtin-cube-logo-circle.svg" ]
+                            ]
+                        ]
+                        Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
                             Heading.h3 
                                 [ Heading.IsSubtitle
                                   Heading.Modifiers [ Modifier.TextColor IsWhite ]
@@ -224,12 +234,10 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
           BCast = None}, Cmd.map SignOutMsg cmd
 
     | ClickStopLive, {Child = DashboardRouterModel model} ->
-        let new_model, new_cmd = DashboardRouter.update model DashboardRouter.StopLive
-        {state with BCast = None}, Cmd.map DashboardRouterMsg new_cmd
+        {state with BCast = None}, Cmd.ofMsg (DashboardRouterMsg DashboardRouter.ClickStopLiveTutor)
 
     | ClickGoLiveTutor, {Child = DashboardRouterModel model} ->
-        let new_model, new_cmd = DashboardRouter.update model DashboardRouter.GoLive
-        {state with BCast = Some Tutor}, Cmd.map DashboardRouterMsg new_cmd
+        {state with BCast = Some Tutor}, Cmd.ofMsg (DashboardRouterMsg DashboardRouter.ClickGoLiveTutor)
 
     | ClickTitle, state ->
         //move to the home page
@@ -260,6 +268,15 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
                 { state with 
                     Session = Some session; Claims = Some claims;
                     Child = DashboardRouterModel(student_model)}, Cmd.map DashboardRouterMsg cmd
+            | model when claims.IsTitan  ->
+                let message = "Titan user update not implemented"
+                Browser.console.error message
+                failwith message
+            | _ ->
+                let message = "Unknown state or claim."
+                Browser.console.error message
+                failwith message
+
         | Error e -> 
             Browser.console.warn e
             {state with Session = None}, Cmd.none 

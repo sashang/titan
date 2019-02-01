@@ -40,6 +40,7 @@ module.exports = {
         // Create a publisher
         var publisher = OT.initPublisher(div_id, {
           insertMode: 'append',
+          resolution: '1280x720',
           width: '100%',
           height: '100%'
         },function(error) {

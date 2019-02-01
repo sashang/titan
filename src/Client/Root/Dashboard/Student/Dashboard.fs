@@ -88,11 +88,19 @@ let update model msg =
         Browser.console.info ("Subscribe message")
         let new_live_model, new_cmd = Live.update live_model (Live.GoLive oti)
         {model with Live = new_live_model}, Cmd.map LiveMsg new_cmd
+    
+    | {Live = live_model}, LiveMsg msg ->
+        Browser.console.info ("Live message")
+        let new_model, new_cmd = Live.update live_model msg
+        {model with Live = new_model}, Cmd.map LiveMsg new_cmd
 
     | {EnroledSchools = enroled_model}, StudentSchoolsMsg  msg ->
         Browser.console.info ("STudentSchools message")
         let new_model, new_cmd = StudentSchools.update enroled_model msg
         {model with EnroledSchools = new_model}, Cmd.map StudentSchoolsMsg new_cmd
+
+    | model, EnrolSuccess () ->
+        model, Cmd.none
     
     | model, Failure e ->
         match e with

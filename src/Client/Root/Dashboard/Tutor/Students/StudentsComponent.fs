@@ -106,8 +106,6 @@ let private student_content (student : Student) =
                 Column.column [] [
                     Text.div [ ] [ str student.Email ]
                 ]
-            ]
-            Columns.columns [] [
                 Column.column [] [
                     Label.label [ ] [ str "Phone" ]
                 ]
@@ -118,7 +116,7 @@ let private student_content (student : Student) =
         ]
 
 let private single_student model dispatch (student : Domain.Student) = 
-    Column.column [ Column.Width (Screen.All, Column.Is3) ]
+    Column.column [ ]
       [ Card.card [ ] 
           [ Card.header [ Modifiers [ Modifier.BackgroundColor IsTitanSecondary ] ]
               [ Card.Header.title 
@@ -133,11 +131,8 @@ let private render_all_students (model : Model) (dispatch : Msg->unit) =
     | [] ->
         [nothing]
     | _ ->
-        let l4 = Homeless.chunk 4 model.Students
-        [for l in l4 do
-                yield Columns.columns [ ]
-                    [ for x in l do
-                        yield single_student model dispatch x] ]
+       [ for x in model.Students do
+           yield single_student model dispatch x] 
 
 let private students_level =
     Level.level [ ] 
