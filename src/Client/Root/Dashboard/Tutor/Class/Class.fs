@@ -32,7 +32,7 @@ type Msg =
     | GetSessionFailure of exn
 
 
-exception GoLiveEx of APIError
+exception GetSeesionEx of APIError
 
 let private get_live_session_id () = promise {
     let request = make_get 
@@ -46,7 +46,7 @@ let private get_live_session_id () = promise {
             | Some oti -> return oti
             | None -> return failwith ("Expected opentok info but got nothing")
         | Some api_error ->
-            return raise (GoLiveEx api_error)
+            return raise (GetSeesionEx api_error)
     | Error msg ->
         return failwith ("Failed to go live: " + msg)
 }
@@ -66,14 +66,15 @@ let update (model : Model) (msg : Msg) =
 
     | GetSessionFailure e ->
         match e with
-        | :? GoLiveEx as ex ->
-            Browser.console.warn ("Failed to go live: " + List.head ex.Data0.Messages)
+        | :? GetSeesionEx as ex ->
+            Browser.console.warn ("Failed to get session: " + List.head ex.Data0.Messages)
             model , Cmd.none
         | e ->
-            Browser.console.warn ("Failed to go live: " + e.Message)
+            Browser.console.warn ("Failed to get session: " + e.Message)
             model, Cmd.none
 
     | GoLive ->
+        Browser.console.info (sprintf "Clicked GoLive...initialzing publisher with session id = %s" model.OTI.Value.SessionId)
         let publisher = OpenTokJSInterop.init_pub "publisher"
         OpenTokJSInterop.connect_session_with_pub model.Session.Value publisher model.OTI.Value.Token
         model, Cmd.none

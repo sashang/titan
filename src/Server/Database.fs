@@ -140,7 +140,7 @@ type Database(c : string) =
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
                 let sql = """select "School"."Name","User"."FirstName","User"."LastName","School"."Info",
-                             "School"."Subjects", "School"."Location", "School"."Email" from "School" join "User" on "User"."Id" = "School"."UserId";"""
+                             "School"."Subjects", "School"."Location", "User"."Email" from "School" join "User" on "User"."Id" = "School"."UserId";"""
                 let result = conn
                              |> dapper_query<Models.SchoolTutor> sql
                              |> Seq.toList

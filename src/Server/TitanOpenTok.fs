@@ -12,24 +12,26 @@ open System.Threading.Tasks
 
 type ITitanOpenTok =
 
-    abstract member get_token : unit -> Task<Result<OpenTokInfo, string>>
+    abstract member get_token : string -> Task<Result<OpenTokInfo, string>>
     
 
 type TitanOpenTok(key:int, secret:string) =
-    let mutable (session : OpenTokCore.Session option) = None
+    let tutor_email_to_session = new Dictionary<string, OpenTokCore.Session>()
     member this.open_tok = OpenTok(key, secret)
 
     interface ITitanOpenTok with
 
-        member this.get_token () :  Task<Result<OpenTokInfo, string>> = task {
-            match session with
-            | None ->
+        member this.get_token tutor_email :  Task<Result<OpenTokInfo, string>> = task {
+            match tutor_email_to_session.ContainsKey(tutor_email) with
+            | false ->
                 let! new_session = this.open_tok.CreateSession("", OpenTokCore.MediaMode.RELAYED, OpenTokCore.ArchiveMode.MANUAL)
+                tutor_email_to_session.Add(tutor_email, new_session)
                 let in_one_hour = (DateTime.UtcNow.Add(TimeSpan.FromHours(5.0)).Subtract(new DateTime(1970, 1, 1))).TotalSeconds
                 let token = this.open_tok.GenerateToken(new_session.Id, OpenTokCore.Role.MODERATOR, in_one_hour, "name=test")
-                session <- Some new_session
-                return Ok {SessionId = new_session.Id; Token = token; Key = new_session.ApiKey.ToString() }
-            | Some session ->
+                let oti = {SessionId = new_session.Id; Token = token; Key = new_session.ApiKey.ToString() }
+                return Ok oti
+            | true ->
+                let session = tutor_email_to_session.[tutor_email]
                 let in_one_hour = (DateTime.UtcNow.Add(TimeSpan.FromHours(5.0)).Subtract(new DateTime(1970, 1, 1))).TotalSeconds
                 let token = this.open_tok.GenerateToken(session.Id, OpenTokCore.Role.MODERATOR, in_one_hour, "name=test")
                 return Ok {SessionId = session.Id; Token = token; Key = session.ApiKey.ToString() }

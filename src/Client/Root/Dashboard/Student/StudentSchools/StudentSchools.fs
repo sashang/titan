@@ -163,11 +163,18 @@ let render_school (school : School) (state : LiveState) (dispatch : Msg -> unit)
         ]
     ]
 
+let private your_schools model dispatch =
+    Level.level [ ] 
+        [ Level.left [ ]
+            [ Level.title [ Common.Modifiers [ Modifier.TextTransform TextTransform.UpperCase
+                                               Modifier.TextSize (Screen.All, TextSize.Is5) ]
+                            Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "your schools" ] ] ]
+
 //render the schools that this student is enroled in
 let view (model : Model) (dispatch : Msg -> unit) =
     Box.box' [ ] [
-        yield! List.append 
-                [ Heading.h2 [ ] [ str "Your Schools" ] ]
+        yield! List.append
+                [your_schools model dispatch ]
                 [ for (school,live_state) in model.Schools do
                     yield render_school school live_state dispatch ]
     ]

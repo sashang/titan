@@ -146,10 +146,10 @@ let single_row (school : School) (dispatch : Msg -> unit) =
 let view (model : Model) (dispatch : Msg -> unit) =
      Container.container [ Container.IsFluid ] [
         Columns.columns [ ] [
-            Column.column [ Column.Width (Screen.All, Column.Is4) ] [
+            Column.column [Column.Width (Screen.All, Column.Is4) ] [
                 StudentSchools.view model.EnroledSchools (StudentSchoolsMsg >> dispatch)
             ]
-            Column.column [ Column.Width (Screen.All, Column.Is4) ] [
+            Column.column [ ] [
                 yield! Live.view model.Live (LiveMsg >> dispatch)
             ]
         ]

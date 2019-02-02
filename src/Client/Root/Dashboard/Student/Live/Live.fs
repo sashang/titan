@@ -26,10 +26,10 @@ let init () =
 let update (model : Model) (msg : Msg) =
     match model, msg with
     | model, GoLive oti ->
-        Browser.console.info "receive GoLive"
+        Browser.console.info (sprintf "receive GoLive for session id = %s" oti.SessionId)
         match model.Session with
         //no existing session so init one an opentok session with the tutor
-        | None ->
+        | None -> 
             let js_session = OpenTokJSInterop.init_session oti.Key oti.SessionId
             if js_session = null then failwith "failed to get js session"
             OpenTokJSInterop.connect_session_with_sub js_session oti.Token

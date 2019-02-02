@@ -34,9 +34,10 @@ let join_live (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
         let logger = ctx.GetLogger<Debug.DebugLogger>()
         let! request = ctx.BindJsonAsync<JoinLiveRequest>()
-        logger.LogInformation("subscribing to session")
+        let student_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        logger.LogInformation(sprintf "join_live: student with email %s joining tutor with email %s " student_email request.TutorEmail)
         let titan_open_tok = ctx.GetService<ITitanOpenTok>()
-        let! result = titan_open_tok.get_token()
+        let! result = titan_open_tok.get_token request.TutorEmail
         match result with
         | Ok tok_info ->
             return! ctx.WriteJsonAsync {Info = Some tok_info; Error = None}
@@ -47,12 +48,14 @@ let join_live (next : HttpFunc) (ctx : HttpContext) = task {
         return! ctx.WriteJsonAsync APIError.unauthorized
 }
 
+/// tutor request to go live
 let go_live (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
         let logger = ctx.GetLogger<Debug.DebugLogger>()
-        logger.LogInformation("going live")
+        let email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        logger.LogInformation(sprintf "go_live: tutor with email %s" email)
         let titan_open_tok = ctx.GetService<ITitanOpenTok>()
-        let! result = titan_open_tok.get_token()
+        let! result = titan_open_tok.get_token email
         match result with
         | Ok tok_info ->
             return! ctx.WriteJsonAsync {Info = Some tok_info; Error = None}
