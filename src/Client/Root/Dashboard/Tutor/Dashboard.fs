@@ -48,7 +48,7 @@ let init () : Model*Cmd<Msg> =
 
 
 let view_in_classroom (model : Model) (dispatch : Msg -> unit) =
-    [ Columns.columns [ ]
+    [ Columns.columns [ Columns.IsDesktop ]
         [ Column.column [ Column.Width (Screen.All, Column.Is4) ]
             [ yield! School.view model.School (SchoolMsg >> dispatch)
               yield! PendingStudents.view model.Pending (PendingMsg >> dispatch) 

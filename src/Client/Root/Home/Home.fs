@@ -167,8 +167,28 @@ let archived_video =
                       Text.div 
                         [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4)
                                              Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
-                        [ str "Make videos of the lesson available for private viewing." ] ] ]
+                        [ str "Record the lesson and make available for private viewing." ]
+                      Text.div 
+                        [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5)
+                                             Modifier.TextTransform TextTransform.Italic
+                                             Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
+                        [ str "This feature is still in development." ] ] ]
                   ]
+
+let no_advertising =
+    Container.container 
+        [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
+        [ Columns.columns [ ]
+            [ Column.column [ ]
+                    [ Box.box' [ Common.Props [ Props.Style [ Props.CSSProp.Height "100%" ] ] ]
+                        [ Heading.h3 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold
+                                                           Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
+                            [ str "No advertising." ]
+                          Text.div 
+                            [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4) ] ]
+                            [ str "Education should be free from advertising. Free versions of Skype and Google
+                                   Hangouts are reusing student's personal data and conversations for advertising purposes. 
+                                   We don't do this." ] ] ] ] ]
             
 let target_audience =
     Container.container 
@@ -187,7 +207,7 @@ let target_audience =
                             [ str "Manage enrolments" ]
                           Text.div 
                             [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4) ] ]
-                            [ str "A guided enrolment process ensures places you in control." ] ] ]
+                            [ str "A guided enrolment process places you in control." ] ] ]
               Column.column [ ]
                     [ Box.box' [ Common.Props [ Props.Style [ Props.CSSProp.Height "100%" ] ] ]
                         [ Heading.h3 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ]
@@ -261,6 +281,7 @@ let footer =
     Footer.footer [ Common.Modifiers [ Modifier.BackgroundColor IsTitanPrimary ] ]
         [ Container.container [ ]
             [ ] ]
+
 let view (model : Model) (dispatch : Msg -> unit) =
     [ Section.section 
         [ Section.Modifiers [ ] ]
@@ -276,6 +297,9 @@ let view (model : Model) (dispatch : Msg -> unit) =
       Section.section 
         [ Section.Modifiers [ Modifier.BackgroundColor IsWhite ] ]
         [ archived_video ]
+      Section.section 
+        [ Section.Modifiers [ Modifier.BackgroundColor IsTitanPrimary ] ]
+        [ no_advertising ]
       Section.section 
         [ Section.Modifiers [ Modifier.BackgroundColor IsWhite ] ]
         [ pricing ]

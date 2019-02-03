@@ -40,7 +40,7 @@ type OpenTokInfo =
     static member init = {SessionId = ""; Token = ""; Key = ""}
 
 [<CLIMutable>]
-type GoLiveResponse =
+type OTIResponse =
     { Info : OpenTokInfo option
       Error : APIError option}
     static member init = { Info = None; Error = None}
@@ -69,6 +69,12 @@ type SignUp =
 type SignOutCode =
     | Success = 0
     | Failure = 1
+
+///some api handler that uses an email address as a parameter
+/// got tired of writign types for each request that used an email.
+[<CLIMutable>]
+type EmailRequest =
+    { Email : string }
 
 [<CLIMutable>]
 type SignOutResult =
@@ -224,7 +230,4 @@ type GetAllSchoolsResult =
 type DismissStudentRequest =
     { Email : string }
 
-[<CLIMutable>]
-type JoinLiveRequest =
-    { TutorEmail : string }
 

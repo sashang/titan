@@ -182,7 +182,7 @@ let titan_api =  router {
     post "/approve-pending" API.approve_enrolment_request
     post "/dismiss-student" API.dismiss_student
     post "/save-tutor" API.save_tutor
-    post "/join-live" API.join_live
+    post "/student-get-session" API.get_session_id_for_student
 }
 
 ///Define the pipeline that http request headers will see

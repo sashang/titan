@@ -205,7 +205,7 @@ let view model dispatch =
                 ]
             ]
         ]
-        Hero.body [ ] [ 
+        Hero.body [ Common.Props [ Style [ ] ] ] [ 
             match model.Child with
             | LoginModel -> 
                 yield Login.view

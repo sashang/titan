@@ -30,14 +30,16 @@ let get_enroled_schools (next : HttpFunc) (ctx : HttpContext) = task {
         return! ctx.WriteJsonAsync APIError.unauthorized
 }
 
-let join_live (next : HttpFunc) (ctx : HttpContext) = task {
+///student request to get session id. Note that the json must container the
+///email of the tutor since that is what links the session id.
+let get_session_id_for_student (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
         let logger = ctx.GetLogger<Debug.DebugLogger>()
-        let! request = ctx.BindJsonAsync<JoinLiveRequest>()
+        let! request = ctx.BindJsonAsync<EmailRequest>()
         let student_email = ctx.User.FindFirst(ClaimTypes.Email).Value
-        logger.LogInformation(sprintf "join_live: student with email %s joining tutor with email %s " student_email request.TutorEmail)
+        logger.LogInformation(sprintf "get_session_id_tutor: student with email %s joining tutor with email %s " student_email request.Email)
         let titan_open_tok = ctx.GetService<ITitanOpenTok>()
-        let! result = titan_open_tok.get_token request.TutorEmail
+        let! result = titan_open_tok.get_token request.Email
         match result with
         | Ok tok_info ->
             return! ctx.WriteJsonAsync {Info = Some tok_info; Error = None}
@@ -47,7 +49,6 @@ let join_live (next : HttpFunc) (ctx : HttpContext) = task {
     else
         return! ctx.WriteJsonAsync APIError.unauthorized
 }
-
 /// tutor request to go live
 let go_live (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then

@@ -28,6 +28,8 @@ type Msg =
     | StudentSchoolsMsg of StudentSchools.Msg
     | LiveMsg of Live.Msg
     | Failure of exn
+    | JoinLive of string
+    | StopLive of string
 
 exception GetAllSchoolsEx of APIError
 exception EnrolEx of APIError
@@ -79,14 +81,15 @@ let update model msg =
         {model with Result = result}, Cmd.none
 
     //intercept this specific StudentSchoolsMsg, reroute it ot hte live component    
-    | {Live = live_model}, StudentSchoolsMsg (StudentSchools.Unsubscribe) ->
-        Browser.console.info ("Unsubscribe message")
-        let new_live_model, new_cmd = Live.update live_model (Live.StopLive)
+    | {Live = live_model}, StudentSchoolsMsg (StudentSchools.LiveViewGoLive email) ->
+        Browser.console.info ("LiveViewGoLive ")
+        let new_live_model, new_cmd = Live.update live_model (Live.GoLive email)
         {model with Live = new_live_model}, Cmd.map LiveMsg new_cmd
 
-    | {Live = live_model}, StudentSchoolsMsg (StudentSchools.Subscribe oti) ->
-        Browser.console.info ("Subscribe message")
-        let new_live_model, new_cmd = Live.update live_model (Live.GoLive oti)
+    //intercept this specific StudentSchoolsMsg, reroute it ot hte live component    
+    | {Live = live_model}, StudentSchoolsMsg (StudentSchools.LiveViewStopLive email) ->
+        Browser.console.info ("LiveViewStopLive ")
+        let new_live_model, new_cmd = Live.update live_model (Live.StopLive email)
         {model with Live = new_live_model}, Cmd.map LiveMsg new_cmd
     
     | {Live = live_model}, LiveMsg msg ->

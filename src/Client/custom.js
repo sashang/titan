@@ -33,14 +33,15 @@ module.exports = {
     },
     disconnect: function(session) {
         console.log("disconnecting session");
-        if (session)
+        if (session) {
             session.disconnect();
+        }
     },
-    init_pub: function(div_id) {
+    init_pub: function(div_id, res) {
         // Create a publisher
         var publisher = OT.initPublisher(div_id, {
           insertMode: 'append',
-          resolution: '1280x720',
+          resolution: res,
           width: '100%',
           height: '100%'
         },function(error) {
@@ -64,6 +65,14 @@ module.exports = {
             session.publish(publisher, function(error) {
                 handle_error(error)
             })}});
+    },
+    add_subscriber: function(session) {
+        session.once('streamCreated', function(event) {
+            subscriber = session.subscribe(event.stream, 'subscriber', {
+            insertMode: 'append',
+            width: '100%',
+            height: '100%'
+            }, handle_error)});
     },
     connect_session_with_sub: function(session, token) {
         // Connect to the session
