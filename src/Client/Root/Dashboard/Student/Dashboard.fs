@@ -8,11 +8,11 @@ open Fable.PowerPack
 open Fable.Helpers.React
 open Fulma
 open ModifiedFableFetch
-open StudentSchools
+open Enroled
 open Thoth.Json
 
 type PageModel =
-    | EnroledModel of StudentSchools.Model //page of schools this student is enroled in
+    | EnroledModel of Enroled.Model //page of schools this student is enroled in
     | ClassModel of Student.Class.Model //live view of the classroom
     | HomeModel 
 
@@ -27,7 +27,7 @@ type Msg =
     | ClickAccount
     | GetEnroledSchoolsSuccess of School list
     | ClassMsg of Student.Class.Msg
-    | EnroledMsg of StudentSchools.Msg
+    | EnroledMsg of Enroled.Msg
     | Failure of exn
 
 exception GetEnroledSchoolsEx of APIError
@@ -60,7 +60,7 @@ let update model msg =
 
     | {Child = EnroledModel child}, EnroledMsg  msg ->
         Browser.console.info ("Enroled message")
-        let new_model, new_cmd = StudentSchools.update child msg
+        let new_model, new_cmd = Enroled.update child msg
         {model with Child = EnroledModel new_model }, Cmd.map EnroledMsg new_cmd
 
     | model, GetEnroledSchoolsSuccess schools ->
@@ -70,7 +70,7 @@ let update model msg =
         {model with Child = ClassModel new_state}, Cmd.map ClassMsg new_cmd
     
     | model, ClickEnrol ->
-        let new_state, new_cmd = StudentSchools.init ()
+        let new_state, new_cmd = Enroled.init ()
         {model with Child = EnroledModel new_state}, Cmd.map EnroledMsg new_cmd
 
     | model, ClickAccount ->
@@ -119,7 +119,7 @@ let view (model : Model) (dispatch : Msg -> unit) =
             Column.column [ ] [
                 (match model.Child with
                 | EnroledModel child ->
-                    StudentSchools.view child (EnroledMsg >> dispatch)
+                    Enroled.view child (EnroledMsg >> dispatch)
                 | ClassModel child ->
                     Student.Class.view child (ClassMsg >> dispatch)
                 | HomeModel -> nothing)

@@ -1,4 +1,4 @@
-module StudentSchools
+module Enroled
 
 open CustomColours
 open Domain
