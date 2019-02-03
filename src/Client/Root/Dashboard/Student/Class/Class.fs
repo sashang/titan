@@ -21,7 +21,6 @@ type LiveState =
 type Msg =
     | GoLive
     | GetSessionSuccess of OpenTokInfo
-    | GetEnroledSchoolsSuccess of School list //unfortunately we need this herer as well to get the tutors emails
     | Failure of exn
     | StopLive
 
@@ -33,7 +32,6 @@ type Model =
       Error : APIError option}
 
 exception GetSessionEx of APIError
-exception GetEnroledSchoolsEx of APIError
 
 let private get_live_session_id (tutor_email : EmailRequest) = promise {
     let request = make_post 1 tutor_email
