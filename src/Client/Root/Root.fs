@@ -37,7 +37,6 @@ type RootMsg =
     | DashboardRouterMsg of DashboardRouter.Msg
     | UrlUpdatedMsg of Pages.PageType
     | HomeMsg of Home.Msg
-    | ClickGoLiveTutor
     | Success of unit
     | Failure of exn
 
@@ -131,12 +130,6 @@ let private  nav_item_button (dispatch : RootMsg -> unit) (msg : RootMsg) (text 
               Button.OnClick (fun e -> dispatch msg)  ]
             [ str text ] ]
 
-let private  nav_item_stop_button (dispatch : RootMsg -> unit) =
-    Navbar.Item.div [ ]
-        [ Button.button 
-            [ Button.Color IsDanger
-              Button.OnClick (fun e -> dispatch ClickStopLive)  ]
-            [ str "Stop" ] ]
 
 let private nav_item_button_url page (text : string) =
     Navbar.Item.div [ ]
@@ -155,12 +148,7 @@ let private nav_item_button_href href (text : string) =
 
 let dashboard_button (model : State) dispatch (claims : TitanClaim) =
     if claims.IsTutor then
-         [ nav_item_button_url Pages.DashboardTutor "Dashboard"
-           (match model.BCast with
-           | Some bcast ->
-                nav_item_stop_button dispatch 
-           | None ->
-                nav_item_button dispatch ClickGoLiveTutor "Go Live!")]
+         [ nav_item_button_url Pages.DashboardTutor "Dashboard" ]
     else
         [ nothing ]
     
@@ -232,12 +220,6 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         //assume that signing out worked so we delete the sesison
         { Child = HomeModel (Home.init ()); Session = None; Claims = None;
           BCast = None}, Cmd.map SignOutMsg cmd
-
-    | ClickStopLive, {Child = DashboardRouterModel model} ->
-        {state with BCast = None}, Cmd.ofMsg (DashboardRouterMsg DashboardRouter.ClickStopLiveTutor)
-
-    | ClickGoLiveTutor, {Child = DashboardRouterModel model} ->
-        {state with BCast = Some Tutor}, Cmd.ofMsg (DashboardRouterMsg DashboardRouter.ClickGoLiveTutor)
 
     | ClickTitle, state ->
         //move to the home page

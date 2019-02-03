@@ -15,8 +15,6 @@ type PageModel =
 type Msg =
     | TutorMsg of Tutor.Dashboard.Msg
     | StudentMsg of Student.Dashboard.Msg
-    | ClickGoLiveTutor
-    | ClickStopLiveTutor
 
 
 type Model =
@@ -39,14 +37,6 @@ let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
     | _, TutorMsg _  ->
         Browser.console.error("Received bad message.")
         model, Cmd.none
-
-    | model, ClickGoLiveTutor ->
-        Browser.console.info("DashboardRouter.ClickGoLiveTutor.")
-        model, Cmd.ofMsg (TutorMsg Tutor.Dashboard.GoLive)
-
-    | model, ClickStopLiveTutor ->
-        Browser.console.info("DashboardRouter.ClickStopLiveTutor.")
-        model, Cmd.ofMsg (TutorMsg Tutor.Dashboard.StopLive)
 
     | {Child = StudentModel model}, StudentMsg msg  ->
         let new_model, cmd = Student.Dashboard.update model msg

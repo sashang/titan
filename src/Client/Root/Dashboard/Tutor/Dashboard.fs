@@ -12,86 +12,104 @@ open Thoth.Json
 
 
 
-type LiveState =
-    | On
-    | Off
+
+type PageModel =
+    | SchoolModel of School.Model
+    | ClassModel of Class.Model
+    | EnrolModel of PendingStudents.Model
+    | StudentsModel of StudentsComponent.Model
 
 type Model =
-    { School : School.Model
-      Class : Class.Model
-      Pending : PendingStudents.Model
-      Students : StudentsComponent.Model
-      CurrentSession : OpenTokInfo option
-      LiveState : LiveState }
+    { Child : PageModel
+      CurrentSession : OpenTokInfo option }
 
 type Msg =
-    | GoLive
-    | StopLive
     | SchoolMsg of School.Msg
-    | PendingMsg of PendingStudents.Msg
+    | EnrolMsg of PendingStudents.Msg
     | ClassMsg of Class.Msg
     | StudentMsg of StudentsComponent.Msg
+    | ClickStudents
+    | ClickClassroom
+    | ClickAccount
+    | ClickEnrol
 
 
 let init () : Model*Cmd<Msg> =
-    let school_model, school_cmd = School.init ()
     let class_model, class_cmd = Class.init ()
-    let student_model, student_cmd = StudentsComponent.init ()
-    let pending_model, pending_cmd = PendingStudents.init ()
-    { School = school_model; Class = class_model
-      Pending = pending_model; Students = student_model;
-      LiveState = Off; CurrentSession = None },
-    Cmd.batch [ Cmd.map SchoolMsg school_cmd
-                Cmd.map ClassMsg class_cmd
-                Cmd.map PendingMsg pending_cmd
-                Cmd.map StudentMsg student_cmd ]
+    { Child = ClassModel class_model; CurrentSession = None },
+    Cmd.map ClassMsg class_cmd
 
+// Helper to generate a menu item
+let menuItem label isActive dispatch msg =
+    Menu.Item.li [ Menu.Item.IsActive isActive
+                   Menu.Item.OnClick (fun e -> dispatch msg)
+                   Menu.Item.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
+       [ str label ]
 
-let view_in_classroom (model : Model) (dispatch : Msg -> unit) =
-    [ Columns.columns [ Columns.IsDesktop ]
-        [ Column.column [ Column.Width (Screen.All, Column.Is4) ]
-            [ yield! School.view model.School (SchoolMsg >> dispatch)
-              yield! PendingStudents.view model.Pending (PendingMsg >> dispatch) 
-              yield! StudentsComponent.view model.Students (StudentMsg >> dispatch) ]
-          Column.column [ ]
-            [ yield! Class.view model.Class (ClassMsg >> dispatch) ] ] ]
+// Helper to generate a sub menu
+let subMenu label isActive children =
+    li [ ]
+       [ Menu.Item.a [ Menu.Item.IsActive isActive ]
+            [ str label ]
+         ul [ ]
+            children ]
+
 
 // Menu rendering
 let view (model : Model) (dispatch : Msg -> unit) =
      Container.container
         //fluid to take up the width of the screen
-        [ Container.IsFluid ]
-        (view_in_classroom model dispatch)
+        [ Container.IsFluid 
+          Container.Modifiers [ Modifier.IsMarginless ]  ] [
+            Columns.columns [ ] [
+                Column.column [ Column.Width (Screen.All, Column.Is1) ] [
+                    Menu.menu [ ] [
+                        Menu.list [ ] [
+                            menuItem "Classroom" false dispatch ClickClassroom
+                            menuItem "Enrol" false dispatch ClickEnrol
+                            menuItem "Students" false dispatch ClickStudents
+                            menuItem "Account" false dispatch ClickAccount
+                        ]
+                    ]
+                ]
+                Column.column [ ] [
+                   yield! (match model.Child with
+                           | ClassModel class_model ->
+                               Class.view class_model (ClassMsg >> dispatch) 
+                           | EnrolModel model ->
+                               PendingStudents.view model (EnrolMsg >> dispatch) 
+                           | SchoolModel model ->
+                               School.view model (SchoolMsg >> dispatch) 
+                           | StudentsModel model ->
+                               StudentsComponent.view model (StudentMsg >> dispatch))
+                ]
+            ]
+        ]
             
 
 let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
-    match msg with
-    | SchoolMsg msg ->
-        let new_state, cmd = School.update model.School msg
-        {model with School = new_state}, Cmd.map SchoolMsg cmd
-    | ClassMsg msg ->
-        let new_state, cmd = Class.update model.Class msg
-        {model with Class = new_state}, Cmd.map ClassMsg cmd
-    | StudentMsg msg ->
-        let new_state, cmd = StudentsComponent.update model.Students msg
-        {model with Students = new_state}, Cmd.map StudentMsg cmd
-    | PendingMsg msg ->
-        match msg with
-        | PendingStudents.ApprovePendingSuccess () ->
-            let new_student_state, student_cmd = StudentsComponent.update model.Students StudentsComponent.GetAllStudents
-            let new_pending_state, pending_cmd = PendingStudents.update model.Pending msg
-            {model with Pending = new_pending_state
-                        Students = new_student_state},
-            Cmd.batch [Cmd.map PendingMsg pending_cmd; Cmd.map StudentMsg student_cmd]
-        | _ ->
-            let new_pending_state, pending_cmd = PendingStudents.update model.Pending msg
-            {model with Pending = new_pending_state}, Cmd.map PendingMsg pending_cmd
-
-    | GoLive ->
-        Browser.console.info ("Tutor.Dashboard.GoLive")
-        {model with LiveState = LiveState.On}, Cmd.ofMsg (ClassMsg Class.GoLive)
-
-    | StopLive ->
-        Browser.console.info ("Tutor.Dashboard.StopLive")
-        {model with LiveState = LiveState.Off}, Cmd.ofMsg (ClassMsg Class.StopLive)
-        
+    match model, msg with
+    | {Child = SchoolModel child_model}, SchoolMsg msg ->
+        let new_state, cmd = School.update child_model msg
+        {model with Child = SchoolModel new_state}, Cmd.map SchoolMsg cmd
+    | {Child = ClassModel child_model}, ClassMsg msg ->
+        let new_state, cmd = Class.update child_model msg
+        {model with Child = ClassModel new_state}, Cmd.map ClassMsg cmd
+    | {Child = StudentsModel child_model}, StudentMsg msg ->
+        let new_state, cmd = StudentsComponent.update child_model msg
+        {model with Child = StudentsModel new_state}, Cmd.map StudentMsg cmd
+    | {Child = EnrolModel child_model}, EnrolMsg msg ->
+        let new_state, cmd = PendingStudents.update child_model msg
+        {model with Child = EnrolModel new_state}, Cmd.map EnrolMsg cmd
+    | model, ClickAccount ->
+        let new_state, new_cmd = School.init ()
+        {model with Child = SchoolModel new_state}, Cmd.map SchoolMsg new_cmd
+    | model, ClickEnrol ->
+        let new_state, new_cmd = PendingStudents.init ()
+        {model with Child = EnrolModel new_state}, Cmd.map EnrolMsg new_cmd
+    | model, ClickClassroom ->
+        let new_state, new_cmd = Class.init ()
+        {model with Child = ClassModel new_state}, Cmd.map ClassMsg new_cmd
+    | model, ClickStudents ->
+        let new_state, new_cmd = StudentsComponent.init ()
+        {model with Child = StudentsModel new_state}, Cmd.map StudentMsg new_cmd
