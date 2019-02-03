@@ -11,26 +11,15 @@ open Fulma
 open ModifiedFableFetch
 open Thoth.Json
 
-type LiveState =
-    | On
-    | Off
-
 type Model =
-    { Schools : (School*LiveState) list } //list of enroled schools
+    { Schools : School list } //list of enroled schools
 
 type Msg =
-    | JoinLiveSuccess of OpenTokInfo*string
-    | JoinLiveFailure of exn
     | GetEnroledSchoolsSuccess of School list
     | GetEnroledSchoolsFailure of exn
-    | JoinLive of string
-    | StopLive of string
-    | LiveViewGoLive of string
-    | LiveViewStopLive of string
 
 exception GetEnroledSchoolsEx of APIError
 exception GetAllSchoolsEx of APIError
-exception JoinLiveEx of APIError
 exception EnrolEx of APIError
 
 let private get_enroled_schools () = promise {
@@ -82,21 +71,7 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     match model, msg with
     | model, GetEnroledSchoolsSuccess schools ->
         Browser.console.info ("Got enroled schools %A", schools)
-        {model with Schools = schools |> List.map (fun s -> (s,Off)) }, Cmd.none
-
-    | model, JoinLive email ->
-        let update = model.Schools
-                      |> List.map (fun (school,state) -> if school.Email = email then (school,On) else (school,state))
-
-        //tell the live view that we want to join this tutors live stream
-        {model with Schools = update}, Cmd.ofMsg (LiveViewGoLive email)
-
-    | model, StopLive tutor_email ->
-        //mark this school as off
-        let update = model.Schools
-                      |> List.map (fun (school,state) -> if school.Email = tutor_email then (school,Off) else (school,state))
-        //tell the live view that we want to stop viewing this tutors live stream
-        {model with Schools = update}, Cmd.ofMsg (LiveViewStopLive tutor_email)
+        {model with Schools = schools }, Cmd.none
 
     | model, GetEnroledSchoolsFailure e ->
         match e with
@@ -107,19 +82,11 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
             Browser.console.warn ("Failed to get enroled schools: " + e.Message)
             model, Cmd.none
 
-let private card_footer (school : School) (state : LiveState) (dispatch : Msg -> unit) =
-    [ Card.Footer.div [ ]
-        [ (match state with
-           | On ->
-                (Button.button [ Button.Color IsDanger
-                                 Button.Props [ OnClick (fun _ -> dispatch (StopLive school.Email)) ] ]
-                [ str "Stop" ])
-           | Off ->
-                (Button.button [ Button.Color IsTitanInfo
-                                 Button.Props [ OnClick (fun _ -> dispatch (JoinLive school.Email)) ] ]
-                [ str "Go Live" ])) ] ] 
+let private card_footer (school : School) (dispatch : Msg -> unit) =
+     Card.Footer.div [ ]
+        [  ] 
 
-let private card_content (school:School) (state : LiveState) (dispatch:Msg->unit) =
+let private card_content (school:School) (dispatch:Msg->unit) =
     [
         Columns.columns [ ] [
             Column.column [ ] [
@@ -145,7 +112,7 @@ let private card_content (school:School) (state : LiveState) (dispatch:Msg->unit
         ]
     ]
 
-let render_school (school : School) (state : LiveState) (dispatch : Msg -> unit) =
+let render_school (school : School)  (dispatch : Msg -> unit) =
     Card.card [] [
         Card.header [ Modifiers [ Modifier.BackgroundColor IsTitanSecondary
                                   Modifier.TextColor IsWhite
@@ -155,10 +122,10 @@ let render_school (school : School) (state : LiveState) (dispatch : Msg -> unit)
                 [ str school.SchoolName ]
         ]
         Card.content [ Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [
-            yield! card_content school state dispatch
+            yield! card_content school dispatch
         ]
         Card.footer [ ] [
-            yield! card_footer school state dispatch 
+            card_footer school dispatch 
         ]
     ]
 
@@ -174,8 +141,8 @@ let view (model : Model) (dispatch : Msg -> unit) =
     Box.box' [ ] [
         yield! List.append
                 [your_schools model dispatch ]
-                [ for (school,live_state) in model.Schools do
-                    yield render_school school live_state dispatch ]
+                [ for school in model.Schools do
+                    yield render_school school dispatch ]
     ]
     
 

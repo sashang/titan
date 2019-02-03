@@ -100,6 +100,7 @@ let sub_menu label isActive children =
             [ str label ]
          ul [ ]
             children ]
+
 let view (model : Model) (dispatch : Msg -> unit) =
      Container.container [ Container.IsFluid
                            Container.Modifiers [ Modifier.IsMarginless ] ] [
