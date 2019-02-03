@@ -29,8 +29,9 @@ type Msg =
     | LiveViewStopLive of string
 
 exception GetEnroledSchoolsEx of APIError
+exception GetAllSchoolsEx of APIError
 exception JoinLiveEx of APIError
-
+exception EnrolEx of APIError
 
 let private get_enroled_schools () = promise {
     let request = make_get
@@ -44,6 +45,34 @@ let private get_enroled_schools () = promise {
         | None ->  return result.Schools
     | Error e ->
         return raise (GetEnroledSchoolsEx (APIError.init [APICode.Fetch] [e]))
+}
+
+let private get_all_schools () = promise {
+    let request = make_get
+    let decoder = Decode.Auto.generateDecoder<GetAllSchoolsResult>()
+    let! response = Fetch.tryFetchAs "/api/get-all-schools" decoder request
+    Browser.console.info "received response from get-all-schools"
+    match response with
+    | Ok result ->
+        match result.Error with
+        | Some api_error -> return raise (GetAllSchoolsEx api_error)
+        | None ->  return result
+    | Error e ->
+        return raise (GetAllSchoolsEx (APIError.init [APICode.Fetch] [e]))
+}
+
+let private enrol_student er = promise {
+    let request = make_post 1 er
+    let decoder = Decode.Auto.generateDecoder<APIError option>()
+    let! response = Fetch.tryFetchAs "/api/enrol-student" decoder request
+    Browser.console.info "received response from enrol-student"
+    match response with
+    | Ok result ->
+        match result with
+        | Some api_error -> return raise (EnrolEx api_error)
+        | None -> return ()
+    | Error e ->
+        return raise (EnrolEx (APIError.init [APICode.Fetch] [e]))
 }
 
 let init () =

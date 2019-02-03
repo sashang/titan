@@ -11,149 +11,118 @@ open ModifiedFableFetch
 open StudentSchools
 open Thoth.Json
 
+type PageModel =
+    | EnroledModel of StudentSchools.Model //page of schools this student is enroled in
+    | ClassModel of Student.Class.Model //live view of the classroom
+    | HomeModel 
+
 type Model =
-    { FirstName : string
-      LastName : string
-      Phone : string
-      Email : string
-      EnrolError : APIError option
-      EnroledSchools : StudentSchools.Model
-      Live : Live.Model
-      Result : GetAllSchoolsResult}
+    { EnroledSchools : School list
+      Child : PageModel
+      Error : APIError option }
 
 type Msg =
-    | ClickEnrol of string
-    | GetAllSchoolsSuccess of GetAllSchoolsResult
-    | EnrolSuccess of unit
-    | StudentSchoolsMsg of StudentSchools.Msg
-    | LiveMsg of Live.Msg
+    | ClickClassroom of School
+    | ClickEnrol
+    | ClickAccount
+    | GetEnroledSchoolsSuccess of School list
+    | ClassMsg of Student.Class.Msg
+    | EnroledMsg of StudentSchools.Msg
     | Failure of exn
-    | JoinLive of string
-    | StopLive of string
 
-exception GetAllSchoolsEx of APIError
-exception EnrolEx of APIError
+exception GetEnroledSchoolsEx of APIError
 
-let private get_all_schools () = promise {
+let private get_enroled_schools () = promise {
     let request = make_get
     let decoder = Decode.Auto.generateDecoder<GetAllSchoolsResult>()
-    let! response = Fetch.tryFetchAs "/api/get-all-schools" decoder request
-    Browser.console.info "received response from get-all-schools"
+    let! response = Fetch.tryFetchAs "/api/get-enroled-schools" decoder request
+    Browser.console.info "received response from get-enroled-schools"
     match response with
     | Ok result ->
         match result.Error with
-        | Some api_error -> return raise (GetAllSchoolsEx api_error)
-        | None ->  return result
+        | Some api_error -> return raise (GetEnroledSchoolsEx api_error)
+        | None ->  return result.Schools
     | Error e ->
-        return raise (GetAllSchoolsEx (APIError.init [APICode.Fetch] [e]))
+        return raise (GetEnroledSchoolsEx (APIError.init [APICode.Fetch] [e]))
 }
 
-let private enrol_student er = promise {
-    let request = make_post 1 er
-    let decoder = Decode.Auto.generateDecoder<APIError option>()
-    let! response = Fetch.tryFetchAs "/api/enrol-student" decoder request
-    Browser.console.info "received response from enrol-student"
-    match response with
-    | Ok result ->
-        match result with
-        | Some api_error -> return raise (EnrolEx api_error)
-        | None -> return ()
-    | Error e ->
-        return raise (EnrolEx (APIError.init [APICode.Fetch] [e]))
-}
 
 
 let init () = 
-    let your_schools, ss_cmd = StudentSchools.init ()
-    let live_model, live_cmd = Live.init ()
-    {FirstName = ""; LastName = ""; Phone = ""; EnrolError = None;
-     Email =""; EnroledSchools = your_schools; Result = GetAllSchoolsResult.init; Live = live_model},
-              Cmd.batch [ Cmd.ofPromise get_all_schools () GetAllSchoolsSuccess Failure
-                          Cmd.map LiveMsg live_cmd
-                          Cmd.map StudentSchoolsMsg ss_cmd ]
+    {Error = None; Child = HomeModel; EnroledSchools = [] }, Cmd.ofPromise get_enroled_schools () GetEnroledSchoolsSuccess Failure
 
 let update model msg =
     match model, msg with
-    | model, ClickEnrol school_name ->
-        model, Cmd.ofPromise enrol_student {SchoolName = school_name} EnrolSuccess Failure
-        
-    | model, GetAllSchoolsSuccess result ->
-        {model with Result = result}, Cmd.none
+    | {Child = ClassModel child}, ClassMsg msg ->
+        Browser.console.info ("ClassMsg message")
+        let new_model, new_cmd = Student.Class.update child msg
+        {model with Child = ClassModel new_model}, Cmd.map ClassMsg new_cmd
 
-    //intercept this specific StudentSchoolsMsg, reroute it ot hte live component    
-    | {Live = live_model}, StudentSchoolsMsg (StudentSchools.LiveViewGoLive email) ->
-        Browser.console.info ("LiveViewGoLive ")
-        let new_live_model, new_cmd = Live.update live_model (Live.GoLive email)
-        {model with Live = new_live_model}, Cmd.map LiveMsg new_cmd
+    | {Child = EnroledModel child}, EnroledMsg  msg ->
+        Browser.console.info ("Enroled message")
+        let new_model, new_cmd = StudentSchools.update child msg
+        {model with Child = EnroledModel new_model }, Cmd.map EnroledMsg new_cmd
 
-    //intercept this specific StudentSchoolsMsg, reroute it ot hte live component    
-    | {Live = live_model}, StudentSchoolsMsg (StudentSchools.LiveViewStopLive email) ->
-        Browser.console.info ("LiveViewStopLive ")
-        let new_live_model, new_cmd = Live.update live_model (Live.StopLive email)
-        {model with Live = new_live_model}, Cmd.map LiveMsg new_cmd
+    | model, GetEnroledSchoolsSuccess schools ->
+        {model with EnroledSchools = schools}, Cmd.none
+    | model, ClickClassroom school ->
+        let new_state, new_cmd = Student.Class.init school
+        {model with Child = ClassModel new_state}, Cmd.map ClassMsg new_cmd
     
-    | {Live = live_model}, LiveMsg msg ->
-        Browser.console.info ("Live message")
-        let new_model, new_cmd = Live.update live_model msg
-        {model with Live = new_model}, Cmd.map LiveMsg new_cmd
+    | model, ClickEnrol ->
+        let new_state, new_cmd = StudentSchools.init ()
+        {model with Child = EnroledModel new_state}, Cmd.map EnroledMsg new_cmd
 
-    | {EnroledSchools = enroled_model}, StudentSchoolsMsg  msg ->
-        Browser.console.info ("STudentSchools message")
-        let new_model, new_cmd = StudentSchools.update enroled_model msg
-        {model with EnroledSchools = new_model}, Cmd.map StudentSchoolsMsg new_cmd
-
-    | model, EnrolSuccess () ->
+    | model, ClickAccount ->
         model, Cmd.none
-    
+
     | model, Failure e ->
         match e with
-        | :? GetAllSchoolsEx as ex ->
-            List.iter (fun m -> Browser.console.warn ("GetAllSchoolsEx:" + m)) ex.Data0.Messages
-            {model with Result = {model.Result with Error = Some ex.Data0}}, Cmd.none
-        | :? EnrolEx as ex ->
-            List.iter (fun m -> Browser.console.warn ("EnrolEx:" + m)) ex.Data0.Messages
-            {model with EnrolError = Some ex.Data0}, Cmd.none
+        | :? GetEnroledSchoolsEx as ex ->
+            Browser.console.warn ("GetEnroledSchoolsEx: " + ex.Message)
+            {model with Error = Some ex.Data0}, Cmd.none
         | e ->
             Browser.console.warn ("Failed to get_all_schools: " + e.Message)
             model, Cmd.none
 
-let single_row (school : School) (dispatch : Msg -> unit) =
-        Card.card [] [
-            Card.header [ Modifiers [ Modifier.BackgroundColor IsTitanSecondary
-                                      Modifier.TextColor IsWhite
-                                      Modifier.TextTransform TextTransform.Capitalized] ] [
-                Card.Header.title
-                    [ Card.Header.Title.Modifiers [ Modifier.TextColor IsWhite ] ]
-                    [ str school.SchoolName ]
-            ]
-            Card.content [  ] [
-                Columns.columns [  ] [
-                    Column.column [ Column.Width (Screen.All, Column.Is1) ] [
-                       Label.label
-                           [ Label.Modifiers [Modifier.TextAlignment (Screen.All, TextAlignment.Left)] ]
-                           [ Text.div [ ] [ str "Tutor" ] ]
-                    ]
-                    Column.column [ Column.Width (Screen.All, Column.Is2) ] [
-                       Text.div [ ] [ str school.FirstName; str " "; str school.LastName]
-                    ]
-                ]
-            ]
-            Card.footer [ ] [
-                Button.button [ Button.OnClick (fun ev -> dispatch (ClickEnrol school.SchoolName)) ] [
-                    str "Enrol"
-                ]
-            ]
-        ]
     
-    
+// Helper to generate a menu item
+let menu_item label isActive dispatch msg =
+    Menu.Item.li [ Menu.Item.IsActive isActive
+                   Menu.Item.OnClick (fun e -> dispatch msg)
+                   Menu.Item.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
+       [ str label ]
+
+// Helper to generate a sub menu
+let sub_menu label isActive children =
+    li [ ]
+       [ Menu.Item.a [ Menu.Item.IsActive isActive ]
+            [ str label ]
+         ul [ ]
+            children ]
 let view (model : Model) (dispatch : Msg -> unit) =
-     Container.container [ Container.IsFluid ] [
+     Container.container [ Container.IsFluid
+                           Container.Modifiers [ Modifier.IsMarginless ] ] [
         Columns.columns [ ] [
-            Column.column [Column.Width (Screen.All, Column.Is4) ] [
-                StudentSchools.view model.EnroledSchools (StudentSchoolsMsg >> dispatch)
+            Column.column [ Column.Width (Screen.All, Column.Is1) ] [
+                Menu.menu [ ] [
+                    Menu.list [ ] [
+                        sub_menu "Classrooms" false [
+                        yield! [ for school in model.EnroledSchools do
+                                    yield menu_item school.SchoolName false dispatch (ClickClassroom school) ]
+                        ]
+                        menu_item "Enrol" false dispatch ClickEnrol
+                        menu_item "Account" false dispatch ClickAccount
+                    ]
+                ]
             ]
             Column.column [ ] [
-                yield! Live.view model.Live (LiveMsg >> dispatch)
+                (match model.Child with
+                | EnroledModel child ->
+                    StudentSchools.view child (EnroledMsg >> dispatch)
+                | ClassModel child ->
+                    Student.Class.view child (ClassMsg >> dispatch)
+                | HomeModel -> nothing)
             ]
         ]
      ]

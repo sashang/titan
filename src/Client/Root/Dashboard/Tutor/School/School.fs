@@ -131,6 +131,12 @@ let private school_name_help_first_time_user (result : LoadSchoolResult option) 
         | false -> std_label "School Name"
     | _ -> std_label "School Name"
 
+let private account_level =
+    Level.level [ ] 
+        [ Level.left [ ]
+            [ Level.title [ Common.Modifiers [ Modifier.TextTransform TextTransform.UpperCase
+                                               Modifier.TextSize (Screen.All, TextSize.Is5) ]
+                            Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "Account" ] ] ]
     
 let private image_holder url =
     [ Image.image [ Image.Is128x128 ]
@@ -162,26 +168,25 @@ let private go_live dispatch msg text =
     ] [ str text ]
 
 let view (model : Model) (dispatch : Msg -> unit) = 
-    [ Card.card [ ] 
-        [ Card.header [ ]
-            [ Card.Header.title [ ] [ ] ]
-          Card.image [ ]
-            [ yield! image_holder "Images/school.png" ]
-          Card.content [ ]
-            [ yield! school_content model dispatch ] 
-          Card.footer [ ] [
-              Level.level [] [
-                  Level.left [ ] [
-                      Level.item [] [
-                          Card.Footer.div [ ] [
-                              save_button dispatch ClickSave "Save"
+    [   account_level
+        Card.card [ ] 
+            [ Card.header [ ]
+                [ Card.Header.title [ ] [ ] ]
+              Card.content [ ]
+                [ yield! school_content model dispatch ] 
+              Card.footer [ ] [
+                  Level.level [] [
+                      Level.left [ ] [
+                          Level.item [] [
+                              Card.Footer.div [ ] [
+                                  save_button dispatch ClickSave "Save"
+                              ]
                           ]
                       ]
                   ]
+                  make_error model.Error 
               ]
-              make_error model.Error 
-          ]
-        ]
+            ]
     ]
 
 let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =

@@ -1,4 +1,4 @@
-module Live
+module Student.Class
 
 open CustomColours
 open Client.Shared
@@ -16,14 +16,13 @@ open Thoth.Json
 type Msg =
     | GoLive of string
     | GetSessionSuccess of OpenTokInfo
-    | GetSessionFailure of exn
     | GetEnroledSchoolsSuccess of School list //unfortunately we need this herer as well to get the tutors emails
-    | GetEnroledSchoolsFailure of exn
+    | Failure of exn
     | StopLive of string
 
 type Model =
     { Session : obj option
-      Schools : School list
+      School : School 
       OTI : OpenTokInfo option
       Error : APIError option}
 
@@ -62,9 +61,9 @@ let private get_enroled_schools () = promise {
         return raise (GetEnroledSchoolsEx (APIError.init [APICode.Fetch] [e]))
 }
 
-let init () = 
-    { Schools = []; Session = None; OTI = None; Error = None},
-     Cmd.ofPromise get_enroled_schools () GetEnroledSchoolsSuccess GetEnroledSchoolsFailure
+let init school = 
+    { School = school; Session = None; OTI = None; Error = None},
+    Cmd.ofPromise get_live_session_id {Email = school.Email} GetSessionSuccess Failure
 
 let update (model : Model) (msg : Msg) =
     //TODO: map this to the OTI record based on the email
@@ -82,14 +81,13 @@ let update (model : Model) (msg : Msg) =
         model, Cmd.none
 
     | model, GetSessionSuccess oti ->
-
         //TODO: need to fix this to work with multiple schools
         Browser.console.info ("Student.Live: Got session id")
         let session = OpenTokJSInterop.init_session oti.Key oti.SessionId
         if session = null then failwith "failed to get js session"
         {model with OTI = Some oti; Session = Some session; Error = None}, Cmd.none
 
-    | model, GetSessionFailure e ->
+    | model, Failure e ->
         match e with
         | :? GetSessionEx as ex ->
             Browser.console.warn ("Student.Live: Failed to get session: " + List.head ex.Data0.Messages)
@@ -98,22 +96,6 @@ let update (model : Model) (msg : Msg) =
             Browser.console.warn ("Student.Live: Failed to get session: " + e.Message)
             model, Cmd.none
 
-    | model, GetEnroledSchoolsFailure e ->
-        match e with
-        | :? GetEnroledSchoolsEx as ex ->
-            Browser.console.warn ("Student.Live: Failed to get enroled schools: " + List.head ex.Data0.Messages)
-            model, Cmd.none
-        | e ->
-            Browser.console.warn ("Student.Live: Failed to get enroled schools: " + e.Message)
-            model, Cmd.none
-
-    | model, GetEnroledSchoolsSuccess schools ->
-        Browser.console.info ("Student.Live: Got enroled schools %A", schools)
-        //get the tutors emails and get opentok session ids for them
-        let cmds = schools 
-                   |> List.map (fun school -> Cmd.ofPromise get_live_session_id {Email = school.Email} GetSessionSuccess GetSessionFailure)
-                   |> Cmd.batch
-        {model with Schools = schools }, cmds
 
 let private video = 
     div [ HTMLAttr.Id "videos"
@@ -128,6 +110,6 @@ let private video =
     ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
-    [ Box.box' [ Common.Props [ HTMLAttr.Id ""
-                                Style [ CSSProp.Height "100%" ] ] ]
-        [ video ] ]
+     Box.box' [ Common.Props [ HTMLAttr.Id ""
+                               Style [ CSSProp.Height "100%" ] ] ]
+        [ video ]

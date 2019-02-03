@@ -21,7 +21,8 @@
     <Compile Include="Root/Dashboard/Tutor/PendingStudents/PendingStudents.fs" />
     <Compile Include="Root/Dashboard/Tutor/Dashboard.fs" />
     <Compile Include="Root/Dashboard/Student/StudentSchools/StudentSchools.fs" />
-    <Compile Include="Root/Dashboard/Student/Live/Live.fs" />
+    <Compile Include="Root/Dashboard/Student/Class/Class.fs" />
+    <Compile Include="Root/Dashboard/Student/Home/Home.fs" />
     <Compile Include="Root/Dashboard/Student/Dashboard.fs" />
     <Compile Include="Root/Dashboard/DashboardRouter.fs" />
     <Compile Include="Root/Root.fs" />
