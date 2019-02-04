@@ -329,12 +329,12 @@ research on colour theory.
 Using a docker image but the fake build.fsx should handle all of that
 
 ```
-fake build --target Bundle
+fake build --target Docker
 ```
 
 Test with docker locally
 ```
-docker run --rm -it -net=host  sashang/titan
+docker run --rm -it --net=host  sashang/titan
 ```
 
 If it's ok then push to dockerhub
