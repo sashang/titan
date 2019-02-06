@@ -6,6 +6,7 @@ open Fable.Core
 open Fable.Core.JsInterop
 open Fable.Import
 open Fable.PowerPack
+open Fable.Helpers.React
 open Elmish.Browser.Navigation
 open Fulma
 open Fulma.Extensions
@@ -50,6 +51,21 @@ let button dispatch msg text props =
 
 let button_enabled dispatch msg text enable =
     button dispatch msg text [Button.Disabled (not enable)]
+
+let loading_view = 
+    [ 
+        div [ HTMLAttr.Class "lds-grid" ] [ 
+            div [] []
+            div [] []
+            div [] []
+            div [] []
+            div [] []
+            div [] []
+            div [] []
+            div [] []
+            div [] []
+        ]
+    ]
 
 let onEnter msg dispatch =
     function

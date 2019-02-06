@@ -13,15 +13,20 @@ open Fulma
 open ModifiedFableFetch
 open Thoth.Json
 
+type LoadingState =
+    | Loading
+    | Loaded
 
 type Model =
     { Students : Domain.Student list
+      LoadStudentsState : LoadingState
       //result of interaction with the api
       Error : APIError option}
 
 
 exception GetAllStudentsEx of APIError
 exception DismissStudentEx of APIError
+
 
 type Msg =
     | LoadStudentsSuccess of Student list
@@ -54,7 +59,7 @@ let get_all_students () = promise {
 }
 
 let init () =
-    { Students = [ ]; Error = None },
+    { LoadStudentsState = Loading; Students = [ ]; Error = None },
     Cmd.ofPromise get_all_students () LoadStudentsSuccess LoadStudentsFailure
 
 let update (model : Model) (msg : Msg) =
@@ -63,7 +68,7 @@ let update (model : Model) (msg : Msg) =
         model, Cmd.ofPromise get_all_students () LoadStudentsSuccess LoadStudentsFailure
         
     | LoadStudentsSuccess students ->
-        {model with Students = students}, Cmd.none
+        {model with LoadStudentsState = Loaded; Students = students}, Cmd.none
     | LoadStudentsFailure e ->
         match e with 
         | :? GetAllStudentsEx as ex ->
@@ -143,4 +148,6 @@ let private students_level =
 
 let view (model : Model) (dispatch : Msg -> unit) =
     [ Box.box' [ ] 
-        [ yield! List.append [students_level] [yield! render_all_students model dispatch] ] ] 
+        [ yield! (match model.LoadStudentsState with
+                   | Loaded -> List.append [students_level] [yield! render_all_students model dispatch] 
+                   | Loading -> Client.Style.loading_view) ] ] 

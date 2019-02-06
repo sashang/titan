@@ -173,20 +173,6 @@ let private go_live dispatch msg text =
         Button.OnClick (fun _ -> (dispatch msg))
     ] [ str text ]
 
-let private loading_view = 
-    [ 
-        div [ HTMLAttr.Class "lds-grid" ] [ 
-            div [] []
-            div [] []
-            div [] []
-            div [] []
-            div [] []
-            div [] []
-            div [] []
-            div [] []
-            div [] []
-        ]
-    ]
 
 let view (model : Model) (dispatch : Msg -> unit) = 
     match model.SchoolLoadState, model.UserLoadState with
@@ -211,7 +197,7 @@ let view (model : Model) (dispatch : Msg -> unit) =
                   ]
                 ]
         ]
-    | _, _ ->  loading_view
+    | _, _ ->  Client.Style.loading_view
 
 let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     match msg with
