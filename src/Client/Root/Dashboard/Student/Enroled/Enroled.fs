@@ -10,9 +10,11 @@ open Fable.Helpers.React.Props
 open Fulma
 open ModifiedFableFetch
 open Thoth.Json
+open Client.Shared
 
 type Model =
-    { Schools : School list } //list of enroled schools
+    { Schools : School list
+      LoadSchoolsState : LoadingState } //list of enroled schools
 
 type Msg =
     | GetEnroledSchoolsSuccess of School list
@@ -65,13 +67,12 @@ let private enrol_student er = promise {
 }
 
 let init () =
-    {Schools = []}, Cmd.ofPromise get_enroled_schools () GetEnroledSchoolsSuccess GetEnroledSchoolsFailure
+    {Schools = []; LoadSchoolsState = Loading}, Cmd.ofPromise get_enroled_schools () GetEnroledSchoolsSuccess GetEnroledSchoolsFailure
 
 let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     match model, msg with
     | model, GetEnroledSchoolsSuccess schools ->
-        Browser.console.info ("Got enroled schools %A", schools)
-        {model with Schools = schools }, Cmd.none
+        {model with Schools = schools; LoadSchoolsState = Loaded }, Cmd.none
 
     | model, GetEnroledSchoolsFailure e ->
         match e with
@@ -139,10 +140,14 @@ let private your_schools model dispatch =
 //render the schools that this student is enroled in
 let view (model : Model) (dispatch : Msg -> unit) =
     Box.box' [ ] [
-        yield! List.append
-                [your_schools model dispatch ]
-                [ for school in model.Schools do
-                    yield render_school school dispatch ]
+        yield! (match model.LoadSchoolsState with
+                | Loaded ->
+                    List.append
+                        [your_schools model dispatch ]
+                        [ for school in model.Schools do
+                            yield render_school school dispatch ]
+                | Loading ->
+                    Client.Style.loading_view)
     ]
     
 

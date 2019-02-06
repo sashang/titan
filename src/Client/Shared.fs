@@ -4,6 +4,10 @@ open Domain
 open Fable.Core.JsInterop
 open Thoth.Json
 
+type LoadingState =
+    | Loading
+    | Loaded
+
 /// Claim info that's shared between pages on the client side.
 [<CLIMutable>]
 type TitanClaim = 

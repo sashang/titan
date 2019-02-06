@@ -1,5 +1,6 @@
 module School
 
+open Client.Shared
 open Client.Style
 open CustomColours
 open Domain
@@ -16,9 +17,6 @@ exception SaveEx of APIError
 exception LoadSchoolEx of APIError
 exception LoadUserEx of APIError
 
-type LoadingState =
-    | Loading
-    | Loaded
 
 type Model =
     { SchoolName : string

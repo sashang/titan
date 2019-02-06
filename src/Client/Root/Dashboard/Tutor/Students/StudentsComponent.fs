@@ -12,10 +12,8 @@ open Fable.FontAwesome
 open Fulma
 open ModifiedFableFetch
 open Thoth.Json
+open Client.Shared
 
-type LoadingState =
-    | Loading
-    | Loaded
 
 type Model =
     { Students : Domain.Student list
