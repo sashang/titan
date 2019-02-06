@@ -13,9 +13,9 @@ we’re talking about the rules for using the Site.
 Part of Tewtin's business model is to offer a service where the user's data
 is not resold for the purposes of data mining or advertising by 3rd party
 companies. Typically free video conferencing software is free because you
-allow the providers of such software access to you personal data; and data
-gathered while using the software; which is specifically but not limited to
-text and voice and video. At Tewtin we don't do this, because we believe that
+allow the providers of such software access to your personal data, and data
+gathered while using the software, which includes but is not limited to
+text, voice and video. At Tewtin, we do not do this, because we believe that
 a product used for education should not be collecting the data of students'
 for consumption by a 3rd party.
 

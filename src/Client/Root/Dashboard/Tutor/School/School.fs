@@ -16,12 +16,18 @@ exception SaveEx of APIError
 exception LoadSchoolEx of APIError
 exception LoadUserEx of APIError
 
+type LoadingState =
+    | Loading
+    | Loaded
+
 type Model =
     { SchoolName : string
       FirstName : string
       Subjects : string
       Location : string
       LastName : string
+      UserLoadState : LoadingState
+      SchoolLoadState : LoadingState
       Info : string
       Error : APIError option}
 
@@ -75,7 +81,7 @@ let private save (data : SaveRequest) = promise {
 }
 
 let init () : Model*Cmd<Msg> =
-    {SchoolName = ""; Error = None; Subjects = ""
+    {SchoolName = ""; Error = None; Subjects = ""; UserLoadState = Loading; SchoolLoadState = Loading;
      FirstName = ""; LastName = ""; Info = ""; Location = ""},
      Cmd.batch [Cmd.ofPromise load_school () Success Failure
                 Cmd.ofPromise load_user () LoadUserSuccess Failure]
@@ -167,27 +173,45 @@ let private go_live dispatch msg text =
         Button.OnClick (fun _ -> (dispatch msg))
     ] [ str text ]
 
+let private loading_view = 
+    [ 
+        div [ HTMLAttr.Class "lds-grid" ] [ 
+            div [] []
+            div [] []
+            div [] []
+            div [] []
+            div [] []
+            div [] []
+            div [] []
+            div [] []
+            div [] []
+        ]
+    ]
+
 let view (model : Model) (dispatch : Msg -> unit) = 
-    [   account_level
-        Card.card [ ] 
-            [ Card.header [ ]
-                [ Card.Header.title [ ] [ ] ]
-              Card.content [ ]
-                [ yield! school_content model dispatch ] 
-              Card.footer [ ] [
-                  Level.level [] [
-                      Level.left [ ] [
-                          Level.item [] [
-                              Card.Footer.div [ ] [
-                                  save_button dispatch ClickSave "Save"
+    match model.SchoolLoadState, model.UserLoadState with
+    | Loaded, Loaded ->
+        [   account_level
+            Card.card [ ] 
+                [ Card.header [ ]
+                    [ Card.Header.title [ ] [ ] ]
+                  Card.content [ ]
+                    [ yield! school_content model dispatch ] 
+                  Card.footer [ ] [
+                      Level.level [] [
+                          Level.left [ ] [
+                              Level.item [] [
+                                  Card.Footer.div [ ] [
+                                      save_button dispatch ClickSave "Save"
+                                  ]
                               ]
                           ]
                       ]
+                      make_error model.Error 
                   ]
-                  make_error model.Error 
-              ]
-            ]
-    ]
+                ]
+        ]
+    | _, _ ->  loading_view
 
 let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     match msg with
@@ -209,9 +233,9 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     | SetSchoolName name ->
         {model with SchoolName = name}, Cmd.none
     | Success result ->
-        {model with SchoolName = result.SchoolName; Info = result.Info; Subjects = result.Subjects; Location = result.Location}, Cmd.none
+        {model with SchoolLoadState = Loaded; SchoolName = result.SchoolName; Info = result.Info; Subjects = result.Subjects; Location = result.Location}, Cmd.none
     | LoadUserSuccess result ->
-        {model with FirstName = result.FirstName; LastName = result.LastName}, Cmd.none
+        {model with UserLoadState = Loaded; FirstName = result.FirstName; LastName = result.LastName}, Cmd.none
     | Failure e ->
         match e with
         | :? SaveEx as ex ->
