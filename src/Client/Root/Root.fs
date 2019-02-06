@@ -146,12 +146,6 @@ let private nav_item_button_href href (text : string) =
             [ str text ] ]
 
 
-let dashboard_button (model : State) dispatch (claims : TitanClaim) =
-    if claims.IsTutor then
-         [ nav_item_button_url Pages.DashboardTutor "Dashboard" ]
-    else
-        [ nothing ]
-    
 
 let view model dispatch =
     Hero.hero [
@@ -186,10 +180,7 @@ let view model dispatch =
                                 yield nav_item_button_href "/schools.html" "Schools"
                                 yield nav_item_button_url Pages.Login "Login"
                           | Some session ->
-                                yield! List.append [ match model.Claims with
-                                                     | Some claims -> yield! dashboard_button model dispatch claims
-                                                     | None -> yield nothing]
-                                                   [ yield nav_item_button dispatch ClickSignOut "Sign Out" ] ]
+                                yield nav_item_button dispatch ClickSignOut "Sign Out" ]
                 ]
             ]
         ]
