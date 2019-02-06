@@ -92,15 +92,27 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | {Child = SchoolModel child_model}, SchoolMsg msg ->
         let new_state, cmd = School.update child_model msg
         {model with Child = SchoolModel new_state}, Cmd.map SchoolMsg cmd
+    | _, SchoolMsg _ ->
+        Browser.console.error("Unexpected SchoolMsg in Dashboard.Tutor")
+        model, Cmd.none
     | {Child = ClassModel child_model}, ClassMsg msg ->
         let new_state, cmd = Class.update child_model msg
         {model with Child = ClassModel new_state}, Cmd.map ClassMsg cmd
+    | _, ClassMsg _ ->
+        Browser.console.error("Unexpected ClassMsg in Dashboard.Tutor")
+        model, Cmd.none
     | {Child = StudentsModel child_model}, StudentMsg msg ->
         let new_state, cmd = StudentsComponent.update child_model msg
         {model with Child = StudentsModel new_state}, Cmd.map StudentMsg cmd
+    | _, StudentMsg _ ->
+        Browser.console.error("Unexpected StudentMsg in Dashboard.Tutor")
+        model, Cmd.none
     | {Child = EnrolModel child_model}, EnrolMsg msg ->
         let new_state, cmd = PendingStudents.update child_model msg
         {model with Child = EnrolModel new_state}, Cmd.map EnrolMsg cmd
+    | _, EnrolMsg _ ->
+        Browser.console.error("Unexpected EnrolMsg in Dashboard.Tutor")
+        model, Cmd.none
     | model, ClickAccount ->
         let new_state, new_cmd = School.init ()
         {model with Child = SchoolModel new_state}, Cmd.map SchoolMsg new_cmd

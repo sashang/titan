@@ -37,7 +37,7 @@ let get_session_id_for_student (next : HttpFunc) (ctx : HttpContext) = task {
         let logger = ctx.GetLogger<Debug.DebugLogger>()
         let! request = ctx.BindJsonAsync<EmailRequest>()
         let student_email = ctx.User.FindFirst(ClaimTypes.Email).Value
-        logger.LogInformation(sprintf "get_session_id_tutor: student with email %s joining tutor with email %s " student_email request.Email)
+        logger.LogInformation(sprintf "get_session_id_for_student: student with email %s joining tutor with email %s " student_email request.Email)
         let titan_open_tok = ctx.GetService<ITitanOpenTok>()
         let! result = titan_open_tok.get_token request.Email
         match result with

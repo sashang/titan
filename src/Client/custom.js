@@ -5,7 +5,6 @@ function handle_error(error) {
         console.log(error.message);
     }
 }
-
 var subscriber = null;
 
 module.exports = {
@@ -34,6 +33,10 @@ module.exports = {
     disconnect: function(session) {
         console.log("disconnecting session");
         if (session) {
+            if (subscriber) {
+                console.log("unubscribing subscriber");
+                session.unsubscribe(subscriber)
+            }
             session.disconnect();
         }
     },
@@ -66,10 +69,11 @@ module.exports = {
                 handle_error(error)
             })}});
     },
-    add_subscriber: function(session) {
-        session.once('streamCreated', function(event) {
+    on_streamcreate_subscribe: function(session, w, h) {
+        session.on('streamCreated', function(event) {
             subscriber = session.subscribe(event.stream, 'subscriber', {
             insertMode: 'append',
+            preferedResolution: {width: w, height: h},
             width: '100%',
             height: '100%'
             }, handle_error)});

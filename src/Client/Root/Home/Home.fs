@@ -278,9 +278,10 @@ let private beta_program model dispatch =
                   render_error model dispatch ] ] ]
 
 let footer = 
-    Footer.footer [ Common.Modifiers [ Modifier.BackgroundColor IsTitanPrimary ] ]
-        [ Container.container [ ]
-            [ ] ]
+    Footer.footer [ Common.Modifiers [ Modifier.BackgroundColor IsTitanPrimary
+                                       Modifier.TextColor IsWhite
+                                       Modifier.TextAlignment (Screen.All, TextAlignment.Left )  ] ]
+        [ a [ Href "docs/privacy-policy.html" ] [ str "Privacy Policy" ]]
 
 let view (model : Model) (dispatch : Msg -> unit) =
     [ Section.section 

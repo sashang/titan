@@ -58,10 +58,18 @@ let update model msg =
         let new_model, new_cmd = Student.Class.update child msg
         {model with Child = ClassModel new_model}, Cmd.map ClassMsg new_cmd
 
+    | _, ClassMsg _ ->
+        Browser.console.error ("Received ClassMsg when child page is not ClassModel")
+        model, Cmd.none
+
     | {Child = EnroledModel child}, EnroledMsg  msg ->
         Browser.console.info ("Enroled message")
         let new_model, new_cmd = Enroled.update child msg
         {model with Child = EnroledModel new_model }, Cmd.map EnroledMsg new_cmd
+
+    | _, EnroledMsg _ ->
+        Browser.console.error ("Received EnroledMsg when child page is not EnroledModel")
+        model, Cmd.none
 
     | model, GetEnroledSchoolsSuccess schools ->
         {model with EnroledSchools = schools}, Cmd.none

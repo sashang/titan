@@ -68,6 +68,7 @@ let update (model : Model) (msg : Msg) =
     | model, GetSessionSuccess oti ->
         Browser.console.info ("Got session id")
         let session = OpenTokJSInterop.init_session oti.Key oti.SessionId
+        OpenTokJSInterop.on_streamcreate_subscribe session 640 480
         if session = null then failwith "failed to get js session"
         {model with OTI = Some oti; Session = Some session; Error = None}, Cmd.none
 
@@ -80,12 +81,11 @@ let update (model : Model) (msg : Msg) =
             Browser.console.warn ("Failed to get session: " + e.Message)
             model, Cmd.none
 
-    |  {Live = Off}, GoLive ->
-            Browser.console.info (sprintf "Clicked GoLive...initialzing publisher with session id = %s" model.OTI.Value.SessionId)
-            let publisher = OpenTokJSInterop.init_pub "publisher" "1280x720"
-            OpenTokJSInterop.connect_session_with_pub model.Session.Value publisher model.OTI.Value.Token
-            OpenTokJSInterop.add_subscriber model.Session.Value
-            {model with Live = On}, Cmd.none
+    |  {Live = Off; OTI = Some oti; Session = Some session}, GoLive ->
+        Browser.console.info (sprintf "Clicked GoLive...initialzing publisher with session id = %s" model.OTI.Value.SessionId)
+        let publisher = OpenTokJSInterop.init_pub "publisher" "1280x720"
+        OpenTokJSInterop.connect_session_with_pub session publisher model.OTI.Value.Token
+        {model with Live = On; Session = Some session}, Cmd.none
 
     | _, GoLive ->
         Browser.console.warn "Clicked GoLive...but we are still live."

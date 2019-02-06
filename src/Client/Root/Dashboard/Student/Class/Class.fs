@@ -83,7 +83,6 @@ let update (model : Model) (msg : Msg) =
         Browser.console.info (sprintf "received GoLive for student at school %s with session = %s" model.School.SchoolName oti.SessionId)
         let publisher = OpenTokJSInterop.init_pub "publisher" "640x480"
         OpenTokJSInterop.connect_session_with_pub model.Session.Value publisher oti.Token
-        OpenTokJSInterop.add_subscriber session
         {model with Live = On}, Cmd.none
 
     | _, GoLive ->
@@ -103,6 +102,7 @@ let update (model : Model) (msg : Msg) =
         //TODO: need to fix this to work with multiple schools
         Browser.console.info ("Student.Live: Got session id")
         let session = OpenTokJSInterop.init_session oti.Key oti.SessionId
+        OpenTokJSInterop.on_streamcreate_subscribe session 640 480
         if session = null then failwith "failed to get js session"
         {model with OTI = Some oti; Session = Some session; Error = None}, Cmd.none
 
@@ -129,7 +129,9 @@ let private video =
     ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
-   [ classroom_level model dispatch
-     Box.box' [ Common.Props [ HTMLAttr.Id ""
-                               Style [ CSSProp.Height "100%" ] ] ]
-        [ video ] ]
+    Container.container [] [
+        classroom_level model dispatch
+        Box.box' [ Common.Props [ HTMLAttr.Id ""
+                                  Style [ CSSProp.Height "100%" ] ] ]
+            [ video ]
+    ]
