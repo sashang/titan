@@ -13,6 +13,7 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Configuration  
 open Microsoft.IdentityModel.Tokens
+open Npgsql
 open Saturn
 open Saturn.Auth
 open System
@@ -30,6 +31,7 @@ type RecStartupOptions = {
     JWTSecret : string 
     JWTIssuer : string 
     ConnectionString : string
+    Cert : string
     GoogleClientId : string
     GoogleSecret : string
     OpenTokSecret : string
@@ -218,12 +220,12 @@ let configure_services startup_options (services:IServiceCollection) =
     let fableJsonSettings = Newtonsoft.Json.JsonSerializerSettings()
     fableJsonSettings.Converters.Add(Fable.JsonConverter())
     services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
-    services.AddSingleton<IDatabase>(Database(startup_options.ConnectionString)) |> ignore
+    services.AddSingleton<IDatabase>(Database(startup_options.ConnectionString, startup_options.Cert)) |> ignore
     services.AddSingleton<ITitanOpenTok>(TitanOpenTok(startup_options.OpenTokKey, startup_options.OpenTokSecret)) |> ignore
 
     services.AddFluentMigratorCore()
             .ConfigureRunner(fun rb ->
-                rb.AddSqlServer2016()
+                rb.AddPostgres()
                   .WithGlobalConnectionString(startup_options.ConnectionString)
                   .ScanIn(typeof<TitanMigrations.Initial>.Assembly).For.Migrations() |> ignore)
             .AddLogging(fun lb -> lb.AddFluentMigratorConsole() |> ignore) |> ignore

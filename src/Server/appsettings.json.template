@@ -3,8 +3,11 @@
 {
     "JWTSecret": "generate the secret using src/bash/gen-jwt-secret.sh",
     "JWTIssuer": "the domain name of the issuer",
-    "ConnectionString": "database connection string"
+    "ConnectionString" : "Host=35.236.69.84;Username=<your username>;Password=<your password>;Database=titan-dev",
+    "Cert" : "<path>/client-cert.pem",
     "GoogleClientId" : "client id",
     "GoogleSecret" : "secret"
+    "OpenTokSecret" : "opentok secret",
+    "OpenTokKey" : 46257672
 }
   
