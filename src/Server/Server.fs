@@ -233,31 +233,32 @@ let get_env_var var =
 let configure_logging (builder : ILoggingBuilder) =
     builder.AddConsole()
         .AddDebug() |> ignore
-let configure_host (builder : IWebHostBuilder) =
+
+let configure_host (settings_file : string) (builder : IWebHostBuilder) =
     //turns out if you pass an anonymous function to a function that expects an Action<...> or
     //Func<...> the type inference will work out the inner types....so you don't need to specify them.
-    let settings_file =
-        match get_env_var "ASPNETCORE_ENVIRONMENT" with
-        | None -> "appsettings.json"
-        | Some e -> "appsettings."+e+".json"
     builder.ConfigureAppConfiguration((fun ctx builder -> builder.AddJsonFile(settings_file) |> ignore))
 
-let app (startup_options : RecStartupOptions) =
+let app settings_file (startup_options : RecStartupOptions) =
     application {
         url ("http://0.0.0.0:" + port.ToString() + "/")
         use_router web_app
         memory_cache
         use_static publicPath
         service_config (configure_services startup_options)
-        host_config configure_host
+        host_config (configure_host settings_file)
         use_google_oauth startup_options.GoogleClientId startup_options.GoogleSecret "/oauth_callback_google" ["language", "urn:google:language"]
         logging configure_logging
         use_gzip
     }
 
-let settings = System.IO.File.ReadAllText("appsettings.json")
+let settings_file =
+    match get_env_var "ASPNETCORE_ENVIRONMENT" with
+        | None -> "appsettings.json"
+        | Some e -> "appsettings."+e+".json"
+let settings = System.IO.File.ReadAllText(settings_file)
 let decoder = Decode.Auto.generateDecoder<RecStartupOptions>()
 let result = Decode.fromString decoder settings
 match result with
-| Ok startup_options -> run (app startup_options)
+| Ok startup_options -> run (app settings_file startup_options)
 | Error e -> failwith ("failed to read appsettings.json: " + e)
