@@ -12,9 +12,8 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
-open Microsoft.Extensions.Configuration  
+open Microsoft.Extensions.Configuration
 open Microsoft.IdentityModel.Tokens
-open Npgsql
 open Saturn
 open Saturn.Auth
 open System
@@ -88,9 +87,9 @@ let generate_token secret issuer (ctx : HttpContext) = task {
     match result with
     | Error message -> return failwith message //no claims no token
     | Ok titan_claims ->
-        let claims = [| for claim in titan_claims do 
-                           yield Claim(claim.Type, claim.Value) |] 
-        return 
+        let claims = [| for claim in titan_claims do
+                           yield Claim(claim.Type, claim.Value) |]
+        return
             [| Claim(JwtRegisteredClaimNames.Email, email);
                Claim(JwtRegisteredClaimNames.GivenName, given_name);
                Claim(JwtRegisteredClaimNames.FamilyName, surname);
@@ -108,7 +107,7 @@ let check_session (next : HttpFunc) (ctx : HttpContext) = task {
             let name = ctx.User.Identity.Name
             let auth_type = ctx.User.Identity.AuthenticationType
             logger.LogInformation ("name = " + name + " auth type = " + auth_type)
-            ctx.User.Claims 
+            ctx.User.Claims
             |> Seq.map (fun claim -> "type = " + claim.Type + " value = " + claim.Value)
             |> Seq.iter (fun message -> logger.LogInformation (message)) |> ignore
             let! token =  generate_token config.["JWTSecret"] config.["JWTIssuer"] ctx
@@ -133,7 +132,7 @@ let render_school_view (next : HttpFunc) (ctx : HttpContext) = task {
             return! (htmlView (SchoolView.view schools)) next ctx
         | Error message ->
             return! (htmlString message) next ctx
-                
+
     with ex ->
         return! failwith ("COuld not render the school view" )
 }
@@ -151,7 +150,7 @@ let secure_router = router {
 }
 
 let api_pipeline = pipeline {
-    plug acceptJson 
+    plug acceptJson
     set_header "x-pipeline-type" "Api"
 }
 let titan_api =  router {
@@ -209,12 +208,12 @@ let configure_services startup_options (services:IServiceCollection) =
     let fableJsonSettings = Newtonsoft.Json.JsonSerializerSettings()
     fableJsonSettings.Converters.Add(Fable.JsonConverter())
     services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
-    services.AddSingleton<IDatabase>(Database(startup_options.ConnectionString, startup_options.Cert)) |> ignore
+    services.AddSingleton<IDatabase>(Database(startup_options.ConnectionString)) |> ignore
     services.AddSingleton<ITitanOpenTok>(TitanOpenTok(startup_options.OpenTokKey, startup_options.OpenTokSecret)) |> ignore
 
     services.AddFluentMigratorCore()
             .ConfigureRunner(fun rb ->
-                rb.AddPostgres()
+                rb.AddSqlServer2016()
                   .WithGlobalConnectionString(startup_options.ConnectionString)
                   .ScanIn(typeof<TitanMigrations.Initial>.Assembly).For.Migrations() |> ignore)
             .AddLogging(fun lb -> lb.AddFluentMigratorConsole() |> ignore) |> ignore

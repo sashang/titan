@@ -13,4 +13,3 @@ System.Runtime.CompilerServices.Unsafe
 Microsoft.Extensions.Configuration.Json
 Thoth.Json.Net
 OpenTokCore
-Npgsql
