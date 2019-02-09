@@ -7,6 +7,7 @@ open FSharp.Control.Tasks
 open FluentMigrator.Runner
 open Giraffe
 open Giraffe.Serialization
+open Homeless
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Microsoft.AspNetCore.Hosting
@@ -25,18 +26,6 @@ open TitanOpenTok
 
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
-
-
-type RecStartupOptions = {
-    JWTSecret : string 
-    JWTIssuer : string 
-    ConnectionString : string
-    Cert : string
-    GoogleClientId : string
-    GoogleSecret : string
-    OpenTokSecret : string
-    OpenTokKey : int
-}
 
 let print_user_details : HttpHandler =
     fun next ctx ->

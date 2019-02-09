@@ -14,10 +14,10 @@
   <ItemGroup>
     <Compile Include="../Shared/Maybe.fs" />
     <Compile Include="../Shared/Domain.fs" />
+    <Compile Include="../Shared/Homeless.fs" />
     <Compile Include="../Shared/ValueDeclarations.fs" />
     <Compile Include="./Migrations/DataTypes.fs" />
     <Compile Include="./Migrations/20181221-CreateSchool.fs" />
-    <Compile Include="./Migrations/Development.fs" />
     <Compile Include="../Shared/FableJson.fs" />
     <Compile Include="Model/Models.fs" />
     <Compile Include="SchoolView.fs" />

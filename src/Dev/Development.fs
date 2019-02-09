@@ -1,9 +1,16 @@
-namespace TitanMigrations
+module DevMigration
 
+open Homeless
+open TitanMigrations
 open FluentMigrator
+open FluentMigrator.Runner
+open FluentMigrator.Runner.Initialization
+open Microsoft.Extensions.DependencyInjection
+open Thoth.Json.Net
+open System
+open System.Linq
 
-
-[<Profile("Development")>]
+[<Migration(20190209L)>]
 type Development() =
     inherit Migration()
 
@@ -119,3 +126,32 @@ type Development() =
             
     override this.Down() =
         ()
+
+
+let create_services connection_string =
+        // let builder = NpgsqlConnectionStringBuilder(connection_string)
+        // builder.SslMode <- SslMode.Require
+        // builder.TrustServerCertificate <- true
+        // builder.UseSslStream <- true
+        // let connection = new NpgsqlConnection(builder.ConnectionString)
+        // connection.ProvideClientCertificatesCallback <- (fun certs -> certs.Add(new X509Certificate2(cert)) |> ignore)
+        // connection
+        ServiceCollection()
+            // Add common FluentMigrator services
+            .AddFluentMigratorCore()
+            .ConfigureRunner(
+                (fun (rb : IMigrationRunnerBuilder) -> rb.AddPostgres()
+                                                         .WithGlobalConnectionString(connection_string)
+                                                         .ScanIn(typeof<Development>.Assembly).For.Migrations() |> ignore))
+            // Enable logging to console in the FluentMigrator way
+            .AddLogging(fun lb -> lb.AddFluentMigratorConsole() |> ignore)
+            // Build the service provider
+            .BuildServiceProvider(false)
+
+let settings = System.IO.File.ReadAllText("../appsettings.Development.json")
+let decoder = Decode.Auto.generateDecoder<RecStartupOptions>()
+let result = Decode.fromString decoder settings
+match result with
+| Ok startup_options ->
+    create_services startup_options.ConnectionString |> ignore
+| Error e -> failwith ("failed to read appsettings.json: " + e) |> ignore

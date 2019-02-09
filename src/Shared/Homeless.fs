@@ -1,6 +1,17 @@
 /// I have no idea where these functions should go...
 module Homeless
 
+
+type RecStartupOptions = {
+    JWTSecret : string 
+    JWTIssuer : string 
+    ConnectionString : string
+    Cert : string
+    GoogleClientId : string
+    GoogleSecret : string
+    OpenTokSecret : string
+    OpenTokKey : int
+}
 //make a list that breaks the original list into one that contains x elem list
 //of the original value
 let chunk x input =
