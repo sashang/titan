@@ -6,7 +6,6 @@ type RecStartupOptions = {
     JWTSecret : string 
     JWTIssuer : string 
     ConnectionString : string
-    Cert : string
     GoogleClientId : string
     GoogleSecret : string
     OpenTokSecret : string

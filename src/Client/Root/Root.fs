@@ -177,7 +177,7 @@ let view model dispatch =
                         [ match model.Session with
                           | None -> 
                                 //yield nav_item_button_url Pages.Enrol "Enrol"
-                                yield nav_item_button_href "/schools.html" "Schools"
+                                //yield nav_item_button_href "/schools.html" "Schools"
                                 yield nav_item_button_url Pages.Login "Login"
                           | Some session ->
                                 yield nav_item_button dispatch ClickSignOut "Sign Out" ]
