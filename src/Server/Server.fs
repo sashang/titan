@@ -14,14 +14,19 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Configuration
 open Microsoft.IdentityModel.Tokens
+open Microsoft.AspNetCore.Authentication
 open Saturn
 open Saturn.Auth
 open System
 open System.IdentityModel.Tokens.Jwt
 open System.IO
+open System.Net
 open System.Security.Claims
+open System.Security.Cryptography.X509Certificates
 open Thoth.Json.Net
 open TitanOpenTok
+
+type AspNetCoreGoogleOpts = Microsoft.AspNetCore.Authentication.Google.GoogleOptions
 
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
@@ -233,10 +238,19 @@ let configure_logging (builder : ILoggingBuilder) =
     builder.AddConsole()
         .AddDebug() |> ignore
 
+
 let configure_host (settings_file : string) (builder : IWebHostBuilder) =
     //turns out if you pass an anonymous function to a function that expects an Action<...> or
     //Func<...> the type inference will work out the inner types....so you don't need to specify them.
-    builder.ConfigureAppConfiguration((fun ctx builder -> builder.AddJsonFile(settings_file) |> ignore))
+    builder.ConfigureAppConfiguration((fun ctx builder -> builder.AddJsonFile(settings_file).Build() |> ignore) ) |> ignore
+        // .ConfigureKestrel(fun ctx opt ->
+        //     let certificate_file = (ctx.Configuration.["certificateSettings:filename"])
+        //     let certificate_password = (ctx.Configuration.["certificateSettings:password"])
+        //     let certificate = new X509Certificate2(certificate_file, certificate_password)
+        //     opt.AddServerHeader <- false
+        //     opt.Listen(IPAddress.Loopback, 4431, (fun opt -> opt.UseHttps(certificate) |> ignore)))
+        //  .UseUrls("https://localhost:4431") |> ignore
+    builder
 
 let app settings_file (startup_options : RecStartupOptions) =
     application {
@@ -246,7 +260,20 @@ let app settings_file (startup_options : RecStartupOptions) =
         use_static publicPath
         service_config (configure_services startup_options)
         host_config (configure_host settings_file)
-        use_google_oauth startup_options.GoogleClientId startup_options.GoogleSecret "/oauth_callback_google" ["language", "urn:google:language"]
+
+        use_google_oauth_with_config (fun (opt:AspNetCoreGoogleOpts) ->
+            opt.ClientSecret <- startup_options.GoogleSecret
+            opt.ClientId <- startup_options.GoogleClientId
+            opt.CallbackPath <- PathString("/oauth_callback_google")
+            opt.UserInformationEndpoint <- "https://www.googleapis.com/oauth2/v2/userinfo"
+            opt.ClaimActions.Clear()
+            opt.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "id")
+            opt.ClaimActions.MapJsonKey(ClaimTypes.Name, "name")
+            opt.ClaimActions.MapJsonKey(ClaimTypes.GivenName, "given_name")
+            opt.ClaimActions.MapJsonKey(ClaimTypes.Surname, "family_name")
+            opt.ClaimActions.MapJsonKey("urn:google:profile", "link")
+            opt.ClaimActions.MapJsonKey(ClaimTypes.Email, "email"))
+            // opt. startup_options.GoogleClientId startup_options.GoogleSecret "/oauth_callback_google" ["language", "urn:google:language"]
         logging configure_logging
         use_gzip
     }

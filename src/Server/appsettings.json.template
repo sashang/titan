@@ -6,5 +6,11 @@
     "ConnectionString": "database connection string"
     "GoogleClientId" : "client id",
     "GoogleSecret" : "secret"
+    "OpenTokSecret" : "secret",
+    "OpenTokKey" : 46257672,
+   "certificateSettings": {
+    "fileName": "localhost.pfx",
+    "password": "1234"
+  }
 }
   
