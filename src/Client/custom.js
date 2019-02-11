@@ -33,10 +33,6 @@ module.exports = {
     disconnect: function(session) {
         console.log("disconnecting session");
         if (session) {
-            if (subscriber) {
-                console.log("unubscribing subscriber");
-                session.unsubscribe(subscriber)
-            }
             session.disconnect();
         }
     },
