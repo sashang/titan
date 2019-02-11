@@ -1,6 +1,6 @@
 module Student.Dashboard
 
-open CustomColours
+open Client.Shared
 open Domain
 open Elmish
 open Fable.Import
@@ -19,6 +19,7 @@ type PageModel =
 type Model =
     { EnroledSchools : School list
       Child : PageModel
+      Claims : TitanClaim
       Error : APIError option }
 
 type Msg =
@@ -48,8 +49,9 @@ let private get_enroled_schools () = promise {
 
 
 
-let init () = 
-    {Error = None; Child = HomeModel; EnroledSchools = [] }, Cmd.ofPromise get_enroled_schools () GetEnroledSchoolsSuccess Failure
+let init claims = 
+    {Claims = claims; Error = None; Child = HomeModel; EnroledSchools = [] },
+     Cmd.ofPromise get_enroled_schools () GetEnroledSchoolsSuccess Failure
 
 let update model msg =
     match model, msg with
@@ -74,7 +76,7 @@ let update model msg =
     | model, GetEnroledSchoolsSuccess schools ->
         {model with EnroledSchools = schools}, Cmd.none
     | model, ClickClassroom school ->
-        let new_state, new_cmd = Student.Class.init school
+        let new_state, new_cmd = Student.Class.init school model.Claims.Email
         {model with Child = ClassModel new_state}, Cmd.map ClassMsg new_cmd
     
     | model, ClickEnrol ->

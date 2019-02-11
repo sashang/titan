@@ -67,8 +67,8 @@ let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMs
     // the following pages require a session token
     | Some Pages.DashboardTutor ->
         match model with
-        | {Session = Some session} ->
-            let new_model, cmd = Tutor.Dashboard.init ()
+        | {Session = Some session; Claims = Some claims} ->
+            let new_model, cmd = Tutor.Dashboard.init claims
             { model with Child = (DashboardRouterModel ({Child = DashboardRouter.TutorModel new_model}))},
                                  Cmd.map (DashboardRouterMsg << DashboardRouter.TutorMsg) cmd
         | {Session = None} ->
@@ -76,8 +76,8 @@ let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMs
             
     | Some Pages.DashboardStudent ->
         match model with
-        | {Session = Some session} ->
-            let new_model, cmd = Student.Dashboard.init ()
+        | {Session = Some session; Claims = Some claims} ->
+            let new_model, cmd = Student.Dashboard.init claims
             { model with Child = (DashboardRouterModel ({Child = DashboardRouter.StudentModel new_model}))},
                                  Cmd.map (DashboardRouterMsg << DashboardRouter.StudentMsg) cmd
         | {Session = None} ->
@@ -232,12 +232,12 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
                 let new_home_model, home_msg = Home.update home_model Home.FirstTimeUser claims
                 { state with Session = Some session; Claims = Some claims; Child = HomeModel new_home_model}, Cmd.none
             | model when claims.IsTutor  ->
-                let tutor_model, cmd = DashboardRouter.init_tutor
+                let tutor_model, cmd = DashboardRouter.init_tutor claims
                 { state with 
                     Session = Some session; Claims = Some claims;
                     Child = DashboardRouterModel(tutor_model)}, Cmd.map DashboardRouterMsg cmd
             | model when claims.IsStudent  ->
-                let student_model, cmd = DashboardRouter.init_student
+                let student_model, cmd = DashboardRouter.init_student claims
                 { state with 
                     Session = Some session; Claims = Some claims;
                     Child = DashboardRouterModel(student_model)}, Cmd.map DashboardRouterMsg cmd

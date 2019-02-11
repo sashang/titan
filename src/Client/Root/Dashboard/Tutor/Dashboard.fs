@@ -1,17 +1,12 @@
 module Tutor.Dashboard
 
+open Client.Shared
 open Domain
 open Elmish
-open Elmish.React
-open Fable.Helpers.React.Props
-open Fable.PowerPack
 open Fable.Import
 open Fable.Helpers.React
 open Fulma
 open Thoth.Json
-
-
-
 
 type PageModel =
     | SchoolModel of School.Model
@@ -21,6 +16,7 @@ type PageModel =
 
 type Model =
     { Child : PageModel
+      Claims : TitanClaim
       CurrentSession : OpenTokInfo option }
 
 type Msg =
@@ -34,9 +30,9 @@ type Msg =
     | ClickEnrol
 
 
-let init () : Model*Cmd<Msg> =
-    let class_model, class_cmd = Class.init ()
-    { Child = ClassModel class_model; CurrentSession = None },
+let init (claims : TitanClaim) : Model*Cmd<Msg> =
+    let class_model, class_cmd = Class.init claims.Email
+    { Child = ClassModel class_model; CurrentSession = None; Claims = claims },
     Cmd.map ClassMsg class_cmd
 
 // Helper to generate a menu item

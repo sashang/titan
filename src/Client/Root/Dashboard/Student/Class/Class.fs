@@ -28,6 +28,7 @@ type Model =
     { Session : obj option
       School : School 
       Live : LiveState
+      StudentEmail: string
       OTI : OpenTokInfo option
       Error : APIError option}
 
@@ -72,8 +73,8 @@ let private classroom_level model dispatch =
         ]
     ]
 
-let init school = 
-    { School = school; Session = None; OTI = None; Error = None; Live = Off},
+let init school student_email = 
+    {School = school; StudentEmail = student_email; Session = None; OTI = None; Error = None; Live = Off},
     Cmd.ofPromise get_live_session_id {Email = school.Email} GetSessionSuccess Failure
 
 let update (model : Model) (msg : Msg) =
@@ -81,7 +82,7 @@ let update (model : Model) (msg : Msg) =
     match model, msg with
     | {OTI = Some oti; Session = Some session; Live = Off}, GoLive ->
         Browser.console.info (sprintf "received GoLive for student at school %s with session = %s" model.School.SchoolName oti.SessionId)
-        let publisher = OpenTokJSInterop.init_pub "publisher" "640x480"
+        let publisher = OpenTokJSInterop.init_pub "publisher" "640x480" model.StudentEmail
         OpenTokJSInterop.connect_session_with_pub model.Session.Value publisher oti.Token
         {model with Live = On}, Cmd.none
 
@@ -102,7 +103,7 @@ let update (model : Model) (msg : Msg) =
         //TODO: need to fix this to work with multiple schools
         Browser.console.info ("Student.Live: Got session id")
         let session = OpenTokJSInterop.init_session oti.Key oti.SessionId
-        OpenTokJSInterop.on_streamcreate_subscribe session 640 480
+        OpenTokJSInterop.on_streamcreate_subscribe_filter session 640 480 model.School.Email
         if session = null then failwith "failed to get js session"
         {model with OTI = Some oti; Session = Some session; Error = None}, Cmd.none
 
@@ -127,9 +128,10 @@ let private video =
     ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
-    [
-        classroom_level model dispatch
-        Box.box' [ Common.Props [ HTMLAttr.Id ""
-                                  Style [ CSSProp.Height "100%" ] ] ]
-            [ video ]
+    Container.container [ Container.IsFluid
+                          Container.Modifiers [ ] ] [
+          classroom_level model dispatch
+          Box.box' [ Common.Props [ HTMLAttr.Id ""
+                                    Style [ CSSProp.Height "100%" ] ] ]
+            [ video ] 
     ]

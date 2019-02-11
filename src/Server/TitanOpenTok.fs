@@ -3,11 +3,8 @@ module TitanOpenTok
 open OpenTokCore
 open Domain
 open FSharp.Control.Tasks.ContextInsensitive
-open Microsoft.Extensions.Logging
-open System.Data.SqlClient
 open System.Collections.Generic
 open System
-open System.Dynamic
 open System.Threading.Tasks
 
 type ITitanOpenTok =

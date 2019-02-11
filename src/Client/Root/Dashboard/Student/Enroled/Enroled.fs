@@ -149,5 +149,3 @@ let view (model : Model) (dispatch : Msg -> unit) =
                 | Loading ->
                     Client.Style.loading_view)
     ]
-    
-

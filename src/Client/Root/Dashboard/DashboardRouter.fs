@@ -1,5 +1,6 @@
 module DashboardRouter
 
+open Client.Shared
 open Elmish
 open Elmish.React
 open Fable.Helpers.React.Props
@@ -20,12 +21,12 @@ type Msg =
 type Model =
     { Child : PageModel }
 
-let init_tutor = 
-    let tutor_model,cmd = Tutor.Dashboard.init ()
+let init_tutor (claims : TitanClaim) = 
+    let tutor_model,cmd = Tutor.Dashboard.init claims
     {Child = TutorModel(tutor_model)}, Cmd.map TutorMsg cmd
     
-let init_student =
-    let student_model, cmd = Student.Dashboard.init ()
+let init_student claims =
+    let student_model, cmd = Student.Dashboard.init claims
     {Child = StudentModel(student_model)}, Cmd.map StudentMsg cmd
 
 let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =

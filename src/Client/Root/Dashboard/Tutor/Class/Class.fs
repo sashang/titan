@@ -28,6 +28,7 @@ type Model =
       Error : APIError option
       Session : obj option
       Live : LiveState
+      Email : string //tutor's email
       EndTime : DateTimeOffset  option }
 
 type Msg =
@@ -57,9 +58,9 @@ let private get_live_session_id () = promise {
 }
 
 
-let init () =
+let init email =
     { Session = None; Students = []; StartTime = None; Live = Off
-      EndTime = None; OTI = None; Error = None},
+      EndTime = None; OTI = None; Error = None; Email = email},
       Cmd.ofPromise get_live_session_id () GetSessionSuccess GetSessionFailure
 
 let update (model : Model) (msg : Msg) =
@@ -83,7 +84,7 @@ let update (model : Model) (msg : Msg) =
 
     |  {Live = Off; OTI = Some oti; Session = Some session}, GoLive ->
         Browser.console.info (sprintf "Clicked GoLive...initialzing publisher with session id = %s" model.OTI.Value.SessionId)
-        let publisher = OpenTokJSInterop.init_pub "publisher" "1280x720"
+        let publisher = OpenTokJSInterop.init_pub "publisher" "1280x720" model.Email
         OpenTokJSInterop.connect_session_with_pub session publisher model.OTI.Value.Token
         {model with Live = On; Session = Some session}, Cmd.none
 

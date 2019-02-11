@@ -41,7 +41,7 @@ module OpenTokJSInterop =
     let init_session (key:string) (session_id:string) : obj =
         import "init_session" "./custom.js"
 
-    let init_pub (div_id : string) (res : string) : obj =
+    let init_pub (div_id : string) (res : string) (email : string) : obj =
         import "init_pub" "./custom.js"
 
     let connect_session_with_pub (session:obj) (publisher:obj) (token:string) : unit =
@@ -58,3 +58,6 @@ module OpenTokJSInterop =
 
     let on_streamcreate_subscribe (session:obj) (width : int) (height : int) : unit =
         import "on_streamcreate_subscribe" "./custom.js"
+
+    let on_streamcreate_subscribe_filter (session:obj) (width : int) (height : int) (email : string) : unit =
+        import "on_streamcreate_subscribe_filter" "./custom.js"
