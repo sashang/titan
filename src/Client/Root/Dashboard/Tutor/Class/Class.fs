@@ -130,8 +130,7 @@ let private students_in_room (model : Model) =
 
 let private video = 
     div [ HTMLAttr.Id "videos"] [
-        div [ HTMLAttr.Id "publisher"
-              Style [ ] ] [
+        div [ HTMLAttr.Id "publisher" ] [
 
         ]
         div [ HTMLAttr.Id "subscriber" ] [

@@ -117,9 +117,7 @@ let update (model : Model) (msg : Msg) =
 
 
 let private video = 
-    div [ HTMLAttr.Id "videos"
-          Style [ CSSProp.Position "relative"
-                  CSSProp.Height "100%"; CSSProp.Width "100%"] ] [
+    div [ HTMLAttr.Id "videos"] [
         div [ HTMLAttr.Id "publisher" ] [
 
         ]
@@ -129,7 +127,7 @@ let private video =
     ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
-    Container.container [] [
+    [
         classroom_level model dispatch
         Box.box' [ Common.Props [ HTMLAttr.Id ""
                                   Style [ CSSProp.Height "100%" ] ] ]
