@@ -46,6 +46,7 @@ type BroadcastState =
 
 type PageModel =
     | LoginModel
+    | FAQModel
     | DashboardRouterModel of DashboardRouter.Model
 (*    | EnrolModel of Enrol.Model*)
     | HomeModel of Home.Model
@@ -83,13 +84,15 @@ let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMs
         | {Session = None} ->
             model, Cmd.none
 
-
     //these pages we don't care about the token. We can go to them with or without one.
     | Some Pages.PageType.Home ->
         { model with Child = HomeModel (Home.init ()) }, Cmd.none
 
     | Some Pages.PageType.Login ->
         { model with Child = LoginModel}, Cmd.none 
+
+    | Some Pages.PageType.FAQ ->
+        { model with Child = FAQModel}, Cmd.none 
 
     | Some Pages.DashboardTitan ->
         let message = "DashboardTitan page not implemented"
@@ -192,8 +195,8 @@ let view model dispatch =
                 yield DashboardRouter.view model (DashboardRouterMsg >> dispatch) 
             | HomeModel model ->
                 yield! Home.view model (HomeMsg  >> dispatch)
-(*                | EnrolModel model ->
-                yield! Enrol.view model (EnrolMsg  >> dispatch)*)
+            | FAQModel ->
+                yield FAQ.view
         ]
         Hero.foot [ ] [ Home.footer ]
     ]

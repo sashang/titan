@@ -12,6 +12,7 @@
     <Compile Include="Style.fs" />
     <Compile Include="Shared.fs" />
     <Compile Include="Root/Home/FirstTime/FirstTime.fs" />
+    <Compile Include="Root/FAQ/FAQ.fs" />
     <Compile Include="Root/Home/Home.fs" />
     <Compile Include="Root/SignOut/SignOut.fs" />
     <Compile Include="Root/Login/Login.fs" />

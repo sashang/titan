@@ -59,6 +59,7 @@ let private register_punter (punter : Domain.BetaRegistration) = promise {
         return ()
     | _  -> return (raise (RegisterException response))
 }
+
 let init () = Model.init
 
 let update  (model : Model) (msg : Msg) (claims : TitanClaim): Model*Cmd<Msg> =
@@ -149,8 +150,8 @@ let curious =
                         Button.button 
                             [ Button.Color IsTitanInfo
                               Button.Size IsLarge
-                              Button.OnClick (goto_url Pages.Login) ]
-                            [ str "Sign in to find out" ] ] ] ] ]
+                              Button.OnClick (goto_url Pages.FAQ) ]
+                            [ str "Click here to find out" ] ] ] ] ]
         
 let archived_video =
     Container.container
@@ -159,20 +160,21 @@ let archived_video =
                 [ Column.column [ ] [
                       Image.image 
                         [ Image.IsSquare ] 
-                        [ img [ Props.Src "Images/film-clip.png" ] ]
+                        [ img [ Props.Src "Images/online tutor.png" ] ]
                   ]
                   Column.column [ ] [
-                      Heading.h1 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] 
-                        [ str "Private video archive" ]
+                      Heading.h1 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold
+                                                       Modifier.TextAlignment  (Screen.All, TextAlignment.Left) ] ] 
+                        [ str "Deliver private lessons to 100s of students." ]
                       Text.div 
                         [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4)
                                              Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
-                        [ str "Record the lesson and make available for private viewing." ]
+                        [ str "" ]
                       Text.div 
                         [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5)
                                              Modifier.TextTransform TextTransform.Italic
                                              Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
-                        [ str "This feature is still in development." ] ] ]
+                        [ str "During the trial phase we artificially limit the numbers." ] ] ]
                   ]
 
 let no_advertising =

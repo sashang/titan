@@ -116,7 +116,7 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         let new_state, new_cmd = PendingStudents.init ()
         {model with Child = EnrolModel new_state}, Cmd.map EnrolMsg new_cmd
     | model, ClickClassroom ->
-        let new_state, new_cmd = Class.init ()
+        let new_state, new_cmd = Class.init model.Claims.Email
         {model with Child = ClassModel new_state}, Cmd.map ClassMsg new_cmd
     | model, ClickStudents ->
         let new_state, new_cmd = StudentsComponent.init ()

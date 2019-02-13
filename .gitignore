@@ -21,3 +21,6 @@ src/Client/public/css/mystyles.css
 src/Server/appsettings.json
 src/Server/appsettings.Development.json
 deploy/
+src/Server/appsettings.azure.json
+src/Server/appsettings.google.json
+src/Server/appsettings.json.template

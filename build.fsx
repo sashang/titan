@@ -99,6 +99,10 @@ Target.create "Run" (fun _ ->
     |> ignore
 )
 
+let buildDocker tag =
+    let args = sprintf "build -t %s ." tag
+    runTool "docker" args "."
+
 Target.create "Bundle" (fun _ ->
     let serverDir = Path.combine deployDir "Server"
     let clientDir = Path.combine deployDir "Client"
@@ -115,12 +119,11 @@ let dockerImageName = "titan"
 let dockerFullName = sprintf "%s/%s" dockerUser dockerImageName
 
 Target.create "Docker" (fun _ ->
-    let buildArgs = sprintf "build -t %s ." dockerFullName
-    runTool "docker" buildArgs "."
-
-    let tagArgs = sprintf "tag %s %s" dockerFullName dockerFullName
-    runTool "docker" tagArgs "."
+    buildDocker dockerFullName
 )
+
+
+
 
 
 open Fake.Core.TargetOperators
