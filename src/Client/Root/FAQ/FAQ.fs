@@ -63,9 +63,11 @@ let view =
                                    However, if you want to scale to 100s of students then Tewtin will be able to deliver an interactive style broadcast.
                                    Imagine trying to manage 10 students with Skype in a single call?" ] 
                         Heading.h4 [ Heading.IsSubtitle ] 
-                            [ str "Additionally Skype has problems with privacy. Your conversation over Skype is being listened to by 3rd parties and students targeted for advertising. We don't believe that
-                                   education should be delivered this way. Parents are becoming more aware of the unexpected side effects of advertising model that drives a lot of these
-                                   free tools, and are more concerned about the data footprint of their children, and seek to minimise this. Tewtin helps with this because we do not advertise on behalf of
+                            [ str "Additionally Skype has problems with privacy. Your conversation over Skype is being listened
+                                   to by 3rd parties and students targeted for advertising. We don't believe that
+                                   education should be delivered this way. Parents are becoming more aware of the unexpected side effects
+                                   of the advertising model that drives a lot of these free tools. They are concerned about the data footprint of their
+                                   children, and seek to minimise this. Tewtin helps here because we do not advertise on behalf of
                                    3rd parties nor sell data to third parties." ] 
                     ]
                 ]
@@ -109,8 +111,8 @@ let view =
                 Column.column [ ] [
                     Box.box' [ Common.Modifiers [ Modifier.BackgroundColor IsTitanInfo2 ]  ] [ 
                         Heading.h4 [ Heading.IsSubtitle ] 
-                            [ str "They are currently an underserved vertical market. There's nothing out there specifically designed to enable them take advantage of the scale that
-                                   the internet can provide." ] 
+                            [ str "They are currently an underserved vertical market. There's nothing out there specifically
+                                   designed to enable them take advantage of the scale that the internet can provide." ] 
                     ]
                 ]
             ]
@@ -131,7 +133,8 @@ let view =
                 Column.column [ ] [
                     Box.box' [ Common.Modifiers [ Modifier.BackgroundColor IsTitanInfo2 ]  ] [ 
                         Heading.h4 [ Heading.IsSubtitle ] 
-                            [ str "A monthly subscription model for the base service with pay as you go for the video conferencing. Pricing is yet to be determined." ] 
+                            [ str "A monthly subscription model for the base service with pre-pay
+                                   for video conferencing and other add on features. Pricing is yet to be determined." ] 
                     ]
                 ]
             ]
