@@ -186,6 +186,15 @@ let view model dispatch =
                                 yield nav_item_button dispatch ClickSignOut "Sign Out" ]
                 ]
             ]
+            (match model.Claims with
+            | Some claims ->
+                match claims.IsApproved with
+                | false ->
+                    Message.message [ Message.Color IsTitanInfo ] [
+                        Message.body [ ] [ str ("Hi " + claims.GivenName + "! Thanks for showing interest in Tewtin. We will email you when your application is approved.") ]
+                    ]
+                | true -> nothing
+            | None -> nothing)
         ]
         Hero.body [ Common.Props [ Style [ ] ] ] [ 
             match model.Child with
@@ -234,24 +243,28 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
             | {Child = HomeModel home_model} when claims.is_first_time ->
                 let new_home_model, home_msg = Home.update home_model Home.FirstTimeUser claims
                 { state with Session = Some session; Claims = Some claims; Child = HomeModel new_home_model}, Cmd.none
-            | model when claims.IsTutor  ->
+            | model when claims.IsTutor && claims.IsApproved ->
                 let tutor_model, cmd = DashboardRouter.init_tutor claims
                 { state with 
                     Session = Some session; Claims = Some claims;
                     Child = DashboardRouterModel(tutor_model)}, Cmd.map DashboardRouterMsg cmd
-            | model when claims.IsStudent  ->
+            | model when claims.IsStudent && claims.IsApproved ->
                 let student_model, cmd = DashboardRouter.init_student claims
                 { state with 
                     Session = Some session; Claims = Some claims;
                     Child = DashboardRouterModel(student_model)}, Cmd.map DashboardRouterMsg cmd
+            | model when not claims.IsApproved ->
+                let message = "User needs approval from Tewtin"
+                Browser.console.warn message
+                { state with Session = Some session; Claims = Some claims}, Cmd.none
             | model when claims.IsTitan  ->
                 let message = "Titan user update not implemented"
                 Browser.console.error message
-                failwith message
+                { state with Session = Some session; Claims = Some claims}, Cmd.none
             | _ ->
                 let message = "Unknown state or claim."
                 Browser.console.error message
-                failwith message
+                state, Cmd.none
 
         | Error e -> 
             Browser.console.warn e

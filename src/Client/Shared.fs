@@ -14,6 +14,7 @@ type TitanClaim =
     { Surname : string 
       GivenName : string
       Email : string
+      IsApproved : bool 
       IsTitan : bool 
       IsStudent : bool 
       IsTutor : bool}
@@ -22,6 +23,7 @@ type TitanClaim =
         GivenName = ""
         Email = ""
         IsTitan = false
+        IsApproved = false
         IsTutor = false
         IsStudent = false }
 
@@ -31,6 +33,7 @@ type TitanClaim =
                 { Surname = get.Required.Field "family_name" Decode.string
                   GivenName= get.Required.Field "given_name" Decode.string
                   Email = get.Required.Field "email" Decode.string
+                  IsApproved =  get.Optional.Field "IsApproved" Decode.string = Some "true"
                   IsTutor =  get.Optional.Field "IsTutor" Decode.string = Some "true"
                   IsStudent = get.Optional.Field "IsStudent" Decode.string = Some "true"
                   IsTitan = get.Optional.Field "IsTitan" Decode.string = Some "true" })
