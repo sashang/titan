@@ -53,18 +53,16 @@ let button_enabled dispatch msg text enable =
     button dispatch msg text [Button.Disabled (not enable)]
 
 let loading_view = 
-    [ 
-        div [ HTMLAttr.Class "lds-grid" ] [ 
-            div [] []
-            div [] []
-            div [] []
-            div [] []
-            div [] []
-            div [] []
-            div [] []
-            div [] []
-            div [] []
-        ]
+    div [ HTMLAttr.Class "lds-grid" ] [ 
+        div [] []
+        div [] []
+        div [] []
+        div [] []
+        div [] []
+        div [] []
+        div [] []
+        div [] []
+        div [] []
     ]
 
 let onEnter msg dispatch =

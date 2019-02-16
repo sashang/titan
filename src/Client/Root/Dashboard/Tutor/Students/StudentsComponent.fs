@@ -131,10 +131,10 @@ let private single_student model dispatch (student : Domain.Student) =
 let private render_all_students (model : Model) (dispatch : Msg->unit) =
     match model.Students with
     | [] ->
-        [nothing]
+        nothing
     | _ ->
-       [ for x in model.Students do
-           yield single_student model dispatch x] 
+       div [ ] [ for x in model.Students do
+                    yield single_student model dispatch x] 
 
 let private students_level =
     Level.level [ ] 
@@ -145,6 +145,9 @@ let private students_level =
 
 let view (model : Model) (dispatch : Msg -> unit) =
      Box.box' [ ] 
-        [ yield! (match model.LoadStudentsState with
-                   | Loaded -> List.append [students_level] [yield! render_all_students model dispatch] 
+        [ yield (match model.LoadStudentsState with
+                   | Loaded -> div [ ] [
+                                  students_level
+                                  render_all_students model dispatch
+                               ]
                    | Loading -> Client.Style.loading_view) ]
