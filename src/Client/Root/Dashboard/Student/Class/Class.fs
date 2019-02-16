@@ -128,8 +128,7 @@ let private video =
     ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
-    Container.container [ Container.IsFluid
-                          Container.Modifiers [ ] ] [
+    [
           classroom_level model dispatch
           Box.box' [ Common.Props [ HTMLAttr.Id ""
                                     Style [ CSSProp.Height "100%" ] ] ]
