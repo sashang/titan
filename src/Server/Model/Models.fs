@@ -14,6 +14,15 @@ type SchoolTutor(Name:string, FirstName:string, LastName:string, Info:string, Su
     member this.Subjects = Subjects
     member this.Email = Email
     
+
+[<RequireQualifiedAccessAttribute>]
+type UserForTitan(FirstName:string, LastName:string, Email:string, Type:string, Value:string) =
+    member this.FirstName = FirstName
+    member this.LastName = LastName
+    member this.Email = Email
+    member this.Type = Type
+    member this.Value = Value
+
 [<RequireQualifiedAccessAttribute>]
 type PendingStudent(FirstName:string, LastName:string, Phone:string, Email:string)=
     member this.Phone = Phone

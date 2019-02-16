@@ -86,6 +86,27 @@ let private make_help (code : APICode) (error : APIError) =
          if code = the_code then List.append acc [(help msg)] else acc)
          [] error.Codes error.Messages
 
+
+let radio_buttons label yes_string no_string value dispatch msg =
+    Field.div [ ] [
+        Field.label [ Field.Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
+            [ Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ R.str label ] ]
+        Control.div [ ]
+
+            [ Radio.radio [ ]
+                [ Radio.input [ Radio.Input.Name label
+                                Radio.Input.Props [ OnChange (fun ev -> dispatch msg)
+                                                    Checked value
+                                                    Disabled false ] ]
+                  R.str yes_string ]
+              Radio.radio [ ]
+                [ Radio.input [ Radio.Input.Name label
+                                Radio.Input.Props [ OnChange (fun ev -> dispatch msg)
+                                                    Disabled false
+                                                    Checked (not value) ] ]
+                  R.str no_string ] ] 
+    ]
+
 //a read only input field
 let input_field_ro label text =
     [ Field.div [ ] 

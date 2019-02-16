@@ -38,6 +38,7 @@ type IDatabase =
     abstract member delete_student_from_school: string -> string -> Task<Result<unit, string>>
     /// get a list of claims for the user based on their email
     abstract member query_claims: string -> Task<Result<Models.TitanClaims list, string>>
+    abstract member has_claim: string -> string -> Task<Result<bool, string>>
 
     abstract member insert_tutor: string -> string -> string -> string -> Task<Result<unit, string>>
     abstract member insert_student: string -> string -> string -> Task<Result<unit, string>>
@@ -91,13 +92,43 @@ type IDatabase =
     //approve enrol request. Means creating a user in the school table that the user wants to
     //enrol with, then removing the user from the pending table
     abstract member approve_enrol_request : string -> string -> Task<Result<unit, string>>
+
+    abstract member update_user_claim : string -> string -> string -> Task<Result<unit, string>>
+
+    abstract member insert_user_claim : string -> string -> string -> Task<Result<unit, string>>
     
     abstract member get_enroled_schools : string -> Task<Result<School list, string>>
+
+    abstract member get_users_for_titan : unit -> Task<Result<Domain.UsersForTitanResponse, string>>
     
 type Database(c : string) = 
     member this.connection = c
 
     interface IDatabase with
+        member this.get_users_for_titan () : Task<Result<Domain.UsersForTitanResponse, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                let sql = """select "User"."FirstName","User"."LastName","User"."Email",
+                             "TitanClaims"."Type","TitanClaims"."Value" from "User" join "TitanClaims" on "User"."Id" = "TitanClaims"."UserId";"""
+                let result =
+                    conn
+                    |> dapper_query<Models.UserForTitan> sql
+                    |> Seq.toList
+                    |> List.groupBy (fun x -> x.Email)
+                    |> List.map (fun (key, values) -> 
+                        List.fold (fun (state : Domain.UserForTitan) (x : Models.UserForTitan) ->
+                            {state with FirstName = x.FirstName; LastName = x.LastName; Email = x.Email;
+                                        IsApproved = state.IsApproved || (x.Type = "IsApproved" && x.Value = "true");
+                                        IsTitan = state.IsTitan || (x.Type = "IsTitan" && x.Value = "true");
+                                        IsTutor = state.IsTutor || (x.Type = "IsTutor" && x.Value = "true");
+                                        IsStudent = state.IsStudent || (x.Type = "IsStudent" && x.Value = "true")}) Domain.UserForTitan.init values)
+                return Ok {Users = result; Error = None}
+            with
+            |  e ->
+                return Error e.Message
+        }
+
         member this.get_enroled_schools student_email : Task<Result<School list, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
@@ -204,6 +235,39 @@ type Database(c : string) =
                 return Error e.Message
         }
         
+        member this.insert_user_claim email claim value : Task<Result<unit, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                let cmd = """insert into "TitanClaims" ("UserId", "Type", "Value") values 
+                             ((select "User"."Id" from "User" where "User"."Email" = @Email), @Type, @Value)"""
+                let m = (Map ["Email", email; "Type", claim; "Value", value])
+                if dapper_map_param_exec cmd m conn = 1 then  
+                    return Ok ()
+                else 
+                    return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+            with
+            |  e ->
+                return Error e.Message
+        }
+
+        member this.update_user_claim email claim value : Task<Result<unit, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                let cmd = """update "TitanClaims" set "TitanClaims"."Value" = @Value from "User"
+                             join "TitanClaims" on "User"."Id" = "TitanClaims"."UserId" where
+                             "User"."Email" = @Email and "TitanClaims"."Type" = @Type"""
+                let m = (Map ["Email", email; "Type", claim; "Value", value])
+                if dapper_map_param_exec cmd m conn = 1 then  
+                    return Ok ()
+                else 
+                    return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+            with
+            |  e ->
+                return Error e.Message
+        }
+        
         member this.insert_enrol_request student_email school_name : Task<Result<unit, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
@@ -219,6 +283,23 @@ type Database(c : string) =
             |  e ->
                 return Error e.Message
         }
+
+        member this.has_claim email claim : Task<Result<bool, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                let cmd = """select case when exists (select "User"."Id" from "User"
+                             join "TitanClaims" on "User"."Id" = "TitanClaims"."UserId"
+                             where "TitanClaims"."Type" = @Claim and "User"."Email" = @Email) then cast(1 as bit) else cast(0 as bit) end"""
+                let exists = conn
+                             |> dapper_map_param_query<bool> cmd (Map ["Email", email; "Claim", claim])
+                             |> Seq.head
+                return (if exists then Ok true else Ok false)
+            with
+            |  e ->
+                return Error e.Message
+        }
+
         member this.insert_tutor first last schoolname email : Task<Result<unit, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
@@ -245,6 +326,7 @@ type Database(c : string) =
             |  e ->
                 return Error e.Message
         }
+
         member this.insert_student first last email : Task<Result<unit, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)

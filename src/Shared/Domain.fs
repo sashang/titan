@@ -1,6 +1,7 @@
 /// Domain model shared between client and server.
 namespace Domain
 
+open Thoth.Json
 ///Flexible API error codes. Interpreted by the client side code depending on context.
 [<RequireQualifiedAccess>]
 type APICode =
@@ -75,6 +76,26 @@ type SignOutCode =
 [<CLIMutable>]
 type EmailRequest =
     { Email : string }
+
+[<CLIMutable>]
+type UserForTitan =
+    { FirstName : string
+      LastName : string
+      Email: string
+      IsTitan : bool
+      IsStudent : bool
+      IsApproved : bool
+      IsTutor : bool }
+    static member init =
+        { FirstName = ""; LastName = ""; Email = ""; IsTitan = false; IsApproved = false; IsStudent = false; IsTutor = false}
+
+[<CLIMutable>]
+type UsersForTitanResponse = 
+    { Users : UserForTitan list
+      Error : APIError option }
+    static member init =
+        { Users = []; Error = None}
+    static member db_error msg = {Users = []; Error = Some (APIError.db msg) } 
 
 [<CLIMutable>]
 type SignOutResult =

@@ -25,7 +25,6 @@ type Model =
 exception GetAllStudentsEx of APIError
 exception DismissStudentEx of APIError
 
-
 type Msg =
     | LoadStudentsSuccess of Student list
     | LoadStudentsFailure  of exn

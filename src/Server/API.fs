@@ -341,6 +341,69 @@ let get_all_students (next : HttpFunc) (ctx : HttpContext) = task {
         return! ctx.WriteJsonAsync APIError.unauthorized
 }
 
+///update the user and its claims
+let update_user_approval (next : HttpFunc) (ctx : HttpContext) = task {
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        logger.LogInformation("called update_user_claims")
+        let titan_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        let db_service = ctx.GetService<IDatabase>()
+        logger.LogInformation("titan is " + titan_email)
+        let! is_titan = db_service.has_claim titan_email "IsTitan"
+        let! data = ctx.BindJsonAsync<UserForTitan>()
+        match is_titan with
+        | Ok _ ->
+            let! result = db_service.has_claim data.Email "IsApproved"
+            match result with
+            | Ok true ->
+                //update the claim
+                logger.LogInformation("Updating existing claim for " + data.Email)
+                let! result = db_service.update_user_claim data.Email "IsApproved" (if data.IsApproved then "true" else "false")
+                match result with
+                | Ok response ->
+                    return! ctx.WriteJsonAsync None
+                | Error message ->
+                    return! ctx.WriteJsonAsync (APIError.db message)
+            | Ok false ->
+                //insert the claim
+                logger.LogInformation("Inserting new claim for " + data.Email)
+                let! result = db_service.insert_user_claim data.Email "IsApproved" (if data.IsApproved then "true" else "false")
+                match result with
+                | Ok response ->
+                    return! ctx.WriteJsonAsync None
+                | Error message ->
+                    return! ctx.WriteJsonAsync (APIError.db message)
+            | Error msg ->
+                logger.LogInformation("has_claim failed for " + data.Email)
+                return! ctx.WriteJsonAsync (APIError.db msg)
+        | Error msg ->
+            logger.LogError("Failed to update claim for " + data.Email)
+            return! ctx.WriteJsonAsync (APIError.db msg)
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
+}
+
+let get_users_for_titan (next : HttpFunc) (ctx : HttpContext) = task {
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        logger.LogInformation("called get_users_for_titan")
+        let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        let db_service = ctx.GetService<IDatabase>()
+        let! is_titan = db_service.has_claim user_email "IsTitan"
+        match is_titan with
+        | Ok _ ->
+            let! result = db_service.get_users_for_titan ()
+            match result with
+            | Ok response ->
+                return! ctx.WriteJsonAsync response
+            | Error message ->
+                return! ctx.WriteJsonAsync (UsersForTitanResponse.db_error message)
+        | Error _ ->
+            return! ctx.WriteJsonAsync APIError.unauthorized
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
+}
+
 let dismiss_student (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
         let logger = ctx.GetLogger<Debug.DebugLogger>()
