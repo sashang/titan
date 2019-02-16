@@ -144,7 +144,7 @@ let private students_level =
                             Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "students" ] ] ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
-    [ Box.box' [ ] 
+     Box.box' [ ] 
         [ yield! (match model.LoadStudentsState with
                    | Loaded -> List.append [students_level] [yield! render_all_students model dispatch] 
-                   | Loading -> Client.Style.loading_view) ] ] 
+                   | Loading -> Client.Style.loading_view) ]

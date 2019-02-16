@@ -6,12 +6,6 @@ function handle_error(error) {
     }
 }
 
-export function byte2string(input) {
-    var result = "";
-    var data = new Buffer(input, 'base63');
-    // var result = data.toString('ascii');
-    // return result;
-}
 export function connect(session, token) {
     if (session)
         session.connect(token, handle_error);

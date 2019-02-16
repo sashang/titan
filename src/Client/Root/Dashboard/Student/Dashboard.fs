@@ -112,29 +112,26 @@ let sub_menu label isActive children =
             children ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
-     Container.container [ Container.IsFluid
-                           Container.Modifiers [ Modifier.IsMarginless ] ] [
-        Columns.columns [ ] [
-            Column.column [ Column.Width (Screen.All, Column.Is1) ] [
-                Menu.menu [ ] [
-                    Menu.list [ ] [
-                        sub_menu "Classrooms" false [
-                        yield! [ for school in model.EnroledSchools do
-                                    yield menu_item school.SchoolName false dispatch (ClickClassroom school) ]
-                        ]
-                        menu_item "Enrol" false dispatch ClickEnrol
-                        menu_item "Account" false dispatch ClickAccount
+    Columns.columns [ ] [
+        Column.column [ Column.Width (Screen.All, Column.Is1) ] [
+            Menu.menu [ ] [
+                Menu.list [ ] [
+                    sub_menu "Classrooms" false [
+                    yield! [ for school in model.EnroledSchools do
+                                yield menu_item school.SchoolName false dispatch (ClickClassroom school) ]
                     ]
+                    menu_item "Enrol" false dispatch ClickEnrol
+                    menu_item "Account" false dispatch ClickAccount
                 ]
             ]
-            Column.column [ ] [
-                (match model.Child with
-                | EnroledModel child ->
-                    Enroled.view child (EnroledMsg >> dispatch)
-                | ClassModel child ->
-                    Student.Class.view child (ClassMsg >> dispatch)
-                | HomeModel -> nothing)
-            ]
         ]
-     ]
+        Column.column [ ] [
+            (match model.Child with
+            | EnroledModel child ->
+                Enroled.view child (EnroledMsg >> dispatch)
+            | ClassModel child ->
+                Student.Class.view child (ClassMsg >> dispatch)
+            | HomeModel -> nothing)
+        ]
+    ]
     

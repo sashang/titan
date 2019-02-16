@@ -139,13 +139,13 @@ let private your_schools model dispatch =
 
 //render the schools that this student is enroled in
 let view (model : Model) (dispatch : Msg -> unit) =
-    Box.box' [ ] [
-        yield! (match model.LoadSchoolsState with
-                | Loaded ->
-                    List.append
-                        [your_schools model dispatch ]
-                        [ for school in model.Schools do
-                            yield render_school school dispatch ]
-                | Loading ->
-                    Client.Style.loading_view)
-    ]
+        Box.box' [ ] [
+            yield! (match model.LoadSchoolsState with
+                    | Loaded ->
+                        List.append
+                            [your_schools model dispatch ]
+                            [ for school in model.Schools do
+                                yield render_school school dispatch ]
+                    | Loading ->
+                        Client.Style.loading_view)
+        ]

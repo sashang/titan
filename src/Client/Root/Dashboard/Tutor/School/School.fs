@@ -175,7 +175,8 @@ let private go_live dispatch msg text =
 let view (model : Model) (dispatch : Msg -> unit) = 
     match model.SchoolLoadState, model.UserLoadState with
     | Loaded, Loaded ->
-        [   account_level
+        div [ ] [
+            account_level
             Card.card [ ] 
                 [ Card.header [ ]
                     [ Card.Header.title [ ] [ ] ]

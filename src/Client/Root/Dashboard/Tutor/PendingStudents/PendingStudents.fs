@@ -216,5 +216,5 @@ let private students_level =
                             Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "enrol" ] ] ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
-    [ Box.box' [ ] 
-        [ yield! List.append [students_level] [yield! render_all_students model dispatch] ] ] 
+    Box.box' [ ] 
+        [ yield! List.append [students_level] [yield! render_all_students model dispatch] ]

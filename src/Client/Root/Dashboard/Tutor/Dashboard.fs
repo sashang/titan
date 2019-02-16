@@ -69,14 +69,14 @@ let view (model : Model) (dispatch : Msg -> unit) =
                     ]
                 ]
                 Column.column [ ] [
-                   yield! (match model.Child with
-                           | ClassModel class_model ->
+                   yield (match model.Child with
+                          | ClassModel class_model ->
                                Class.view class_model (ClassMsg >> dispatch) 
-                           | EnrolModel model ->
+                          | EnrolModel model ->
                                PendingStudents.view model (EnrolMsg >> dispatch) 
-                           | SchoolModel model ->
+                          | SchoolModel model ->
                                School.view model (SchoolMsg >> dispatch) 
-                           | StudentsModel model ->
+                          | StudentsModel model ->
                                StudentsComponent.view model (StudentMsg >> dispatch))
                 ]
             ]
