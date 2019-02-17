@@ -55,9 +55,6 @@ module OpenTokJSInterop =
     let connect (session : obj) (token : obj) : unit =
         import "connect" "./custom.js"
 
-    let connect_session_with_sub (session:obj) (token:obj) : unit =
-        import "connect_session_with_sub" "./custom.js"
-
     let on_streamcreate_subscribe (session:obj) (width : int) (height : int) : unit =
         import "on_streamcreate_subscribe" "./custom.js"
 

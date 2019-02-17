@@ -1,4 +1,6 @@
 
+var sub_count_for_tutor = 0
+
 function handle_error(error) {
     if (error) {
         alert(error.message);
@@ -15,6 +17,7 @@ export function disconnect(session) {
     if (session) {
         session.disconnect();
     }
+    sub_count_for_tutor = 0;
 }
 export function init_pub(div_id, res, email) {
     // Create a publisher
@@ -36,6 +39,7 @@ export function init_pub(div_id, res, email) {
     return publisher;
 }
 export function connect_session_with_pub(session, publisher, token) {
+
     // Connect to the session
     session.connect(token, function (error) {
         // If the connection is successful, publish to the session
@@ -64,30 +68,14 @@ export function on_streamcreate_subscribe_filter(session, w, h, email) {
 }
 export function on_streamcreate_subscribe(session, w, h) {
     session.on('streamCreated', function (event) {
-        session.subscribe(event.stream, 'subscriber', {
-            insertMode: 'append',
-            preferedResolution: { width: w, height: h },
-            width: '100%',
-            height: '100%'
-        }, handle_error);
-    });
-}
-export function connect_session_with_sub(session, token) {
-    // Connect to the session
-    session.connect(token, function (error) {
-        // If the connection is successful, publish to the session
-        if (error) {
-            alert(error.message);
-            console.log(error.message);
-        }
-        else {
-            session.on('streamCreated', function (event) {
-                session.subscribe(event.stream, 'subscriber', {
-                    insertMode: 'append',
-                    width: '100%',
-                    height: '100%'
-                }, handle_error);
-            });
+        if (sub_count_for_tutor < 1) {
+            var sub = session.subscribe(event.stream, 'subscriber', {
+                insertMode: 'append',
+                preferedResolution: { width: w, height: h },
+                width: '100%',
+                height: '100%'
+            }, handle_error);
+            sub_count_for_tutor++;
         }
     });
 }
