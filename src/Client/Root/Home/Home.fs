@@ -283,7 +283,8 @@ let footer =
     Footer.footer [ Common.Modifiers [ Modifier.BackgroundColor IsTitanPrimary
                                        Modifier.TextColor IsWhite
                                        Modifier.TextAlignment (Screen.All, TextAlignment.Left )  ] ]
-        [ a [ Href "docs/privacy-policy.html" ] [ str "Privacy Policy" ]]
+        [ div [] [ a [ Href "docs/privacy-policy.html" ] [ str "Privacy Policy" ] ]
+          div [ ] [ a [ Href "docs/terms-and-conditions.html" ] [ str "Terms and Conditions" ] ]]
 
 let view (model : Model) (dispatch : Msg -> unit) =
     [ Section.section 

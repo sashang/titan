@@ -1,8 +1,7 @@
 # Privacy Policy
 ## Welcome to Tewtin's Privacy Policy
 
-Hi there, we’re Tewtin's Pty Ltd (ABN 27 522 078 458) of 214/15 Pascoe
-Street, Pascoe Vale, Victoria, Australia("Tewtin") and welcome to our privacy
+Hi there, we’re Tewtin, Australia("Tewtin") and welcome to our privacy
 policy. This policy sets out how we handle your personal information if
 you’re an Tewtin user or visitor to our Site. When we say ‘we’, ‘us’ or
 ‘Tewtin’ it’s because that’s who we are and we own and run the Site. If we
@@ -248,8 +247,8 @@ version of this policy will always be available on this page.
 ## How you can contact us
 
 If you have any questions about our privacy practices or the way in which we
-have been managing your personal information, please contact us in writing at
-214/15 Pascoe Street, Pascoe Vale, Melbourne, 3044, Australia or support@tewtin.com.
+have been managing your personal information, please contact us in writing at 
+support@tewtin.com.
 
 We’re really glad you made it to the end of the privacy policy, because
 understanding that Tewtin does not repackage student's personal data for use
