@@ -60,3 +60,6 @@ module OpenTokJSInterop =
 
     let on_streamcreate_subscribe_filter (session:obj) (width : int) (height : int) (email : string) : unit =
         import "on_streamcreate_subscribe_filter" "./custom.js"
+
+module PrivacyPolicy =
+    let pp : obj = import "PrivacyPolicy" "./privacy-policy.js"

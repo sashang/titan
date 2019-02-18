@@ -65,12 +65,13 @@ var CONFIG = {
     // More info at https://babeljs.io/docs/en/next/babel-preset-env.html
     babel: {
         presets: [
+            "@babel/preset-react",
             ["@babel/preset-env", {
                 "targets": "> 0.25%, not dead",
                 "modules": false,
                 // This adds polyfills when needed. Requires core-js dependency.
                 // See https://babeljs.io/docs/en/babel-preset-env#usebuiltins
-                "useBuiltIns": "usage",
+                "useBuiltIns": "usage"
             }]
         ],
     }
@@ -161,6 +162,13 @@ module.exports = {
                         babel: CONFIG.babel
                     }
                 }
+            },
+            {
+                test: /\.html$/,
+                exclude: /node_modules/,
+                use: {
+                    loader: 'html-loader',
+                },
             },
             {
                 test: /\.js$/,
