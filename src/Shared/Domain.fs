@@ -237,6 +237,15 @@ type School =
       Email : string }
     static member init first last sn info subjects location email =
         {FirstName = first; LastName = last; SchoolName = sn; Info = info; Subjects = subjects; Location = location; Email = email}
+
+///generic list of schools reponse
+[<CLIMutable>]
+type SchoolsResponse =
+    { Schools : School list
+      Error : APIError option}
+    
+    static member init = {Schools = []; Error = None} 
+    static member db_error msg = {Schools = []; Error = Some (APIError.db msg) } 
     
 [<CLIMutable>]
 type GetAllSchoolsResult =

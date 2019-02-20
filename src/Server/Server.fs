@@ -164,6 +164,7 @@ let titan_api =  router {
     get "/load-school" API.load_school
     get "/load-user" API.load_user
     get "/get-all-schools" API.get_all_schools
+    get "/get-pending-schools" API.get_pending_schools
     get "/get-all-students" API.get_all_students
     get "/get-pending" API.get_pending
     get "/go-live" API.go_live

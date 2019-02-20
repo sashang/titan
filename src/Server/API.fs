@@ -309,6 +309,22 @@ let save_tutor (next :HttpFunc) (ctx : HttpContext) = task {
         return! ctx.WriteJsonAsync APIError.unauthorized
 }
 
+let get_pending_schools (next : HttpFunc) (ctx : HttpContext) = task {
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        logger.LogInformation("called get_pending_schools")
+        let db_service = ctx.GetService<IDatabase>()
+        let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        let! result = db_service.get_pending_schools user_email
+        match result with
+        | Ok schools ->
+            return! ctx.WriteJsonAsync schools
+        | Error message ->
+            return! ctx.WriteJsonAsync (SchoolsResponse.db_error message)
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
+}
+
 let get_all_schools (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
         let logger = ctx.GetLogger<Debug.DebugLogger>()

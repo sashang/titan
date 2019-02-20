@@ -100,11 +100,39 @@ type IDatabase =
     abstract member get_enroled_schools : string -> Task<Result<School list, string>>
 
     abstract member get_users_for_titan : unit -> Task<Result<Domain.UsersForTitanResponse, string>>
+
+    ///get the pending schools (i.e. the schools that the student has requested enrolement in) given a student's email.
+    abstract member get_pending_schools : string -> Task<Result<Domain.SchoolsResponse, string>>
+
     
 type Database(c : string) = 
     member this.connection = c
 
     interface IDatabase with
+        member this.get_pending_schools (email : string) : Task<Result<Domain.SchoolsResponse, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                //the order the table fields appear in the sql select has to match the order in the Models.SchoolTutor
+                //this sql statement needs a comment. We want the tutors info and the school. We're given the email of the student.
+                //Pending table links to User via UserId, School links to Pending via SchoolId
+                //Tutor User links with School via UserId. Then we want to filter all of that based on the students email.
+                let sql = """select "School"."Name","TU"."FirstName","TU"."LastName","School"."Info",
+                             "School"."Subjects", "School"."Location", "TU"."Email" from "User"
+                             join "Pending" on "User"."Id" = "Pending"."UserId"
+                             join "School" on "School"."Id" = "Pending"."SchoolId"
+                             join "User" as "TU" on "School"."UserId" = "TU"."Id" where "User"."Email" = @Email;"""
+                
+                let result = conn
+                             |> dapper_map_param_query<Models.SchoolTutor> sql (Map["Email", email])
+                             |> Seq.toList
+                             |> List.map (fun x -> School.init x.FirstName x.LastName x.SchoolName x.Info x.Subjects x.Location x.Email)
+                return Ok {Schools = result; Error = None}
+            with
+            |  e ->
+                return Error e.Message
+        }
+
         member this.get_users_for_titan () : Task<Result<Domain.UsersForTitanResponse, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
