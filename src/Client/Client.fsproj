@@ -23,7 +23,7 @@
     <Compile Include="Root/Dashboard/Tutor/Class/Class.fs" />
     <Compile Include="Root/Dashboard/Tutor/PendingStudents/PendingStudents.fs" />
     <Compile Include="Root/Dashboard/Tutor/Dashboard.fs" />
-    <Compile Include="Root/Dashboard/Student/Enroled/Enroled.fs" />
+    <Compile Include="Root/Dashboard/Student/Enrolled/Enrolled.fs" />
     <Compile Include="Root/Dashboard/Student/Class/Class.fs" />
     <Compile Include="Root/Dashboard/Student/Home/Home.fs" />
     <Compile Include="Root/Dashboard/Student/Dashboard.fs" />

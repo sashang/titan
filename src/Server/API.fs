@@ -13,13 +13,13 @@ open System
 open TitanOpenTok
 
 
-let get_enroled_schools (next : HttpFunc) (ctx : HttpContext) = task {
+let get_enrolled_schools (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
         let logger = ctx.GetLogger<Debug.DebugLogger>()
-        logger.LogInformation("getting enroled schools")
+        logger.LogInformation("getting enrolled schools")
         let student_email = ctx.User.FindFirst(ClaimTypes.Email).Value
         let db = ctx.GetService<IDatabase>()
-        let! result = db.get_enroled_schools student_email
+        let! result = db.get_enrolled_schools student_email
         match result with
         | Ok schools ->
             return! ctx.WriteJsonAsync {GetAllSchoolsResult.init with Schools = schools ; Error = None}

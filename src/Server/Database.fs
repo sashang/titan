@@ -97,7 +97,7 @@ type IDatabase =
 
     abstract member insert_user_claim : string -> string -> string -> Task<Result<unit, string>>
     
-    abstract member get_enroled_schools : string -> Task<Result<School list, string>>
+    abstract member get_enrolled_schools : string -> Task<Result<School list, string>>
 
     abstract member get_users_for_titan : unit -> Task<Result<Domain.UsersForTitanResponse, string>>
 
@@ -157,7 +157,7 @@ type Database(c : string) =
                 return Error e.Message
         }
 
-        member this.get_enroled_schools student_email : Task<Result<School list, string>> = task {
+        member this.get_enrolled_schools student_email : Task<Result<School list, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()

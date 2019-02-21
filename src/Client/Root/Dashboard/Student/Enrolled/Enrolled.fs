@@ -1,4 +1,4 @@
-module Enroled
+module Enrolled
 
 open CustomColours
 open Domain
@@ -13,11 +13,11 @@ open Thoth.Json
 open Client.Shared
 
 type Model =
-    { EnroledSchools : School list //list of schools the student is enroled in 
+    { EnrolledSchools : School list //list of schools the student is enrolled in 
       AllSchools : School list //list of all schools
       PendingSchools : School list //list of schools that the student has requested enrolment
       PendingLoaded : LoadingState
-      EnroledLoaded : LoadingState
+      EnrolledLoaded : LoadingState
       AllLoaded : LoadingState }
 
 type Msg =
@@ -25,29 +25,29 @@ type Msg =
     | GetPendingSchoolsFailure of exn
     | GetAllSchoolsSuccess of School list
     | GetAllSchoolsFailure of exn
-    | GetEnroledSchoolsSuccess of School list
-    | GetEnroledSchoolsFailure of exn
+    | GetEnrolledSchoolsSuccess of School list
+    | GetEnrolledSchoolsFailure of exn
     | ClickEnrol of string
     | EnrolSuccess of unit
     | EnrolFailure of exn
 
 exception GetPendingSchoolsEx of APIError
-exception GetEnroledSchoolsEx of APIError
+exception GetEnrolledSchoolsEx of APIError
 exception GetAllSchoolsEx of APIError
 exception EnrolEx of APIError
 
-let private get_enroled_schools () = promise {
+let private get_enrolled_schools () = promise {
     let request = make_get
     let decoder = Decode.Auto.generateDecoder<GetAllSchoolsResult>()
-    let! response = Fetch.tryFetchAs "/api/get-enroled-schools" decoder request
-    Browser.console.info "received response from get-enroled-schools"
+    let! response = Fetch.tryFetchAs "/api/get-enrolled-schools" decoder request
+    Browser.console.info "received response from get-enrolled-schools"
     match response with
     | Ok result ->
         match result.Error with
-        | Some api_error -> return raise (GetEnroledSchoolsEx api_error)
+        | Some api_error -> return raise (GetEnrolledSchoolsEx api_error)
         | None ->  return result.Schools
     | Error e ->
-        return raise (GetEnroledSchoolsEx (APIError.init [APICode.Fetch] [e]))
+        return raise (GetEnrolledSchoolsEx (APIError.init [APICode.Fetch] [e]))
 }
 
 ///get the schools that this student has requested enrolment
@@ -94,9 +94,9 @@ let private enrol_student (er : EnrolRequest) = promise {
 }
 
 let init () =
-    {EnroledSchools = []; PendingSchools = []; AllLoaded = Loading; AllSchools = [];
-    EnroledLoaded = Loading; PendingLoaded = Loading},
-    Cmd.batch [Cmd.ofPromise get_enroled_schools () GetEnroledSchoolsSuccess GetEnroledSchoolsFailure
+    {EnrolledSchools = []; PendingSchools = []; AllLoaded = Loading; AllSchools = [];
+    EnrolledLoaded = Loading; PendingLoaded = Loading},
+    Cmd.batch [Cmd.ofPromise get_enrolled_schools () GetEnrolledSchoolsSuccess GetEnrolledSchoolsFailure
                Cmd.ofPromise get_pending_schools () GetPendingSchools GetPendingSchoolsFailure
                Cmd.ofPromise get_all_schools () GetAllSchoolsSuccess GetAllSchoolsFailure ]
 
@@ -142,16 +142,16 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
             Browser.console.warn ("Failed to get all schools: " + e.Message)
             model, Cmd.none
 
-    | model, GetEnroledSchoolsSuccess schools ->
-        {model with EnroledSchools = schools; EnroledLoaded = Loaded }, Cmd.none
+    | model, GetEnrolledSchoolsSuccess schools ->
+        {model with EnrolledSchools = schools; EnrolledLoaded = Loaded }, Cmd.none
 
-    | model, GetEnroledSchoolsFailure e ->
+    | model, GetEnrolledSchoolsFailure e ->
         match e with
-        | :? GetEnroledSchoolsEx as ex ->
-            Browser.console.warn ("Failed to get enroled schools: " + List.head ex.Data0.Messages)
+        | :? GetEnrolledSchoolsEx as ex ->
+            Browser.console.error ("Failed to get enrolled schools: " + List.head ex.Data0.Messages)
             model, Cmd.none
         | e ->
-            Browser.console.warn ("Failed to get enroled schools: " + e.Message)
+            Browser.console.error ("Failed to get enrolled schools: " + e.Message)
             model, Cmd.none
 
 let private card_footer (school : School) (dispatch : Msg -> unit) =
@@ -160,7 +160,8 @@ let private card_footer (school : School) (dispatch : Msg -> unit) =
 
 let private card_footer_enrol (school : School) (dispatch : Msg -> unit) =
      Card.Footer.div [ ]
-        [ Client.Style.button dispatch (ClickEnrol school.SchoolName) "Enrol" [] ] 
+        [ Client.Style.button dispatch (ClickEnrol school.SchoolName) "Enrol" [] ]
+
 let private card_content (school:School) (dispatch:Msg->unit) =
     [
         Columns.columns [ ] [
@@ -242,21 +243,41 @@ let private all_schools model dispatch =
                                                Modifier.TextSize (Screen.All, TextSize.Is5) ]
                             Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "all schools" ] ] ]
 
-//render the schools that this student is enroled in
+//render the schools that this student is enrolled in
 let view (model : Model) (dispatch : Msg -> unit) =
         Box.box' [ ] [
-            (match model.EnroledLoaded,model.AllLoaded,model.PendingLoaded with
+            (match model.EnrolledLoaded,model.AllLoaded,model.PendingLoaded with
                 | Loaded, Loaded, Loaded ->
                    div [ ] [
-                        yield your_schools model dispatch 
-                        yield! [ for school in model.EnroledSchools do
-                                    yield render_school school dispatch ]
-                        yield pending_schools model dispatch 
-                        yield! [ for school in model.PendingSchools do
-                                    yield render_school school dispatch ]
-                        yield all_schools model dispatch 
-                        yield! [ for school in model.AllSchools do
-                                    yield render_school_for_enrolment school dispatch ] ]
+                        div [] [
+                            yield your_schools model dispatch
+                        ]
+                        div [] [
+                            yield! [ for school in model.EnrolledSchools do
+                                        yield render_school school dispatch ]
+                        ]
+                        div [] [
+                            yield pending_schools model dispatch 
+                        ]
+                        div [] [
+                            yield! [ for school in model.PendingSchools do
+                                        yield render_school school dispatch ]
+                        ]
+                        div [] [
+                            yield all_schools model dispatch 
+                        ]
+                        div [] [
+                            yield! [ for school in model.AllSchools do
+                                        let result_pend = List.tryFind (fun (pending: School) -> pending.Email = school.Email) model.PendingSchools 
+                                        let result_enrolled = List.tryFind (fun (enrolled: School) -> enrolled.Email = school.Email) model.EnrolledSchools 
+                                        //don't render the school if it's in the pending
+                                        match result_pend, result_enrolled with
+                                        | None, None ->
+                                            yield render_school_for_enrolment school dispatch 
+                                        | _,_ ->
+                                            yield nothing ] 
+                        ]
+                    ]
 
                 | _ ->
                     Client.Style.loading_view)
