@@ -18,6 +18,7 @@ type Model =
       PendingSchools : School list //list of schools that the student has requested enrolment
       PendingLoaded : LoadingState
       EnrolledLoaded : LoadingState
+      ActiveEnrolMessage : bool
       AllLoaded : LoadingState }
 
 type Msg =
@@ -95,7 +96,7 @@ let private enrol_student (er : EnrolRequest) = promise {
 
 let init () =
     {EnrolledSchools = []; PendingSchools = []; AllLoaded = Loading; AllSchools = [];
-    EnrolledLoaded = Loading; PendingLoaded = Loading},
+    EnrolledLoaded = Loading; PendingLoaded = Loading; ActiveEnrolMessage = false},
     Cmd.batch [Cmd.ofPromise get_enrolled_schools () GetEnrolledSchoolsSuccess GetEnrolledSchoolsFailure
                Cmd.ofPromise get_pending_schools () GetPendingSchools GetPendingSchoolsFailure
                Cmd.ofPromise get_all_schools () GetAllSchoolsSuccess GetAllSchoolsFailure ]
@@ -113,7 +114,10 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
 
     | model, EnrolSuccess () ->
         Browser.console.info ("Student request for enrolment succeeded")
-        model, Cmd.none
+        {model with ActiveEnrolMessage = true; AllLoaded = Loading; EnrolledLoaded = Loading; PendingLoaded = Loading },
+        Cmd.batch [Cmd.ofPromise get_enrolled_schools () GetEnrolledSchoolsSuccess GetEnrolledSchoolsFailure
+                   Cmd.ofPromise get_pending_schools () GetPendingSchools GetPendingSchoolsFailure
+                   Cmd.ofPromise get_all_schools () GetAllSchoolsSuccess GetAllSchoolsFailure ]
 
     | model, EnrolFailure e ->
         match e with
@@ -243,42 +247,53 @@ let private all_schools model dispatch =
                                                Modifier.TextSize (Screen.All, TextSize.Is5) ]
                             Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "all schools" ] ] ]
 
+let private render_all_school_types model dispatch =
+    div [ ] [
+        div [] [
+            yield your_schools model dispatch
+            yield! [ for school in model.EnrolledSchools do
+                        yield render_school school dispatch ]
+        ]
+        div [] [
+            match model.PendingSchools with
+            | [] ->
+                yield nothing
+            | _ ->
+                yield pending_schools model dispatch 
+                yield! [ for school in model.PendingSchools do
+                            yield render_school school dispatch ]
+        ]
+        div [] [
+            yield all_schools model dispatch 
+            yield! [ for school in model.AllSchools do
+                        let result_pend = List.tryFind (fun (pending: School) -> pending.Email = school.Email) model.PendingSchools 
+                        let result_enrolled = List.tryFind (fun (enrolled: School) -> enrolled.Email = school.Email) model.EnrolledSchools 
+                        //don't render the school if it's in the pending
+                        match result_pend, result_enrolled with
+                        | None, None ->
+                            yield render_school_for_enrolment school dispatch 
+                        | _,_ ->
+                            yield nothing ] 
+        ]
+    ]
+
 //render the schools that this student is enrolled in
 let view (model : Model) (dispatch : Msg -> unit) =
         Box.box' [ ] [
-            (match model.EnrolledLoaded,model.AllLoaded,model.PendingLoaded with
-                | Loaded, Loaded, Loaded ->
-                   div [ ] [
-                        div [] [
-                            yield your_schools model dispatch
+            
+            (match model.EnrolledLoaded,model.AllLoaded,model.PendingLoaded,model.ActiveEnrolMessage with
+                | Loaded, Loaded, Loaded, true ->
+                    div [ ] [
+                        Message.message [ Message.Color IsTitanSuccess ] [
+                            Message.body [ ] [ str ("Your enrollment request has been received. Your tutor will get back to you.") ]
                         ]
-                        div [] [
-                            yield! [ for school in model.EnrolledSchools do
-                                        yield render_school school dispatch ]
-                        ]
-                        div [] [
-                            yield pending_schools model dispatch 
-                        ]
-                        div [] [
-                            yield! [ for school in model.PendingSchools do
-                                        yield render_school school dispatch ]
-                        ]
-                        div [] [
-                            yield all_schools model dispatch 
-                        ]
-                        div [] [
-                            yield! [ for school in model.AllSchools do
-                                        let result_pend = List.tryFind (fun (pending: School) -> pending.Email = school.Email) model.PendingSchools 
-                                        let result_enrolled = List.tryFind (fun (enrolled: School) -> enrolled.Email = school.Email) model.EnrolledSchools 
-                                        //don't render the school if it's in the pending
-                                        match result_pend, result_enrolled with
-                                        | None, None ->
-                                            yield render_school_for_enrolment school dispatch 
-                                        | _,_ ->
-                                            yield nothing ] 
-                        ]
+                        render_all_school_types model dispatch
                     ]
 
+                | Loaded, Loaded, Loaded, false ->
+                    div [ ] [
+                        render_all_school_types model dispatch
+                    ]
                 | _ ->
                     Client.Style.loading_view)
         ]
