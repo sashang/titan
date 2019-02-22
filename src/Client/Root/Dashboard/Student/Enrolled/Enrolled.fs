@@ -285,7 +285,7 @@ let view (model : Model) (dispatch : Msg -> unit) =
                 | Loaded, Loaded, Loaded, true ->
                     div [ ] [
                         Message.message [ Message.Color IsTitanSuccess ] [
-                            Message.body [ ] [ str ("Your enrollment request has been received. Your tutor will get back to you.") ]
+                            Message.body [ ] [ str ("Your enrolment request has been received. Your tutor will get back to you.") ]
                         ]
                         render_all_school_types model dispatch
                     ]

@@ -1,4 +1,4 @@
-/// Component for students awaiting enrollment completion
+/// Component for students awaiting enrolment completion
 module PendingStudents
 
 open CustomColours
