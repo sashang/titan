@@ -90,19 +90,22 @@ let enrol (next : HttpFunc) (ctx : HttpContext) = task {
 }
 
 let dismiss_pending (next :HttpFunc) (ctx : HttpContext) = task {
-    let logger = ctx.GetLogger<Debug.DebugLogger>()
-    let db = ctx.GetService<IDatabase>()
-    let! info = ctx.BindJsonAsync<DismissPendingRequest>()
-    //get the user id of the tutor
-    let user_id = ctx.User.FindFirst(ClaimTypes.NameIdentifier).Value
-    let! result = db.delete_pending_for_tutor info.Email user_id
-    match result with
-    | Error e ->
-        logger.LogInformation("failed to delete pending student: " + e)
-        let api_error = {DismissPendingResult.Error = Some (APIError.init [APICode.Database] [e])}
-        return! ctx.WriteJsonAsync api_error
-    | Ok _ ->
-        return! ctx.WriteJsonAsync {DismissPendingResult.Error = None}
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let db = ctx.GetService<IDatabase>()
+        let! info = ctx.BindJsonAsync<DismissPendingRequest>()
+        //get the user id of the tutor
+        let tutor_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        let! result = db.delete_pending_for_tutor info.Email tutor_email
+        match result with
+        | Error e ->
+            logger.LogInformation("failed to delete pending student: " + e)
+            let api_error = {DismissPendingResult.Error = Some (APIError.init [APICode.Database] [e])}
+            return! ctx.WriteJsonAsync api_error
+        | Ok _ ->
+            return! ctx.WriteJsonAsync {DismissPendingResult.Error = None}
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
 }
 
 let approve_enrolment_request (next : HttpFunc) (ctx : HttpContext) = task {

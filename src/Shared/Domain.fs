@@ -187,8 +187,8 @@ type ApprovePendingRequest =
 
 
 type DismissPendingRequest =
-    { Email : string
-      FirstName : string
+    { Email : string //the student's email
+      FirstName : string //student's first name
       LastName : string }
     static member init = {FirstName = ""; LastName = ""; Email = ""}
     static member of_student (student : Student) = {FirstName = student.FirstName; LastName = student.LastName; Email = student.Email}

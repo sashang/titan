@@ -57,15 +57,9 @@ let private approve_pending (pending : ApprovePendingRequest) = promise {
 }
 
 let private dismiss_pending (pending : DismissPendingRequest) = promise {
-    let body = Encode.Auto.toString (3, pending)
-    let props =
-        [ RequestProperties.Method HttpMethod.POST
-          RequestProperties.Credentials RequestCredentials.Include
-          requestHeaders [ HttpRequestHeaders.ContentType "application/json"
-                           HttpRequestHeaders.Accept "application/json"]
-          RequestProperties.Body !^(body) ] 
+    let request = make_post 3 pending 
     let decoder = Decode.Auto.generateDecoder<DismissPendingResult>()
-    let! response = Fetch.tryFetchAs "/api/dismiss-pending" decoder props
+    let! response = Fetch.tryFetchAs "/api/dismiss-pending" decoder request
     match response with
     | Ok result ->
         match result.Error with

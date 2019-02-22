@@ -405,12 +405,13 @@ type Database(c : string) =
                 return Error e.Message
         }
 
-        member this.delete_pending_for_tutor email user_id : Task<Result<unit, string>> = task {
+        member this.delete_pending_for_tutor student_email tutor_email : Task<Result<unit, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
-                let cmd = """delete from "Pending" where ("Pending"."Email" = @Email and "SchoolId" = (select "School"."Id" from "School" where "School"."UserId" = @UserID))"""
-                let m = (Map ["Email", email; "UserId", user_id])
+                let cmd = """delete from "Pending" where "Pending"."UserId" = (select "Id" from "User" where "User"."Email" = @StudentEmail)
+                             and "Pending"."SchoolId" = (select "Id" from "School" where "School"."UserId" = (select "Id" from "User" where "User"."Email" = @TutorEmail));"""
+                let m = (Map ["StudentEmail", student_email; "TutorEmail", tutor_email])
                 if dapper_map_param_exec cmd m conn = 1 then  
                     return Ok ()
                 else
