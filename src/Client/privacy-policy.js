@@ -1,10 +1,15 @@
-import htmlContent from '/home/sashan/code/titan/src/Client/public/docs/privacy-policy.html';
-import React from 'react';
-var createReactClass = require('create-react-class');
+import content from './public/docs/privacy-policy.md';
+const React = require('react')
+const ReactDOM = require('react-dom')
+const ReactMarkdown = require('react-markdown')
 
-const PrivacyPolicy = createReactClass({
-    render() {
-        return ( <div> dangerouslySetInnerHTML={ {__html: htmlContent} } </div>);
-    }
-});
-export default PrivacyPolicy;
+export function wait_for_dom() {
+    document.addEventListener("load", function() {
+        console.log("DOM is ready");
+        ReactDOM.render(
+            <ReactMarkdown source={content} />,
+            document.getElementById('pp-container')
+        )
+    });
+}
+

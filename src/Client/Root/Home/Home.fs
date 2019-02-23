@@ -62,17 +62,17 @@ let private register_punter (punter : Domain.BetaRegistration) = promise {
 
 let init () = Model.init
 
-let update  (model : Model) (msg : Msg) (claims : TitanClaim): Model*Cmd<Msg> =
+let update  (model : Model) (msg : Msg) (claims : TitanClaim option): Model*Cmd<Msg> =
     match model, msg, claims with
-    | _, SetEmail email, claims ->
+    | _, SetEmail email, _ ->
         { model with Email = email}, Cmd.none
-    | _, ClickDelNot, claims ->
+    | _, ClickDelNot, _ ->
         {model with BetaRegistrationResult = None}, Cmd.none
-    | _, ClickRegister, claims ->
+    | _, ClickRegister, _ ->
         model, Cmd.ofPromise register_punter {Domain.BetaRegistration.Email = model.Email} RegisterSuccess RegisterFailure
-    | _, RegisterSuccess (), claims ->
+    | _, RegisterSuccess (), _ ->
         {model with BetaRegistrationResult = None}, Cmd.none
-    | _, RegisterFailure err, claims ->
+    | _, RegisterFailure err, _ ->
         match err with
         | :? RegisterException as login_ex -> //TODO: check this with someone who knows more. the syntax is weird, and Data0??
             { model with BetaRegistrationResult = Some login_ex.Data0 }, Cmd.none
@@ -80,9 +80,14 @@ let update  (model : Model) (msg : Msg) (claims : TitanClaim): Model*Cmd<Msg> =
             { model with BetaRegistrationResult = None }, Cmd.none
     | {Child = None}, FirstTimeUser, claims ->
         Browser.console.info "FirstTimeUser message"
-        {model with Child = Some (FirstTimeModel (FirstTime.init true claims))}, Cmd.none
-        
-    | {Child = Some (FirstTimeModel child) }, FirstTimeMsg msg, claims ->
+        match claims with 
+        | Some claims ->
+            {model with Child = Some (FirstTimeModel (FirstTime.init true claims))}, Cmd.none
+        | None ->
+            Browser.console.error "Need claims for FirstTimeUser otherwise how do we know who this is?"
+            model, Cmd.none
+
+    | {Child = Some (FirstTimeModel child) }, FirstTimeMsg msg, _ ->
         Browser.console.info "FirstTimeMsg message"
         let new_ft_model, new_cmd = FirstTime.update child msg
         {model with Child = Some (FirstTimeModel new_ft_model) }, Cmd.map FirstTimeMsg new_cmd
@@ -279,12 +284,6 @@ let private beta_program model dispatch =
                             [ str "Register" ] ] ]
                   render_error model dispatch ] ] ]
 
-let footer = 
-    Footer.footer [ Common.Modifiers [ Modifier.BackgroundColor IsTitanPrimary
-                                       Modifier.TextColor IsWhite
-                                       Modifier.TextAlignment (Screen.All, TextAlignment.Left )  ] ]
-        [ div [] [ a [ Href "docs/privacy-policy.html" ] [ str "Privacy Policy" ] ]
-          div [ ] [ a [ Href "docs/terms-and-conditions.html" ] [ str "Terms and Conditions" ] ]]
 
 let view (model : Model) (dispatch : Msg -> unit) =
     [ Section.section 

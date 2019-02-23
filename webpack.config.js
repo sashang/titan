@@ -164,6 +164,21 @@ module.exports = {
                 }
             },
             {
+                test: /\.md$/,
+                exclude: /node_modules/,
+                use: [
+                    {
+                        loader: "html-loader"
+                    },
+                    {
+                        loader: "markdown-loader",
+                        options: {
+                            /* your options here */
+                        }
+                    }
+                ]
+            },
+            {
                 test: /\.html$/,
                 exclude: /node_modules/,
                 use: {
