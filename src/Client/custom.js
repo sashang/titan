@@ -8,6 +8,8 @@ function handle_error(error) {
     }
 }
 
+import {pp} from "./privacy-policy.js"
+
 export function connect(session, token) {
     if (session)
         session.connect(token, handle_error);

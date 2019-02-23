@@ -17,6 +17,7 @@ open Fulma
 open Fable.Helpers.React
 open Fable.Core
 open Fable.Core.JsInterop
+open ModifiedFableFetch
 open Thoth.Json
 open ValueDeclarations
 
@@ -31,14 +32,17 @@ type RootMsg =
     | ClickStopLive
     | ClickTitle
     | FirstTime of TitanClaim
+    | LoadPPSuccess of string
     | CheckSessionSuccess of Session
     | CheckSessionFailure of exn
     | SignOutMsg of SignOut.Msg
     | DashboardRouterMsg of DashboardRouter.Msg
     | UrlUpdatedMsg of Pages.PageType
     | HomeMsg of Home.Msg
+    | PrivacyPolicyMsg of PrivacyPolicy.Msg
     | Success of unit
     | Failure of exn
+    | ClickLoadPP
 
 type BroadcastState =
     | Tutor
@@ -49,6 +53,7 @@ type PageModel =
     | FAQModel
     | DashboardRouterModel of DashboardRouter.Model
     | HomeModel of Home.Model
+    | PrivacyPolicyModel of PrivacyPolicy.Model
 and
     State = {
         Child : PageModel //which child page I'm at
@@ -93,10 +98,18 @@ let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMs
     | Some Pages.PageType.FAQ ->
         { model with Child = FAQModel}, Cmd.none 
 
+    | Some Pages.PageType.PrivacyPolicy ->
+        let pp_model, cmd = PrivacyPolicy.init ()
+        { model with Child = PrivacyPolicyModel pp_model }, Cmd.map PrivacyPolicyMsg cmd
+
     | Some Pages.DashboardTitan ->
-        let message = "DashboardTitan page not implemented"
-        Browser.console.error message
-        failwith message
+        match model with
+        | {Session = Some session; Claims = Some claims} ->
+            let new_model, cmd = Titan.Dashboard.init claims
+            { model with Child = (DashboardRouterModel ({Child = DashboardRouter.TitanModel new_model}))},
+                                 Cmd.map (DashboardRouterMsg << DashboardRouter.TitanMsg) cmd
+        | {Session = None} ->
+            model, Cmd.none
 
 (*    | Some Pages.PageType.Enrol ->
         let new_model, cmd = Enrol.init ()
@@ -118,6 +131,7 @@ let check_session () = promise {
     with 
         | e -> return failwith (e.Message)
 }
+
 
 let init _ : State * Cmd<RootMsg> =
     State.init, Cmd.ofPromise check_session () CheckSessionSuccess CheckSessionFailure
@@ -147,6 +161,12 @@ let private nav_item_button_href href (text : string) =
               Button.Props [ Props.Href href ] ]
             [ str text ] ]
 
+let private footer model dispatch = 
+    Footer.footer [ Common.Modifiers [ Modifier.BackgroundColor IsTitanPrimary
+                                       Modifier.TextColor IsWhite
+                                       Modifier.TextAlignment (Screen.All, TextAlignment.Left )  ] ]
+        [ div [] [ a [ OnClick (fun ev -> dispatch ClickLoadPP) ] [ str "Privacy Policy" ] ]
+          div [ ] [ a [ Href "docs/terms-and-conditions.html" ] [ str "Terms and Conditions" ] ]]
 
 
 let view model dispatch =
@@ -178,8 +198,6 @@ let view model dispatch =
                     Navbar.End.div []
                         [ match model.Session with
                           | None -> 
-                                //yield nav_item_button_url Pages.Enrol "Enrol"
-                                //yield nav_item_button_href "/schools.html" "Schools"
                                 yield nav_item_button_url Pages.Login "Login"
                           | Some session ->
                                 yield nav_item_button dispatch ClickSignOut "Sign Out" ]
@@ -205,8 +223,10 @@ let view model dispatch =
                 yield! Home.view model (HomeMsg  >> dispatch)
             | FAQModel ->
                 yield FAQ.view
+            | PrivacyPolicyModel model ->
+                yield PrivacyPolicy.view model (PrivacyPolicyMsg >> dispatch)
         ]
-        Hero.foot [ ] [ Home.footer ]
+        Hero.foot [ ] [ footer model dispatch ]
     ]
 
 (*
@@ -227,6 +247,15 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         //move to the home page
         state, Navigation.newUrl (Pages.to_path Pages.Home)
 
+    | ClickLoadPP, state ->
+        //move to the privacy policy page
+        let model, cmd = PrivacyPolicy.init ()
+        {state with Child = PrivacyPolicyModel model}, Cmd.map PrivacyPolicyMsg cmd
+
+    | PrivacyPolicyMsg msg, {Child = PrivacyPolicyModel model} ->
+        let model', cmd' = PrivacyPolicy.update model msg
+        {state with Child = PrivacyPolicyModel model'}, Cmd.map PrivacyPolicyMsg cmd'
+
     | ClickSignOut, state ->
         let cmd = SignOut.update SignOut.SignOut
         state, Cmd.map SignOutMsg cmd
@@ -240,7 +269,7 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         | Ok claims ->
             match state with
             | {Child = HomeModel home_model} when claims.is_first_time ->
-                let new_home_model, home_msg = Home.update home_model Home.FirstTimeUser claims
+                let new_home_model, home_msg = Home.update home_model Home.FirstTimeUser (Some claims)
                 { state with Session = Some session; Claims = Some claims; Child = HomeModel new_home_model}, Cmd.none
             | model when claims.IsTitan ->
                 let titan_model, cmd = DashboardRouter.init_titan claims
@@ -273,18 +302,14 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     | CheckSessionFailure session, state ->
         {state with Session = None}, Cmd.none 
 
-    | HomeMsg home_msg, {Child = HomeModel model; Claims = Some claims} ->
-        Browser.console.info "HomeMsg with claims"
-        let new_model, cmd = Home.update model home_msg claims
+    | HomeMsg home_msg, {Child = HomeModel model} ->
+        let new_model, cmd = Home.update model home_msg model.Claims
         {state with Child = HomeModel new_model}, Cmd.map HomeMsg cmd
 
-    | HomeMsg home_msg, {Claims = None} -> //no claims so don't pass it through
-        Browser.console.info "HomeMsg with no claims"
-        state, Cmd.none
 
-(*    | EnrolMsg enrol_msg, {Child = EnrolModel model; Session = None} ->
-        let new_model, cmd = Enrol.update model enrol_msg
-        {state with Child = EnrolModel new_model}, Cmd.map EnrolMsg cmd*)
+    | Failure e, state ->
+        Browser.console.error ("Failure: " + e.Message)
+        state, Cmd.none
 
     | DashboardRouterMsg msg, {Child = DashboardRouterModel model; Session = Some session} ->
         let new_model, cmd = DashboardRouter.update model msg
@@ -292,8 +317,4 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     
     | UrlUpdatedMsg msg, {Child = some_child; Session = Some session} ->
         Browser.console.info "got updatedurlmsg"
-        state, Cmd.none
-
-    | msg, state ->
-        Browser.console.error ("got unexpected msg ")
         state, Cmd.none

@@ -32,7 +32,10 @@ type TitanClaim =
                   IsTutor =  get.Optional.Field "IsTutor" Decode.string = Some "true"
                   IsStudent = get.Optional.Field "IsStudent" Decode.string = Some "true"
                   IsTitan = get.Optional.Field "IsTitan" Decode.string = Some "true" })
+    
+    /// if none of these states are set then this is a first time user.
     member this.is_first_time = not (this.IsStudent || this.IsTitan || this.IsTutor)
+
 type LoadingState =
     | Loading
     | Loaded
@@ -61,5 +64,6 @@ module OpenTokJSInterop =
     let on_streamcreate_subscribe_filter (session:obj) (width : int) (height : int) (email : string) : unit =
         import "on_streamcreate_subscribe_filter" "./custom.js"
 
-module PrivacyPolicy =
-    let pp : obj = import "PrivacyPolicy" "./privacy-policy.js"
+ module PP =
+     let wait_for_dom () : unit =
+        import "wait_for_dom" "./privacy-policy.js"
