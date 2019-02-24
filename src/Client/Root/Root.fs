@@ -197,7 +197,7 @@ let view model dispatch =
                     Navbar.End.div []
                         [ match model.Session with
                           | None -> 
-                                yield nav_item_button_url Pages.Login "Login"
+                                yield nav_item_button_url Pages.Login "Register or Login"
                           | Some session ->
                                 yield nav_item_button dispatch ClickSignOut "Sign Out" ]
                 ]
