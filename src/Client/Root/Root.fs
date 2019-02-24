@@ -41,6 +41,7 @@ type RootMsg =
     | UrlUpdatedMsg of Pages.PageType
     | HomeMsg of Home.Msg
     | PrivacyPolicyMsg of PrivacyPolicy.Msg
+    | FAQMsg of FAQ.Msg
     | TermsMsg of Terms.Msg
     | Success of unit
     | Failure of exn
@@ -53,7 +54,7 @@ type BroadcastState =
 
 type PageModel =
     | LoginModel
-    | FAQModel
+    | FAQModel of FAQ.Model
     | DashboardRouterModel of DashboardRouter.Model
     | HomeModel of Home.Model
     | PrivacyPolicyModel of PrivacyPolicy.Model
@@ -100,7 +101,8 @@ let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMs
         { model with Child = LoginModel}, Cmd.none 
 
     | Some Pages.PageType.FAQ ->
-        { model with Child = FAQModel}, Cmd.none 
+        let faq_model, cmd = FAQ.init ()
+        { model with Child = FAQModel faq_model}, Cmd.map FAQMsg cmd
 
     | Some Pages.PageType.PrivacyPolicy ->
         let pp_model, cmd = PrivacyPolicy.init ()
@@ -220,8 +222,8 @@ let view model dispatch =
                 yield DashboardRouter.view model (DashboardRouterMsg >> dispatch) 
             | HomeModel model ->
                 yield! Home.view model (HomeMsg  >> dispatch)
-            | FAQModel ->
-                yield FAQ.view
+            | FAQModel model ->
+                yield FAQ.view model (FAQMsg >> dispatch)
             | PrivacyPolicyModel model ->
                 yield PrivacyPolicy.view model (PrivacyPolicyMsg >> dispatch)
             | TermsModel model ->
@@ -255,6 +257,10 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     | ClickLoadPP, state ->
         //move to the privacy policy page
         state, Navigation.newUrl (Pages.to_path Pages.PrivacyPolicy)
+
+    | FAQMsg msg, {Child = FAQModel model} ->
+        let model', cmd' = FAQ.update model msg
+        {state with Child = FAQModel model'}, Cmd.map FAQMsg cmd'
 
     | PrivacyPolicyMsg msg, {Child = PrivacyPolicyModel model} ->
         let model', cmd' = PrivacyPolicy.update model msg

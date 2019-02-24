@@ -84,7 +84,8 @@ $custom-colors: (
         font-family: 'Roboto', sans-serif;
         color : black;
         font-size: 1em;
-        text-align: left
+        text-align: left;
+        padding: 1rem
     }
     ul {
         font-family: 'Roboto', sans-serif;
@@ -92,6 +93,11 @@ $custom-colors: (
         font-size: 1rem;
         text-align: left;
         list-style-type: circle;
+    }
+    a, a:link, a:visited {
+        color: $custom-titan-info1;
+        text-decoration: none;
+        background-color: $custom-titan-info1;
     }
 }
 

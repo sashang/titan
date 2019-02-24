@@ -43,7 +43,7 @@ let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
         Browser.console.info ("loaded pp")
         {model with Terms = pp}, Cmd.none
     | model, Failure e ->
-        Browser.console.error ("Failure in PrivacyPolicy: " + e.Message)
+        Browser.console.error ("Failure in Terms: " + e.Message)
         model, Cmd.none
 
 let view (model : Model) (dispatch : Msg -> unit) =
