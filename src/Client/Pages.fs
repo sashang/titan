@@ -8,6 +8,7 @@ type PageType =
     | Login
     | FAQ
     | PrivacyPolicy
+    | Terms
     | DashboardTutor
     | DashboardStudent
     | DashboardTitan
@@ -22,6 +23,7 @@ let to_path =
     | PageType.DashboardStudent -> "#dashboard-student"
     | PageType.DashboardTitan -> "#dashboard-titan"
     | PageType.PrivacyPolicy -> "#privacy-policy"
+    | PageType.Terms -> "#terms"
 
 
 /// The URL is turned into a Result.
@@ -31,6 +33,7 @@ let page_parser : Parser<PageType -> _,_> =
           map PageType.Login (s "login")
           map PageType.FAQ (s "faq")
           map PageType.PrivacyPolicy (s "privacy-policy")
+          map PageType.Terms (s "terms")
           map (PageType.DashboardTutor) (s "dashboard-tutor")
           map (PageType.DashboardStudent) (s "dashboard-student")
           map (PageType.DashboardTitan) (s "dashboard-titan") ]

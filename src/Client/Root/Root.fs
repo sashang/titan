@@ -33,6 +33,7 @@ type RootMsg =
     | ClickTitle
     | FirstTime of TitanClaim
     | LoadPPSuccess of string
+    | LoadTermsSuccess of string
     | CheckSessionSuccess of Session
     | CheckSessionFailure of exn
     | SignOutMsg of SignOut.Msg
@@ -40,9 +41,11 @@ type RootMsg =
     | UrlUpdatedMsg of Pages.PageType
     | HomeMsg of Home.Msg
     | PrivacyPolicyMsg of PrivacyPolicy.Msg
+    | TermsMsg of Terms.Msg
     | Success of unit
     | Failure of exn
     | ClickLoadPP
+    | ClickLoadTerms
 
 type BroadcastState =
     | Tutor
@@ -54,6 +57,7 @@ type PageModel =
     | DashboardRouterModel of DashboardRouter.Model
     | HomeModel of Home.Model
     | PrivacyPolicyModel of PrivacyPolicy.Model
+    | TermsModel of Terms.Model
 and
     State = {
         Child : PageModel //which child page I'm at
@@ -102,6 +106,10 @@ let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMs
         let pp_model, cmd = PrivacyPolicy.init ()
         { model with Child = PrivacyPolicyModel pp_model }, Cmd.map PrivacyPolicyMsg cmd
 
+    | Some Pages.PageType.Terms ->
+        let terms_model, cmd = Terms.init ()
+        { model with Child = TermsModel terms_model }, Cmd.map TermsMsg cmd
+
     | Some Pages.DashboardTitan ->
         match model with
         | {Session = Some session; Claims = Some claims} ->
@@ -110,14 +118,6 @@ let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMs
                                  Cmd.map (DashboardRouterMsg << DashboardRouter.TitanMsg) cmd
         | {Session = None} ->
             model, Cmd.none
-
-(*    | Some Pages.PageType.Enrol ->
-        let new_model, cmd = Enrol.init ()
-        { model with Child = EnrolModel new_model}, Cmd.map EnrolMsg cmd*)
-
-// let b2s : byte[] -> string = import "byte2string" "../custom.js"
-// let something () : string = import "something" "../custom.js"
-// let echo (s:string) : string = import "echo" "../custom.js"
 
 let check_session () = promise {
     Browser.console.info "check_session"
@@ -131,7 +131,6 @@ let check_session () = promise {
     with 
         | e -> return failwith (e.Message)
 }
-
 
 let init _ : State * Cmd<RootMsg> =
     State.init, Cmd.ofPromise check_session () CheckSessionSuccess CheckSessionFailure
@@ -166,7 +165,7 @@ let private footer model dispatch =
                                        Modifier.TextColor IsWhite
                                        Modifier.TextAlignment (Screen.All, TextAlignment.Left )  ] ]
         [ div [] [ a [ OnClick (fun ev -> dispatch ClickLoadPP) ] [ str "Privacy Policy" ] ]
-          div [ ] [ a [ Href "docs/terms-and-conditions.html" ] [ str "Terms and Conditions" ] ]]
+          div [ ] [ a [ OnClick (fun ev -> dispatch ClickLoadTerms) ] [ str "Terms and Conditions" ] ]]
 
 
 let view model dispatch =
@@ -225,6 +224,8 @@ let view model dispatch =
                 yield FAQ.view
             | PrivacyPolicyModel model ->
                 yield PrivacyPolicy.view model (PrivacyPolicyMsg >> dispatch)
+            | TermsModel model ->
+                yield Terms.view model (TermsMsg >> dispatch)
         ]
         Hero.foot [ ] [ footer model dispatch ]
     ]
@@ -247,14 +248,21 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         //move to the home page
         state, Navigation.newUrl (Pages.to_path Pages.Home)
 
+    | ClickLoadTerms, state ->
+        //move to the terms page
+        state, Navigation.newUrl (Pages.to_path Pages.Terms)
+
     | ClickLoadPP, state ->
         //move to the privacy policy page
-        let model, cmd = PrivacyPolicy.init ()
-        {state with Child = PrivacyPolicyModel model}, Cmd.map PrivacyPolicyMsg cmd
+        state, Navigation.newUrl (Pages.to_path Pages.PrivacyPolicy)
 
     | PrivacyPolicyMsg msg, {Child = PrivacyPolicyModel model} ->
         let model', cmd' = PrivacyPolicy.update model msg
         {state with Child = PrivacyPolicyModel model'}, Cmd.map PrivacyPolicyMsg cmd'
+
+    | TermsMsg msg, {Child = TermsModel model} ->
+        let model', cmd' = Terms.update model msg
+        {state with Child = TermsModel model'}, Cmd.map TermsMsg cmd'
 
     | ClickSignOut, state ->
         let cmd = SignOut.update SignOut.SignOut
@@ -305,7 +313,6 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     | HomeMsg home_msg, {Child = HomeModel model} ->
         let new_model, cmd = Home.update model home_msg model.Claims
         {state with Child = HomeModel new_model}, Cmd.map HomeMsg cmd
-
 
     | Failure e, state ->
         Browser.console.error ("Failure: " + e.Message)
