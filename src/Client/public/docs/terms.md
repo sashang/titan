@@ -2,7 +2,7 @@
 
 ## Terms
 
-By accessing the website at http://www.tewtin.com, you are agreeing to be
+By accessing the website at https://www.tewtin.com, you are agreeing to be
 bound by these terms of service, all applicable laws and regulations, and
 agree that you are responsible for compliance with any applicable local laws.
 If you do not agree with any of these terms, you are prohibited from using or
@@ -59,5 +59,5 @@ then current version of these terms of service.
 ## Governing Law
 
 These terms and conditions are governed by and construed in accordance with
-the laws of Australia, Victoria and you irrevocably submit to the exclusive
-jurisdiction of the courts in that State or location.
+the laws of Victoria, Australia and you irrevocably submit to the exclusive
+jurisdiction of the courts in the state of Victoria.

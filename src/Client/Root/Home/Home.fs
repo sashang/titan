@@ -117,7 +117,18 @@ let first_impression =
               Column.column [] 
                 [ Image.image 
                     [ Image.IsSquare ] 
-                    [ img [ Props.Src "Images/teacher.png" ] ] ] ] ]
+                    [ img [ Props.Src "Images/teacher.png" ] ] ] ]
+          Columns.columns [ ] [
+              Column.column []  [
+                  Heading.h3 [ Heading.Modifiers [ Modifier.TextColor IsBlack
+                                                   Modifier.TextTransform TextTransform.Italic ] ] [
+                      Text.div [ Common.Props [ Props.Style [ Props.CSSProp.FontFamily "'Montserrat', sans-serif" ] ] ] [
+                          str "A platform for school tutors." 
+                      ]
+                  ]
+              ]
+          ]
+      ]
 
 let private goto_url page e =
     Navigation.newUrl (Pages.to_path page) |> List.map (fun f -> f ignore) |> ignore
