@@ -40,7 +40,7 @@ you would find at a school.
 
 They are currently an underserved vertical market. There's nothing out there
 specifically designed to enable them take advantage of the scale that the
-internet can provide and help them with routing tasks.
+internet can provide and help them with routine tasks.
 
 ## Do you have a virtual whiteboard?
 
