@@ -68,7 +68,7 @@ use personal information
 ### We will use your personal information:
 To fulfil a contract, or take steps linked to a contract: in particular, in
 facilitating and processing transactions that take place on the Site, like
-where you purchase an item from our marketplace.  
+where you subscribe to our service.  
 Where this is necessary for purposes which are in our, or third parties’,
 legitimate interests. These interests include:
 - operating the Site;
@@ -92,7 +92,7 @@ legitimate interests. These interests include:
 - processing your job application to Tewtin.
 
 ### We will not use your personal information for:
-- providing you with marketing information about products and services which we feel may interest you;
+- providing you with marketing information about products and services;
 - advertising that appear on the Site – where this involves the use of cookies or similar technologies – in order to provide a more personalised experience; and
 - reselling of data (voice, video or text) generated while using the Site
 
@@ -250,10 +250,6 @@ If you have any questions about our privacy practices or the way in which we
 have been managing your personal information, please contact us in writing at 
 support@tewtin.com.
 
-We’re really glad you made it to the end of the privacy policy, because
-understanding that Tewtin does not repackage student's personal data for use
-by 3rd parties while delivering an experience tailored for education, is
-important.
 
 ## If you’re a user or visitor in the European Economic Area these rights also apply to you:
 
@@ -290,3 +286,9 @@ infringement has occurred.
 
 Both personal information and personal data have the same meaning in the
 context of this Privacy Policy.
+
+## Conclusion
+We’re really glad you made it to the end of the privacy policy, because
+understanding that Tewtin does not repackage student's personal data for use
+by 3rd parties while delivering an experience tailored for education, is
+important.
