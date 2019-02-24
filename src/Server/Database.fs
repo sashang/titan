@@ -198,8 +198,10 @@ type Database(c : string) =
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
-                let sql = """select "School"."Name","User"."FirstName","User"."LastName","School"."Info",
-                             "School"."Subjects", "School"."Location", "User"."Email" from "School" join "User" on "User"."Id" = "School"."UserId";"""
+                //tutor must be approved for their school to be valid so we check for it in the sql.
+                let sql = """select "School"."Name","User"."FirstName","User"."LastName","School"."Info","School"."Subjects",
+                             "School"."Location", "User"."Email" from "School" join "User" on "User"."Id" = "School"."UserId"
+                             join "TitanClaims" on "User"."Id" = "TitanClaims"."UserId" where "TitanClaims"."Type" = 'IsApproved' and "TitanClaims"."Value" = 'true';"""
                 let result = conn
                              |> dapper_query<Models.SchoolTutor> sql
                              |> Seq.toList
