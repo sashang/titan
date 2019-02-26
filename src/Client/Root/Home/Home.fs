@@ -123,7 +123,7 @@ let first_impression =
                   Heading.h3 [ Heading.Modifiers [ Modifier.TextColor IsBlack
                                                    Modifier.TextTransform TextTransform.Italic ] ] [
                       Text.div [ Common.Props [ Props.Style [ Props.CSSProp.FontFamily "'Montserrat', sans-serif" ] ] ] [
-                          str "A platform for school tutors." 
+                          str "A platform for independent tutors of school aged kids." 
                       ]
                   ]
               ]
