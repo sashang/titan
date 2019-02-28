@@ -11,6 +11,7 @@
     <Compile Include="CustomColours.fs" />
     <Compile Include="Style.fs" />
     <Compile Include="ReactMarkdown.fs" />
+    <Compile Include="OpenTokReactApp.fs" />
     <Compile Include="Shared.fs" />
     <Compile Include="Root/Home/FirstTime/FirstTime.fs" />
     <Compile Include="Root/FAQ/FAQ.fs" />
@@ -19,6 +20,8 @@
     <Compile Include="Root/Home/Home.fs" />
     <Compile Include="Root/SignOut/SignOut.fs" />
     <Compile Include="Root/Login/Login.fs" />
+    <Compile Include="Root/TutorLiveView/TutorLiveView.fs" />
+    <Compile Include="Root/StudentLiveView/StudentLiveView.fs" />
     <Compile Include="Root/Dashboard/Titan/Users/Users.fs" />
     <Compile Include="Root/Dashboard/Titan/Dashboard.fs" />
     <Compile Include="Root/Dashboard/Tutor/School/School.fs" />

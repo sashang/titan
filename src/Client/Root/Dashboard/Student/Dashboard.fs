@@ -16,6 +16,10 @@ type PageModel =
     | ClassModel of Student.Class.Model //live view of the classroom
     | HomeModel 
 
+type ExternalMsg =
+    | EnrolledSchools of School list
+    | Noop
+
 type Model =
     { EnrolledSchools : School list
       Child : PageModel
@@ -47,53 +51,53 @@ let private get_enroled_schools () = promise {
         return raise (GetEnrolledSchoolsEx (APIError.init [APICode.Fetch] [e]))
 }
 
-
-
 let init claims = 
     {Claims = claims; Error = None; Child = HomeModel; EnrolledSchools = [] },
      Cmd.ofPromise get_enroled_schools () GetEnrolledSchoolsSuccess Failure
 
 let update model msg =
+
     match model, msg with
     | {Child = ClassModel child}, ClassMsg msg ->
         Browser.console.info ("ClassMsg message")
         let new_model, new_cmd = Student.Class.update child msg
-        {model with Child = ClassModel new_model}, Cmd.map ClassMsg new_cmd
+        {model with Child = ClassModel new_model}, Cmd.map ClassMsg new_cmd, ExternalMsg.Noop
 
     | _, ClassMsg _ ->
         Browser.console.error ("Received ClassMsg when child page is not ClassModel")
-        model, Cmd.none
+        model, Cmd.none, ExternalMsg.Noop
 
     | {Child = EnrolledModel child}, EnrolledMsg  msg ->
         Browser.console.info ("Enrolled message")
         let new_model, new_cmd = Enrolled.update child msg
-        {model with Child = EnrolledModel new_model }, Cmd.map EnrolledMsg new_cmd
+        {model with Child = EnrolledModel new_model }, Cmd.map EnrolledMsg new_cmd, ExternalMsg.Noop
 
     | _, EnrolledMsg _ ->
         Browser.console.error ("Received EnrolledMsg when child page is not EnrolledModel")
-        model, Cmd.none
+        model, Cmd.none, ExternalMsg.Noop
 
     | model, GetEnrolledSchoolsSuccess schools ->
-        {model with EnrolledSchools = schools}, Cmd.none
+        {model with EnrolledSchools = schools}, Cmd.none, ExternalMsg.EnrolledSchools schools
+
     | model, ClickClassroom school ->
         let new_state, new_cmd = Student.Class.init school model.Claims.Email
-        {model with Child = ClassModel new_state}, Cmd.map ClassMsg new_cmd
+        {model with Child = ClassModel new_state}, Cmd.map ClassMsg new_cmd, ExternalMsg.Noop
     
     | model, ClickEnrol ->
         let new_state, new_cmd = Enrolled.init ()
-        {model with Child = EnrolledModel new_state}, Cmd.map EnrolledMsg new_cmd
+        {model with Child = EnrolledModel new_state}, Cmd.map EnrolledMsg new_cmd, ExternalMsg.Noop
 
     | model, ClickAccount ->
-        model, Cmd.none
+        model, Cmd.none, ExternalMsg.Noop
 
     | model, Failure e ->
         match e with
         | :? GetEnrolledSchoolsEx as ex ->
             Browser.console.warn ("GetEnrolledSchoolsEx: " + ex.Message)
-            {model with Error = Some ex.Data0}, Cmd.none
+            {model with Error = Some ex.Data0}, Cmd.none, ExternalMsg.Noop
         | e ->
             Browser.console.warn ("Failed to get_all_schools: " + e.Message)
-            model, Cmd.none
+            model, Cmd.none, ExternalMsg.Noop
 
     
 // Helper to generate a menu item

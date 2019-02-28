@@ -69,3 +69,6 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | {Child = UsersModel users_model}, UsersMsg msg ->
         let new_model, new_cmd = Users.update users_model msg
         {model with Child = UsersModel new_model}, Cmd.map UsersMsg new_cmd
+    
+    | model, ClickUsers ->
+        model, Cmd.none

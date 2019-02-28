@@ -60,7 +60,7 @@ let private register_punter (punter : Domain.BetaRegistration) = promise {
     | _  -> return (raise (RegisterException response))
 }
 
-let init () = Model.init
+let init () = Model.init, Cmd.none
 
 let update  (model : Model) (msg : Msg) (claims : TitanClaim option): Model*Cmd<Msg> =
     match model, msg, claims with

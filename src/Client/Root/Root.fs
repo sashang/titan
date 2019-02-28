@@ -19,6 +19,7 @@ open Fable.Core
 open Fable.Core.JsInterop
 open ModifiedFableFetch
 open Thoth.Json
+open Tutor.LiveView
 open ValueDeclarations
 
 
@@ -29,6 +30,7 @@ let from_base64 (s:string) : string = jsNative
 
 type RootMsg =
     | ClickSignOut
+    | ClickGoLive
     | ClickStopLive
     | ClickTitle
     | FirstTime of TitanClaim
@@ -43,14 +45,13 @@ type RootMsg =
     | PrivacyPolicyMsg of PrivacyPolicy.Msg
     | FAQMsg of FAQ.Msg
     | TermsMsg of Terms.Msg
+    | TutorLiveViewMsg of Tutor.LiveView.Msg
+    | GetEnrolledSchoolsSuccess of School list
+    | StudentLiveViewMsg of Student.LiveView.Msg
     | Success of unit
     | Failure of exn
     | ClickLoadPP
     | ClickLoadTerms
-
-type BroadcastState =
-    | Tutor
-    | Student
 
 type PageModel =
     | LoginModel
@@ -59,14 +60,21 @@ type PageModel =
     | HomeModel of Home.Model
     | PrivacyPolicyModel of PrivacyPolicy.Model
     | TermsModel of Terms.Model
+    | TutorLiveViewModel of Tutor.LiveView.Model
+    | StudentLiveViewModel of Student.LiveView.Model
 and
     State = {
         Child : PageModel //which child page I'm at
         Session : Session option //who I am
+        IsLive : bool
         Claims : TitanClaim option
-        BCast : BroadcastState option
+        EnrolledSchools : School list //what a mess
     } with
-    static member init = {Child = HomeModel (Home.init ()); Session = None; Claims = None; BCast = None } 
+    static member init () = 
+        let model, cmd = Home.init ()
+        {Child = HomeModel model; IsLive = false;
+         Session = None; Claims = None; EnrolledSchools = [] }, Cmd.map HomeMsg cmd
+
 
 let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMsg> =
     match page with
@@ -95,7 +103,8 @@ let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMs
 
     //these pages we don't care about the token. We can go to them with or without one.
     | Some Pages.PageType.Home ->
-        { model with Child = HomeModel (Home.init ()) }, Cmd.none
+        let model', cmd = Home.init ()
+        { model with Child = HomeModel model' }, Cmd.map HomeMsg cmd
 
     | Some Pages.PageType.Login ->
         { model with Child = LoginModel}, Cmd.none 
@@ -135,7 +144,8 @@ let check_session () = promise {
 }
 
 let init _ : State * Cmd<RootMsg> =
-    State.init, Cmd.ofPromise check_session () CheckSessionSuccess CheckSessionFailure
+    let model', cmd = State.init ()
+    model', Cmd.batch [ Cmd.ofPromise check_session () CheckSessionSuccess CheckSessionFailure ]
 
 let private goto_url page e =
     Navigation.newUrl (Pages.to_path page) |> List.map (fun f -> f ignore) |> ignore
@@ -169,67 +179,90 @@ let private footer model dispatch =
         [ div [] [ a [ OnClick (fun ev -> dispatch ClickLoadPP) ] [ str "Privacy Policy" ] ]
           div [ ] [ a [ OnClick (fun ev -> dispatch ClickLoadTerms) ] [ str "Terms and Conditions" ] ]]
 
+let private  nav_item_stop_button (dispatch : RootMsg -> unit) =
+    Navbar.Item.div [ ]
+        [ Button.button 
+            [ Button.Color IsDanger
+              Button.OnClick (fun e -> dispatch ClickStopLive)  ]
+            [ str "Stop" ] ]
 
-let view model dispatch =
-    Hero.hero [
-        Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Option.Centered) ]
-        Hero.Color IsWhite ] [
-        Hero.head [ ] [
-            Navbar.navbar [ Navbar.Modifiers [ Modifier.BackgroundColor IsTitanPrimary ] ] [
-                Container.container [ Container.Props [ Style [ ] ] ] [
-                    Navbar.Brand.div [ ] [
-                        Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
-                            Image.image [ Image.IsSquare; Image.Is24x24 ] [
-                                img [ Src "Images/tewtin-cube-logo-circle.svg" ]
-                            ]
-                        ]
-                        Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
-                            Heading.h3 
-                                [ Heading.IsSubtitle
-                                  Heading.Modifiers [ Modifier.TextColor IsWhite ]
-                                  Heading.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ] ] ] [ str MAIN_NAME ]
-                        ]
-                        Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
-                            Heading.h5 
-                                [ Heading.IsSubtitle
-                                  Heading.Modifiers [ Modifier.TextColor IsWhite ]
-                                  Heading.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ] ] ] [ str "putting tutors first" ]
+let private hero_head model dispatch =
+    Hero.head [ ] [
+        Navbar.navbar [ Navbar.Modifiers [ Modifier.BackgroundColor IsTitanPrimary ] ] [
+            Container.container [ Container.Props [ Style [ ] ] ] [
+                Navbar.Brand.div [ ] [
+                    Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
+                        Image.image [ Image.IsSquare; Image.Is24x24 ] [
+                            img [ Src "Images/tewtin-cube-logo-circle.svg" ]
                         ]
                     ]
-                    Navbar.End.div []
-                        [ match model.Session with
-                          | None -> 
-                                yield nav_item_button_url Pages.Login "Register or Login"
-                          | Some session ->
-                                yield nav_item_button dispatch ClickSignOut "Sign Out" ]
+                    Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
+                        Heading.h3 
+                            [ Heading.IsSubtitle
+                              Heading.Modifiers [ Modifier.TextColor IsWhite ]
+                              Heading.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ] ] ] [ str MAIN_NAME ]
+                    ]
+                    Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
+                        Heading.h5 
+                            [ Heading.IsSubtitle
+                              Heading.Modifiers [ Modifier.TextColor IsWhite ]
+                              Heading.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ] ] ] [ str "putting tutors first" ]
+                    ]
+                ]
+                Navbar.End.div [] [
+                    match model.Session with
+                      | None -> 
+                            yield nav_item_button_url Pages.Login "Register or Login"
+                      | Some session ->
+                            match model.IsLive with
+                              | false -> 
+                                    yield nav_item_button dispatch ClickGoLive "Go Live!"
+                                    yield nav_item_button dispatch ClickSignOut "Sign Out"
+                              | true ->
+                                    yield nav_item_stop_button dispatch
+                                    yield nav_item_button dispatch ClickSignOut "Sign Out"
                 ]
             ]
-            (match model.Claims with
-            | Some claims ->
-                match claims.IsApproved || claims.IsTitan with
-                | true -> nothing
-                | false ->
-                    Message.message [ Message.Color IsTitanInfo ] [
-                        Message.body [ ] [ str ("Hi " + claims.GivenName + "! Thanks for your interest in Tewtin. We will email you when your application is approved.") ]
-                    ]
-            | None -> nothing)
         ]
-        Hero.body [ Common.Props [ Style [ ] ] ] [ 
-            match model.Child with
-            | LoginModel -> 
-                yield Login.view
-            | DashboardRouterModel model ->
-                yield DashboardRouter.view model (DashboardRouterMsg >> dispatch) 
-            | HomeModel model ->
-                yield! Home.view model (HomeMsg  >> dispatch)
-            | FAQModel model ->
-                yield FAQ.view model (FAQMsg >> dispatch)
-            | PrivacyPolicyModel model ->
-                yield PrivacyPolicy.view model (PrivacyPolicyMsg >> dispatch)
-            | TermsModel model ->
-                yield Terms.view model (TermsMsg >> dispatch)
-        ]
-        Hero.foot [ ] [ footer model dispatch ]
+        (match model.Claims with
+        | Some claims ->
+            match claims.IsApproved || claims.IsTitan with
+            | true -> nothing
+            | false ->
+                Message.message [ Message.Color IsTitanInfo ] [
+                    Message.body [ ] [ str ("Hi " + claims.GivenName + "! Thanks for your interest in Tewtin. We will email you when your application is approved.") ]
+                ]
+        | None -> nothing)
+    ]
+
+
+let view model dispatch =
+    Hero.hero [ Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Option.Centered) ]
+                Hero.Color IsWhite ] [
+            hero_head model dispatch
+            Hero.body [ Common.Props [ Style [ ] ] ] [ 
+                match model.Child with
+                | LoginModel -> 
+                    yield Login.view
+                | DashboardRouterModel model ->
+                    yield DashboardRouter.view model (DashboardRouterMsg >> dispatch) 
+                | HomeModel model ->
+                    yield! Home.view model (HomeMsg  >> dispatch)
+                | FAQModel model ->
+                    yield FAQ.view model (FAQMsg >> dispatch)
+                | PrivacyPolicyModel model ->
+                    yield PrivacyPolicy.view model (PrivacyPolicyMsg >> dispatch)
+                | TermsModel model ->
+                    yield Terms.view model (TermsMsg >> dispatch)
+                | TutorLiveViewModel model ->
+                    yield Tutor.LiveView.view model (TutorLiveViewMsg >> dispatch)
+                | StudentLiveViewModel model ->
+                    yield Student.LiveView.view model (StudentLiveViewMsg >> dispatch)
+            ]
+            (match model.Child with
+            | TutorLiveViewModel _ -> nothing
+            | StudentLiveViewModel _ -> nothing
+            | _ -> Hero.foot [ ] [ footer model dispatch ])
     ]
 
 (*
@@ -243,8 +276,9 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     | SignOutMsg sign_out, state ->
         let cmd = SignOut.update sign_out
         //assume that signing out worked so we delete the sesison
-        { Child = HomeModel (Home.init ()); Session = None; Claims = None;
-          BCast = None}, Cmd.map SignOutMsg cmd
+        let new_model, cmd = Home.init ()
+        {Child = HomeModel new_model; IsLive = false;
+         EnrolledSchools = []; Session = None; Claims = None}, Cmd.map SignOutMsg cmd
 
     | ClickTitle, state ->
         //move to the home page
@@ -270,9 +304,14 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         let model', cmd' = Terms.update model msg
         {state with Child = TermsModel model'}, Cmd.map TermsMsg cmd'
 
+    | _, {Child = TermsModel model} ->
+        Browser.console.info "Invalid message for TermsModel"
+        state, Cmd.none
+
     | ClickSignOut, state ->
         let cmd = SignOut.update SignOut.SignOut
         state, Cmd.map SignOutMsg cmd
+
 
     | CheckSessionSuccess session, state ->
         let jwt_parts = session.Token.Split '.'
@@ -320,14 +359,74 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         let new_model, cmd = Home.update model home_msg model.Claims
         {state with Child = HomeModel new_model}, Cmd.map HomeMsg cmd
 
+    | _, {Child = HomeModel model} ->
+        Browser.console.warn "Invalid message for HomeModel"
+        state, Cmd.none
+
     | Failure e, state ->
         Browser.console.error ("Failure: " + e.Message)
         state, Cmd.none
 
+    | ClickGoLive, state ->
+        match state.Claims with
+        | Some claims ->
+            if claims.IsTutor && claims.IsApproved then
+                let new_model, cmd = Tutor.LiveView.init state.Claims.Value.Email
+                {state with Child = TutorLiveViewModel new_model; IsLive = true}, Cmd.map TutorLiveViewMsg cmd
+            else if claims.IsStudent && claims.IsApproved then
+                //TODO: need to fix this if student is enrolled in multiple schools
+                let new_model, cmd = Student.LiveView.init (List.head state.EnrolledSchools) claims.Email
+                {state with Child = StudentLiveViewModel new_model; IsLive = true}, Cmd.map StudentLiveViewMsg cmd
+            else
+                let new_model, cmd = Home.init ()
+                {state with Child = HomeModel new_model; IsLive = false; EnrolledSchools = []}, Cmd.map HomeMsg cmd
+        | None ->
+            let new_model, cmd = Home.init ()
+            {state with Child = HomeModel new_model; IsLive = false; EnrolledSchools = []; Session = None}, Cmd.map HomeMsg cmd
+
+    | ClickStopLive, state ->
+        match state.Claims with
+        | Some claims ->
+            if claims.IsTutor && claims.IsApproved then
+               let tutor_model, cmd = DashboardRouter.init_tutor claims
+               { state with Child = DashboardRouterModel(tutor_model); IsLive = false}, Cmd.map DashboardRouterMsg cmd
+            else if claims.IsStudent  && claims.IsApproved then
+               let student_model, cmd = DashboardRouter.init_student claims
+               { state with Child = DashboardRouterModel(student_model); IsLive = false}, Cmd.map DashboardRouterMsg cmd
+            else
+                let new_model, cmd = Home.init ()
+                {state with Child = HomeModel new_model; IsLive = false; EnrolledSchools = []}, Cmd.map HomeMsg cmd
+        | None ->
+            let new_model, cmd = Home.init ()
+            {state with Child = HomeModel new_model; IsLive = false; EnrolledSchools = []; Session = None}, Cmd.map HomeMsg cmd
+
     | DashboardRouterMsg msg, {Child = DashboardRouterModel model; Session = Some session} ->
-        let new_model, cmd = DashboardRouter.update model msg
-        {state with Child = DashboardRouterModel new_model}, Cmd.map DashboardRouterMsg cmd
-    
+        let new_model, cmd, ext = DashboardRouter.update model msg
+        match ext with
+        | DashboardRouter.ExternalMsg.EnrolledSchools schools ->
+            //copy the enrolled schools list into this models state --- this is not ideal..but oh well
+            {state with Child = DashboardRouterModel new_model; EnrolledSchools = schools}, Cmd.map DashboardRouterMsg cmd
+        | DashboardRouter.ExternalMsg.Noop ->
+            {state with Child = DashboardRouterModel new_model}, Cmd.map DashboardRouterMsg cmd
+
+    | _, {Child = DashboardRouterModel model} -> //any dashboard router model paired with a non-dashboardrouterMsg is an error
+        Browser.console.warn "Invalid message for DashboardRouterModel"
+        state, Cmd.none
+
+    | DashboardRouterMsg msg, _ -> //any other dashboard router msg is an error
+        Browser.console.warn "Invalid DashboardRouterMsg"
+        state, Cmd.none
+
+    | TutorLiveViewMsg msg, {Child = TutorLiveViewModel model} ->
+        Browser.console.info "got TutorLiveViewMsg"
+        let model', cmd = Tutor.LiveView.update model msg
+        {state with Child = TutorLiveViewModel model'}, Cmd.map TutorLiveViewMsg cmd
+
+    | StudentLiveViewMsg msg, {Child = StudentLiveViewModel model} ->
+        Browser.console.info "got TutorLiveViewMsg"
+        let model', cmd = Student.LiveView.update model msg
+        {state with Child = StudentLiveViewModel model'}, Cmd.map TutorLiveViewMsg cmd
+
     | UrlUpdatedMsg msg, {Child = some_child; Session = Some session} ->
         Browser.console.info "got updatedurlmsg"
         state, Cmd.none

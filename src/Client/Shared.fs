@@ -41,29 +41,29 @@ type LoadingState =
     | Loaded
 
 /// Claim info that's shared between pages on the client side.
-module OpenTokJSInterop =
+// module OpenTokJSInterop =
 
-    let init_session (key:string) (session_id:string) : obj =
-        import "init_session" "./custom.js"
+//     let init_session (key:string) (session_id:string) : obj =
+//         import "init_session" "./custom.js"
 
-    let init_pub (div_id : string) (res : string) (email : string) : obj =
-        import "init_pub" "./custom.js"
+//     let init_pub (div_id : string) (res : string) (email : string) : obj =
+//         import "init_pub" "./custom.js"
 
-    let connect_session_with_pub (session:obj) (publisher:obj) (token:string) : unit =
-        import "connect_session_with_pub" "./custom.js"
+//     let connect_session_with_pub (session:obj) (publisher:obj) (token:string) : unit =
+//         import "connect_session_with_pub" "./custom.js"
 
-    let disconnect (session : obj) : unit =
-        import "disconnect" "./custom.js"
+//     let disconnect (session : obj) : unit =
+//         import "disconnect" "./custom.js"
 
-    let connect (session : obj) (token : obj) : unit =
-        import "connect" "./custom.js"
+//     let connect (session : obj) (token : obj) : unit =
+//         import "connect" "./custom.js"
 
-    let on_streamcreate_subscribe (session:obj) (width : int) (height : int) : unit =
-        import "on_streamcreate_subscribe" "./custom.js"
+//     let on_streamcreate_subscribe (session:obj) (width : int) (height : int) : unit =
+//         import "on_streamcreate_subscribe" "./custom.js"
 
-    let on_streamcreate_subscribe_filter (session:obj) (width : int) (height : int) (email : string) : unit =
-        import "on_streamcreate_subscribe_filter" "./custom.js"
+//     let on_streamcreate_subscribe_filter (session:obj) (width : int) (height : int) (email : string) : unit =
+//         import "on_streamcreate_subscribe_filter" "./custom.js"
 
- module PP =
-     let wait_for_dom () : unit =
-        import "wait_for_dom" "./privacy-policy.js"
+//  module PP =
+//      let wait_for_dom () : unit =
+//         import "wait_for_dom" "./privacy-policy.js"

@@ -14,6 +14,10 @@ type PageModel =
     | EnrolModel of PendingStudents.Model
     | StudentsModel of StudentsComponent.Model
 
+type ExternalMsg =
+    | GoLive
+    | Noop
+
 type Model =
     { Child : PageModel
       Claims : TitanClaim
@@ -92,7 +96,7 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         Browser.console.error("Unexpected SchoolMsg in Dashboard.Tutor")
         model, Cmd.none
     | {Child = ClassModel child_model}, ClassMsg msg ->
-        let new_state, cmd = Class.update child_model msg
+        let new_state, cmd, ext = Class.update child_model msg
         {model with Child = ClassModel new_state}, Cmd.map ClassMsg cmd
     | _, ClassMsg _ ->
         Browser.console.error("Unexpected ClassMsg in Dashboard.Tutor")

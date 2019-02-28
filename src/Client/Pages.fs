@@ -12,6 +12,8 @@ type PageType =
     | DashboardTutor
     | DashboardStudent
     | DashboardTitan
+    | TutorLiveView
+    | StudentLiveView
 
 
 let to_path =
@@ -24,6 +26,8 @@ let to_path =
     | PageType.DashboardTitan -> "#dashboard-titan"
     | PageType.PrivacyPolicy -> "#privacy-policy"
     | PageType.Terms -> "#terms"
+    | PageType.TutorLiveView -> "#tutor-live-view"
+    | PageType.StudentLiveView -> "#student-live-view"
 
 
 /// The URL is turned into a Result.
@@ -35,6 +39,8 @@ let page_parser : Parser<PageType -> _,_> =
           map PageType.PrivacyPolicy (s "privacy-policy")
           map PageType.Terms (s "terms")
           map (PageType.DashboardTutor) (s "dashboard-tutor")
+          map (PageType.TutorLiveView) (s "tutor-live-view")
+          map (PageType.StudentLiveView) (s "student-live-view")
           map (PageType.DashboardStudent) (s "dashboard-student")
           map (PageType.DashboardTitan) (s "dashboard-titan") ]
 
