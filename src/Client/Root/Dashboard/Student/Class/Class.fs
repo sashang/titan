@@ -65,11 +65,12 @@ let private classroom_level model dispatch =
                                                Modifier.TextSize (Screen.All, TextSize.Is5) ]
                             Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "classroom" ] ]
         Level.right [ ] [
-            (match model.Live with
-            | On ->
+            (match model.Live, model.Session, model.OTI with
+            | On, Some _, Some _ ->
                 nav_item_stop_button dispatch
-            | Off ->
-                Client.Style.button dispatch GoLive "Go Live!" [ ])
+            | Off, Some _ , Some _ -> //only show the go live button when we have values for session and oti and we are off
+                Client.Style.button dispatch GoLive "Go Live!" [ ]
+            | _ -> nothing)
         ]
     ]
 

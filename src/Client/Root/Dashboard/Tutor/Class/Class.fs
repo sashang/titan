@@ -89,7 +89,7 @@ let update (model : Model) (msg : Msg) =
         {model with Live = On; Session = Some session}, Cmd.none
 
     | _, GoLive ->
-        Browser.console.warn "Clicked GoLive...but we are still live."
+        Browser.console.error ("Bad state for GoLive message")
         model, Cmd.none
 
 
@@ -116,11 +116,12 @@ let private classroom_level model dispatch =
                                                Modifier.TextSize (Screen.All, TextSize.Is5) ]
                             Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "classroom" ] ]
         Level.right [ ] [
-            (match model.Live with
-            | On ->
+            (match model.Live, model.Session, model.OTI with
+            | On, Some _, Some _ ->
                 nav_item_stop_button dispatch
-            | Off ->
-                Client.Style.button dispatch GoLive "Go Live!" [ ])
+            | Off, Some _ , Some _ ->
+                Client.Style.button dispatch GoLive "Go Live!" [ ]
+            | _ -> nothing)
         ]
     ]
 
