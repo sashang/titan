@@ -179,7 +179,7 @@ let private footer model dispatch =
         [ div [] [ a [ OnClick (fun ev -> dispatch ClickLoadPP) ] [ str "Privacy Policy" ] ]
           div [ ] [ a [ OnClick (fun ev -> dispatch ClickLoadTerms) ] [ str "Terms and Conditions" ] ]]
 
-let private  nav_item_stop_button (dispatch : RootMsg -> unit) =
+let private nav_item_stop_button (dispatch : RootMsg -> unit) =
     Navbar.Item.div [ ]
         [ Button.button 
             [ Button.Color IsDanger
@@ -237,10 +237,12 @@ let private hero_head model dispatch =
 
 
 let view model dispatch =
+
+
     Hero.hero [ Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Option.Centered) ]
                 Hero.Color IsWhite ] [
             hero_head model dispatch
-            Hero.body [ Common.Props [ Style [ ] ] ] [ 
+            Hero.body [ Common.Props [ Style [ CSSProp.Height "98vh"; CSSProp.Width "100%" ] ] ] [ 
                 match model.Child with
                 | LoginModel -> 
                     yield Login.view
@@ -371,7 +373,7 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         match state.Claims with
         | Some claims ->
             if claims.IsTutor && claims.IsApproved then
-                let new_model, cmd = Tutor.LiveView.init state.Claims.Value.Email
+                let new_model, cmd = Tutor.LiveView.init claims.Email
                 {state with Child = TutorLiveViewModel new_model; IsLive = true}, Cmd.map TutorLiveViewMsg cmd
             else if claims.IsStudent && claims.IsApproved then
                 //TODO: need to fix this if student is enrolled in multiple schools
@@ -388,11 +390,11 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         match state.Claims with
         | Some claims ->
             if claims.IsTutor && claims.IsApproved then
-               let tutor_model, cmd = DashboardRouter.init_tutor claims
-               { state with Child = DashboardRouterModel(tutor_model); IsLive = false}, Cmd.map DashboardRouterMsg cmd
-            else if claims.IsStudent  && claims.IsApproved then
-               let student_model, cmd = DashboardRouter.init_student claims
-               { state with Child = DashboardRouterModel(student_model); IsLive = false}, Cmd.map DashboardRouterMsg cmd
+                let new_model, cmd = DashboardRouter.init_tutor claims
+                {state with Child = DashboardRouterModel new_model; IsLive = false}, Cmd.map DashboardRouterMsg cmd
+            else if claims.IsStudent && claims.IsApproved then
+                let new_model, cmd = DashboardRouter.init_student claims
+                {state with Child = DashboardRouterModel new_model; IsLive = false}, Cmd.map DashboardRouterMsg cmd
             else
                 let new_model, cmd = Home.init ()
                 {state with Child = HomeModel new_model; IsLive = false; EnrolledSchools = []}, Cmd.map HomeMsg cmd

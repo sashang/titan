@@ -27,7 +27,8 @@ type Msg =
 type Model =
     { Email : string
       Error : APIError option
-      OTI : OpenTokInfo option }
+      OTI : OpenTokInfo option
+      Video : bool }
 
 exception GetSessionEx of APIError
 
@@ -50,7 +51,7 @@ let private get_live_session_id () = promise {
 
 let init email =
     Browser.console.info ("tutorliveview init")
-    {OTI = None; Email = email; Error = None},
+    {OTI = None; Email = email; Error = None; Video = true},
      Cmd.ofPromise get_live_session_id () GetSessionSuccess GetSessionFailure
 
 let update model msg =
@@ -71,24 +72,32 @@ let update model msg =
             Browser.console.warn ("Failed to get session: " + e.Message)
             model, Cmd.none
 
+let private on_sub () =
+    Browser.console.info ("subscribe event")
+
 let private video model dispatch = 
-    div [ HTMLAttr.Id "videos"] [
         (match model.OTI with
         | Some oti ->
-            Session.session [ Session.ApiKey oti.Key; Session.SessionId oti.SessionId;
-                              Session.Token oti.Token ] [
-                div [ HTMLAttr.Id "subscriber" ] [
-                    Streams.streams [ ] [
-                        Subscriber.subscriber [ Subscriber.Props [ Name model.Email; Width "100%"; Height "720px"; ] ] [ ]
+             Session.session [ Session.ApiKey oti.Key; Session.SessionId oti.SessionId;
+                               Session.Token oti.Token ] [
+                Columns.columns [] [
+                    Column.column [ Column.Props [ Style [ ] ]
+                                    Column.Modifiers [ ] ] [
+                        Streams.streams [ ]  [
+                            Subscriber.subscriber [ Subscriber.OTProps [ Width "100%"; Height "90vh"; ]
+                                                    Subscriber.OnSubscribe on_sub  ] [ ]
+                        ]
                     ]
                 ]
-                div [ HTMLAttr.Id "publisher" ] [
-                    Publisher.publisher [ Publisher.Props [ Width "360px"; Height "240px"; Name model.Email ]  ] [ ]
+                Columns.columns [] [
+                    Column.column [ Column.Props [ Style [ PaddingLeft 30; PaddingTop 110 ] ]
+                                    Column.Modifiers [ Modifier.IsOverlay ] ] [
+                        Publisher.publisher [ Publisher.Props [ PublishVideo model.Video; Name model.Email; Width "360px"; Height "240px" ]  ] [ ]
+                    ]
                 ]
             ]
         | None ->
             nothing)
-    ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
     // Modal.modal [ Modal.IsActive model.Active

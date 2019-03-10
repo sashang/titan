@@ -10,6 +10,7 @@ type Properties =
     | Name of string
     | Width of string
     | Height of string
+    | PublishVideo of bool
 
 
 module Streams =
@@ -32,11 +33,12 @@ module Publisher =
 module Subscriber =
     type Props =
         | OTProps of Properties list
+        | OnSubscribe of (unit -> unit)
 
     let subscriber (props : Props list) (elems : ReactElement list) : ReactElement =
         ofImport "OTSubscriber" "opentok-react" (keyValueList CaseRules.LowerFirst props) elems
 
-    let inline Props (css: Properties list): Props =
+    let inline OTProps (css: Properties list): Props =
         !!("properties", keyValueList CaseRules.LowerFirst css)
 
 module Session = 
@@ -44,10 +46,17 @@ module Session =
         | ApiKey of string
         | Token of string
         | SessionId of string
+        | Height of string
 
     let session (props : Props list) (elems : ReactElement list) : ReactElement =
         ofImport "OTSession" "opentok-react" (keyValueList CaseRules.LowerFirst props) elems
 
+module StudentSubscriber =
+    type Props =
+        | OTProps of Properties list
+        | TutorEmail of string
 
+    let comp (props : Props list) (elems : ReactElement list) : ReactElement =
+        ofImport "default" "./StudentSubscriber.js" (keyValueList CaseRules.LowerFirst props) elems
 
 

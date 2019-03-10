@@ -74,21 +74,32 @@ let update model msg =
             model, Cmd.none
 
 let private video model dispatch = 
-    div [ HTMLAttr.Id "videos"] [
         (match model.OTI with
         | Some oti ->
-            Session.session [ Session.ApiKey oti.Key; Session.SessionId oti.SessionId;
-                              Session.Token oti.Token ] [
-                Streams.streams [ ] [
-                    Subscriber.subscriber [ Subscriber.Props [ Name model.StudentEmail; Width "100%"; Height "720px"; ] ] [ ]
+            // StudentReactComp.comp [ StudentReactComp.ApiKey oti.Key; StudentReactComp.SessionId oti.SessionId;
+            //                         StudentReactComp.TutorEmail model.School.Email; StudentReactComp.Token oti.Token ] [ ]
+             Session.session [ Session.ApiKey oti.Key; Session.SessionId oti.SessionId;
+                               Session.Token oti.Token ] [
+                Columns.columns [] [
+                    Column.column [ Column.Props [ Style [ ] ]
+                                    Column.Modifiers [ ] ] [
+                        Streams.streams [ ]  [
+                            // StudentSubscriber.comp [ StudentSubscriber.OTProps [ Width "100%"; Height "90vh"; ]
+                            //                          StudentSubscriber.TutorEmail model.School.Email ] [ ]
+                            Subscriber.subscriber [ Subscriber.OTProps [ Width "100%"; Height "90vh"; ] ] [ ]
+                        ]
+                    ]
                 ]
-                div [ HTMLAttr.Id "publisher" ] [
-                    Publisher.publisher [ Publisher.Props [ Width "360px"; Height "240px"; Name model.StudentEmail ]  ] [ ]
+                Columns.columns [] [
+                    Column.column [ Column.Props [ Style [ PaddingLeft 30; PaddingTop 110 ] ]
+                                    Column.Modifiers [ Modifier.IsOverlay ] ] [
+                        Publisher.publisher [ Publisher.Props [ Name model.StudentEmail; Width "360px"; Height "240px" ]  ] [ ]
+                    ]
                 ]
-            ]
+             ]
         | None ->
             nothing)
-    ]
+    //]
 
 let view (model : Model) (dispatch : Msg -> unit) =
     video model dispatch

@@ -34,11 +34,9 @@ $custom-colors: (
     position: fixed;
     right: 0;
     bottom: 0;
-    width: auto;
-    height: auto;
-    z-index: -100;
-    min-width: 100%;
-    min-height: 100%;
+    width: 100%;
+    height: 100%;
+    //z-index: -100;
     overflow: hidden;
     //min-height: 720px;
     //margin-left: auto;
@@ -49,8 +47,7 @@ $custom-colors: (
     left: 0;
     top: 0;
     width: 100%;
-    height: 720px;
-    min-height: 720;
+    height: 100%;
     z-index: 10;
 }
 #publisher {
@@ -63,7 +60,93 @@ $custom-colors: (
     border: 3px solid white;
     border-radius: 3px;
 }
+// .OTSubscriberContainer {
+//     position: relative;
+//     left: 0;
+//     top: 0;
+//     width: 100%;
+//     height: 100vh;
+//     z-index: 10;
+// }
+// .OTPublisherContainer {
+//     position: absolute;
+//     bottom: 10px;
+//     right: 10px;
+//     width: 360px;
+//     height: 240px;
+//     z-index: 100;
+//     border: 3px solid white;
+//     flex: auto;
+//     border-radius: 3px;
+// }
 
+.flexbox-parent
+{
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+    
+    justify-content: flex-start; /* align items in Main Axis */
+    align-items: stretch; /* align items in Cross Axis */
+    align-content: stretch; /* Extra space in Cross Axis */
+            
+    background: rgba(255, 255, 255, .1);
+}
+
+.flexbox-item
+{
+    padding: 8px;
+}
+.flexbox-item-grow
+{
+    flex: 1; /* same as flex: 1 1 auto; */
+}
+
+.flexbox-item.header
+{
+    background: rgba(255, 0, 0, .1);
+}
+.flexbox-item.footer
+{
+    background: rgba(0, 255, 0, .1);
+}
+.flexbox-item.content
+{
+    background: rgba(0, 0, 255, .1);
+}
+
+.fill-area
+{
+    display: flex;
+    flex-direction: row;
+    
+    justify-content: flex-start; /* align items in Main Axis */
+    align-items: stretch; /* align items in Cross Axis */
+    align-content: stretch; /* Extra space in Cross Axis */
+    
+}
+.fill-area-content
+{
+    background: rgba(0, 0, 0, .3);
+    border: 1px solid #000000;
+    
+    /* Needed for when the area gets squished too far and there is content that can't be displayed */
+    overflow: auto; 
+}
+
+// .OTPublisherContainer {
+//     position: absolute;
+//     bottom: 10px;
+//     right: 10px;
+//     width: 360px;
+//     height: 240px;
+//     z-index: 100;
+//     border: 3px solid white;
+//     flex: auto;
+//     border-radius: 3px;
+// }
 .markdown {
     h1 {
         color : $custom-titan-primary;
