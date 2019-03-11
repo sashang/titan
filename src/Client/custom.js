@@ -80,6 +80,9 @@ export function on_streamcreate_subscribe(session, w, h) {
     });
     session.on('streamDestroyed', function (event) {
         sub_count_for_tutor--;
+        if (sub_count_for_tutor < 0) {
+            sub_count_for_tutor = 0
+        }
     });
 }
 export function init_session(key, session_id) {
