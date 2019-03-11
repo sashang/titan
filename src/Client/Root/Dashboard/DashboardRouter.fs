@@ -66,6 +66,10 @@ let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
         let new_model, cmd = Titan.Dashboard.update model msg
         {Child = TitanModel new_model}, Cmd.map TitanMsg cmd
 
+    | {Child = TitanModel model}, SignOut ->
+        let new_model, cmd = Titan.Dashboard.update model Titan.Dashboard.SignOut
+        {Child = TitanModel new_model}, Cmd.map TitanMsg cmd
+
     | _, TitanMsg _  ->
         Browser.console.error("Received bad TitanMsg.")
         model, Cmd.none

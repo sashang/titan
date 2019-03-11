@@ -17,6 +17,7 @@ type Model =
 
 type Msg =
     | ClickUsers
+    | SignOut
     | UsersMsg of Users.Msg
 
 
@@ -69,3 +70,11 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | {Child = UsersModel users_model}, UsersMsg msg ->
         let new_model, new_cmd = Users.update users_model msg
         {model with Child = UsersModel new_model}, Cmd.map UsersMsg new_cmd
+
+    | _, ClickUsers ->
+        Browser.console.info ("ClickUsers message")
+        model, Cmd.none
+
+    | _, SignOut ->
+        //let the root handle the signout request.
+        model, Cmd.none

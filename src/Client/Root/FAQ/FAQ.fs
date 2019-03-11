@@ -41,7 +41,7 @@ let init () =
 let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
     match model, msg with 
     | model, LoadFAQSuccess pp ->
-        Browser.console.info ("loaded pp")
+        Browser.console.info ("loaded FAQ")
         {model with FAQ = pp}, Cmd.none
     | model, Failure e ->
         Browser.console.error ("Failure in FAQ: " + e.Message)

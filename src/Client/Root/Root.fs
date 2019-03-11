@@ -262,13 +262,25 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         let model', cmd' = FAQ.update model msg
         {state with Child = FAQModel model'}, Cmd.map FAQMsg cmd'
 
+    | _, {Child = FAQModel _} ->
+        Browser.console.error "Received unknown message but child is FAQModel"
+        state, Cmd.none
+
     | PrivacyPolicyMsg msg, {Child = PrivacyPolicyModel model} ->
         let model', cmd' = PrivacyPolicy.update model msg
         {state with Child = PrivacyPolicyModel model'}, Cmd.map PrivacyPolicyMsg cmd'
 
+    | _, {Child = PrivacyPolicyModel _} ->
+        Browser.console.error "Received unknown message but child is PrivacyPolicyModel"
+        state, Cmd.none
+
     | TermsMsg msg, {Child = TermsModel model} ->
         let model', cmd' = Terms.update model msg
         {state with Child = TermsModel model'}, Cmd.map TermsMsg cmd'
+
+    | _, {Child = TermsModel _} ->
+        Browser.console.error "Received unknown message but child is TermsModel"
+        state, Cmd.none
 
     | ClickSignOut, state ->
         match state.Child with 
@@ -326,13 +338,29 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         let new_model, cmd = Home.update model home_msg model.Claims
         {state with Child = HomeModel new_model}, Cmd.map HomeMsg cmd
 
+    | _, {Child = HomeModel model} ->
+        Browser.console.error "Received unknown message but child is HomeModel"
+        state, Cmd.none
+
     | Failure e, state ->
         Browser.console.error ("Failure: " + e.Message)
         state, Cmd.none
 
-    | DashboardRouterMsg msg, {Child = DashboardRouterModel model; Session = Some session} ->
+    | DashboardRouterMsg msg, {Child = DashboardRouterModel model} ->
         let new_model, cmd = DashboardRouter.update model msg
         {state with Child = DashboardRouterModel new_model}, Cmd.map DashboardRouterMsg cmd
+
+    | DashboardRouterMsg _, {Child = _} ->
+        Browser.console.error "Received DashboardRouterMsg but child is not DashboarRouterModel"
+        state, Cmd.none
+
+    | _, {Child = DashboardRouterModel _} ->
+        Browser.console.error "Received unknown message but child is DashboarRouterModel"
+        state, Cmd.none
+
+    | _, {Child = LoginModel} ->
+        Browser.console.error "Received unknown message but child is LoginModel. There should be no messages for this model."
+        state, Cmd.none
     
     | UrlUpdatedMsg msg, {Child = some_child; Session = Some session} ->
         Browser.console.info "got updatedurlmsg"
