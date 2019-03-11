@@ -20,6 +20,7 @@ type LiveState =
 
 type Msg =
     | GoLive
+    | SignOut
     | GetSessionSuccess of OpenTokInfo
     | Failure of exn
     | StopLive
@@ -95,6 +96,11 @@ let update (model : Model) (msg : Msg) =
         Browser.console.info (sprintf "received StopLive for student at school %s" model.School.SchoolName)
         OpenTokJSInterop.disconnect session
         {model with Live = Off}, Cmd.none
+
+    | {Session = Some session}, SignOut ->
+        Browser.console.info (sprintf "received StopLive for student at school %s" model.School.SchoolName)
+        OpenTokJSInterop.disconnect session
+        {model with Live = Off; Session = None; OTI = None}, Cmd.none
 
     | _, StopLive ->
         Browser.console.error ("Bad state for StopLive message")

@@ -28,6 +28,7 @@ type Msg =
     | ClickClassroom
     | ClickAccount
     | ClickEnrol
+    | SignOut
 
 
 let init (claims : TitanClaim) : Model*Cmd<Msg> =
@@ -94,6 +95,11 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | {Child = ClassModel child_model}, ClassMsg msg ->
         let new_state, cmd = Class.update child_model msg
         {model with Child = ClassModel new_state}, Cmd.map ClassMsg cmd
+
+    | {Child = ClassModel child_model}, SignOut ->
+        let new_state, new_cmd = Class.update child_model Class.SignOut
+        {model with Child = ClassModel new_state}, Cmd.map ClassMsg new_cmd
+
     | _, ClassMsg _ ->
         Browser.console.error("Unexpected ClassMsg in Dashboard.Tutor")
         model, Cmd.none

@@ -34,6 +34,7 @@ type Model =
 type Msg =
     | GoLive
     | StopLive
+    | SignOut
     | GetSessionSuccess of OpenTokInfo
     | GetSessionFailure of exn
 
@@ -94,12 +95,27 @@ let update (model : Model) (msg : Msg) =
 
 
     | {Live = On }, StopLive ->
-        OpenTokJSInterop.disconnect model.Session.Value
-        {model with Live = Off}, Cmd.none
+        match model.Session with
+        | Some session ->
+            OpenTokJSInterop.disconnect session
+            {model with Live = Off}, Cmd.none
+        | None ->
+            model, Cmd.none
 
     | _, StopLive ->
         Browser.console.warn "Clicked StopLive ... but we are not live."
         model, Cmd.none
+
+    | _, SignOut ->
+        Browser.console.info "Received signout msg"
+        match model.Session with
+        | Some session ->
+            OpenTokJSInterop.disconnect session
+            {model with Live = Off; Session = None}, Cmd.none
+        | None ->
+            model, Cmd.none
+
+
 
 
 let private  nav_item_stop_button (dispatch : Msg -> unit) =

@@ -271,8 +271,14 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         {state with Child = TermsModel model'}, Cmd.map TermsMsg cmd'
 
     | ClickSignOut, state ->
-        let cmd = SignOut.update SignOut.SignOut
-        state, Cmd.map SignOutMsg cmd
+        match state.Child with 
+        | DashboardRouterModel model ->
+            let dbr_model, dbr_cmd = DashboardRouter.update model DashboardRouter.SignOut
+            let cmd = SignOut.update SignOut.SignOut
+            state, Cmd.batch [ Cmd.map DashboardRouterMsg dbr_cmd; Cmd.map SignOutMsg cmd ]
+        | _ ->
+            let cmd = SignOut.update SignOut.SignOut
+            state, Cmd.map SignOutMsg cmd
 
     | CheckSessionSuccess session, state ->
         let jwt_parts = session.Token.Split '.'

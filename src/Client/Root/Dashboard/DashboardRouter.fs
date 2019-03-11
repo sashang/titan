@@ -17,6 +17,7 @@ type Msg =
     | TutorMsg of Tutor.Dashboard.Msg
     | StudentMsg of Student.Dashboard.Msg
     | TitanMsg of Titan.Dashboard.Msg
+    | SignOut
 
 
 type Model =
@@ -40,6 +41,10 @@ let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
     | {Child = TutorModel model}, TutorMsg msg  ->
         let new_model, cmd = Tutor.Dashboard.update model msg
         {Child = TutorModel new_model}, Cmd.map TutorMsg cmd
+        
+    | {Child = TutorModel model}, SignOut ->
+        let new_model, cmd = Tutor.Dashboard.update model Tutor.Dashboard.SignOut
+        {Child = TutorModel new_model}, Cmd.map TutorMsg cmd
 
     | _, TutorMsg _  ->
         Browser.console.error("Received bad TutorMsg.")
@@ -47,6 +52,10 @@ let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
 
     | {Child = StudentModel model}, StudentMsg msg  ->
         let new_model, cmd = Student.Dashboard.update model msg
+        {Child = StudentModel new_model}, Cmd.map StudentMsg cmd
+
+    | {Child = StudentModel model}, SignOut ->
+        let new_model, cmd = Student.Dashboard.update model Student.Dashboard.SignOut
         {Child = StudentModel new_model}, Cmd.map StudentMsg cmd
 
     | _, StudentMsg _  ->
@@ -60,6 +69,7 @@ let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
     | _, TitanMsg _  ->
         Browser.console.error("Received bad TitanMsg.")
         model, Cmd.none
+
         
 let view (model : Model) (dispatch : Msg -> unit) =
     match model with

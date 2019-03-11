@@ -78,6 +78,9 @@ export function on_streamcreate_subscribe(session, w, h) {
             sub_count_for_tutor++;
         }
     });
+    session.on('streamDestroyed', function (event) {
+        sub_count_for_tutor--;
+    });
 }
 export function init_session(key, session_id) {
     var session = OT.initSession(key, session_id);

@@ -26,6 +26,7 @@ type Msg =
     | ClickClassroom of School
     | ClickEnrol
     | ClickAccount
+    | SignOut
     | GetEnrolledSchoolsSuccess of School list
     | ClassMsg of Student.Class.Msg
     | EnrolledMsg of Enrolled.Msg
@@ -58,6 +59,11 @@ let update model msg =
     | {Child = ClassModel child}, ClassMsg msg ->
         Browser.console.info ("ClassMsg message")
         let new_model, new_cmd = Student.Class.update child msg
+        {model with Child = ClassModel new_model}, Cmd.map ClassMsg new_cmd
+
+    | {Child = ClassModel child}, SignOut ->
+        Browser.console.info ("SignOut message")
+        let new_model, new_cmd = Student.Class.update child Student.Class.SignOut
         {model with Child = ClassModel new_model}, Cmd.map ClassMsg new_cmd
 
     | _, ClassMsg _ ->
