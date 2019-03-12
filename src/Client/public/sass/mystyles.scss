@@ -29,7 +29,13 @@ $custom-colors: (
   "custom-titan-success": ($custom-titan-success, $custom-titan-success-invert),
   "custom-titan-error": ($custom-titan-error, $custom-titan-error-invert),
 );
-
+  
+#layoutContainer {
+    width: 100%;
+    height: 85vh;
+    background-color: #DDD;
+    position:relative;
+}
 #videos {
     position: relative;
     width: 100%;
@@ -43,7 +49,7 @@ $custom-colors: (
     left: 0;
     top: 0;
     width: 100%;
-    height: 95vh;
+    height: 90vh;
     min-height: 720;
     z-index: 10;
 }

@@ -116,8 +116,6 @@ let update (model : Model) (msg : Msg) =
             model, Cmd.none
 
 
-
-
 let private  nav_item_stop_button (dispatch : Msg -> unit) =
     Navbar.Item.div [ ]
         [ Button.button 
@@ -148,10 +146,9 @@ let private students_in_room (model : Model) =
 
 let private video = 
     div [ HTMLAttr.Id "videos"] [
-        div [ HTMLAttr.Id "publisher" ] [
-
+        div [ HTMLAttr.Id "layoutContainer"] [
         ]
-        div [ HTMLAttr.Id "subscriber" ] [
+        div [ HTMLAttr.Id "publisher" ] [
 
         ]
     ]

@@ -1,5 +1,18 @@
 
 var sub_count_for_tutor = 0
+const initLayoutContainer = require('opentok-layout-js');
+const options = {
+    maxRatio: 3/2,          // The narrowest ratio that will be used (default 2x3)
+    minRatio: 9/16,         // The widest ratio that will be used (default 16x9)
+    fixedRatio: false,      // If this is true then the aspect ratio of the video is maintained and minRatio and maxRatio are ignored (default false)
+    bigClass: "OT_big",     // The class to add to elements that should be sized bigger
+    bigPercentage: 0.8,      // The maximum percentage of space the big ones should take up
+    bigFixedRatio: false,   // fixedRatio for the big ones
+    bigMaxRatio: 3/2,       // The narrowest ratio to use for the big elements (default 2x3)
+    bigMinRatio: 9/16,      // The widest ratio to use for the big elements (default 16x9)
+    bigFirst: true,         // Whether to place the big one in the top left (true) or bottom right
+    animate: true           // Whether you want to animate the transitions
+};
 
 function handle_error(error) {
     if (error) {
@@ -68,18 +81,30 @@ export function on_streamcreate_subscribe_filter(session, w, h, email) {
 }
 export function on_streamcreate_subscribe(session, w, h) {
     session.on('streamCreated', function (event) {
-        if (sub_count_for_tutor < 1) {
-            var sub = session.subscribe(event.stream, 'subscriber', {
+        if (sub_count_for_tutor < 2) {
+            var sub = session.subscribe(event.stream, 'layoutContainer', {
                 insertMode: 'append',
-                preferedResolution: { width: w, height: h },
-                width: '100%',
-                height: '100%'
+                preferedResolution: { width: w, height: h }
+                // width: '100%',
+                // height: '100%'
             }, handle_error);
             sub_count_for_tutor++;
+
+            var layoutContainer = document.getElementById("layoutContainer");
+            // Initialize the layout container and get a reference to the layout method
+            var layout = initLayoutContainer(layoutContainer).layout;
+            layout();
+        } else {
+            console.log("Not enough room in the class!!");
         }
     });
     session.on('streamDestroyed', function (event) {
         sub_count_for_tutor--;
+        var layoutContainer = document.getElementById("layoutContainer");
+        // Initialize the layout container and get a reference to the layout method
+        var layout = initLayoutContainer(layoutContainer).layout;
+        layout();
+        layout();
         if (sub_count_for_tutor < 0) {
             sub_count_for_tutor = 0
         }
