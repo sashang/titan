@@ -29,6 +29,7 @@ type Msg =
     | LoadStudentsSuccess of Student list
     | LoadStudentsFailure  of exn
     | GetAllStudents
+    | SignOut
     | DismissStudent of Student
     | DismissStudentSuccess of unit
     | DismissStudentFailure of exn
@@ -79,7 +80,11 @@ let update (model : Model) (msg : Msg) =
         
     | DismissStudentSuccess () ->
         model, Cmd.ofPromise get_all_students () LoadStudentsSuccess LoadStudentsFailure
-        
+
+    | SignOut ->
+        Browser.console.info "Received signout msg" //we don't have to do anything special here.
+        model, Cmd.none
+
     | DismissStudentFailure e ->
         match e with 
         | :? DismissStudentEx as ex ->

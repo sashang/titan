@@ -31,6 +31,7 @@ type Msg =
     | ClickEnrol of string
     | EnrolSuccess of unit
     | EnrolFailure of exn
+    | SignOut
 
 exception GetPendingSchoolsEx of APIError
 exception GetEnrolledSchoolsEx of APIError
@@ -108,6 +109,10 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
 
     | model, GetAllSchoolsSuccess schools ->
         {model with AllSchools = schools; AllLoaded = Loaded }, Cmd.none
+
+    | model, SignOut ->
+        Browser.console.info "Received signout msg" //we don't have to do anything special here.
+        model, Cmd.none
 
     | model, ClickEnrol school ->
         model, Cmd.ofPromise enrol_student {SchoolName = school} EnrolSuccess EnrolFailure

@@ -38,6 +38,7 @@ type Msg =
     | DismissPendingFailure of exn
     | DismissPending of Student
     | ApprovePending of Student
+    | SignOut
 
 let private approve_pending (pending : ApprovePendingRequest) = promise {
     let request = make_post 3 pending
@@ -142,6 +143,9 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         | e ->
             Browser.console.warn ("Received general exception: " + e.Message)
             { model with Error = Some (APIError.init [APICode.Failure] [e.Message])}, Cmd.none
+
+    | SignOut ->
+        model, Cmd.none
 
 let private student_content (student : Student) =
       [

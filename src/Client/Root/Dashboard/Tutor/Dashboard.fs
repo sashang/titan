@@ -103,15 +103,26 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | _, ClassMsg _ ->
         Browser.console.error("Unexpected ClassMsg in Dashboard.Tutor")
         model, Cmd.none
+
     | {Child = StudentsModel child_model}, StudentMsg msg ->
         let new_state, cmd = StudentsComponent.update child_model msg
         {model with Child = StudentsModel new_state}, Cmd.map StudentMsg cmd
+
+    | {Child = StudentsModel child_model}, SignOut ->
+        let new_state, new_cmd = StudentsComponent.update child_model StudentsComponent.SignOut
+        {model with Child = StudentsModel new_state}, Cmd.map StudentMsg new_cmd
+
     | _, StudentMsg _ ->
         Browser.console.error("Unexpected StudentMsg in Dashboard.Tutor")
         model, Cmd.none
     | {Child = EnrolModel child_model}, EnrolMsg msg ->
         let new_state, cmd = PendingStudents.update child_model msg
         {model with Child = EnrolModel new_state}, Cmd.map EnrolMsg cmd
+
+    | {Child = EnrolModel child_model}, SignOut ->
+        let new_state, cmd = PendingStudents.update child_model PendingStudents.SignOut
+        {model with Child = EnrolModel new_state}, Cmd.map EnrolMsg cmd
+
     | _, EnrolMsg _ ->
         Browser.console.error("Unexpected EnrolMsg in Dashboard.Tutor")
         model, Cmd.none
