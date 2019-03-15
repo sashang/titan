@@ -20,9 +20,13 @@ deimos and put all the code related to it there.
 This is a list of services you will need to maintain (or contact to close down
 if you don't feel like running this anymore).
 
-The following accounts are associated with the username `sashang@tewtin.com`
+The following are associated with `sashang@gmail.com`
 * Lastpass (password manager contains all of the passwords to the services
     below)
+* https://github.com/sashang/titan (this is private so not publically visible)
+
+
+The following accounts are associated with the username `sashang@tewtin.com`
 * GSuite
 * Azure
 * Google analytics
@@ -30,8 +34,6 @@ The following accounts are associated with the username `sashang@tewtin.com`
 * Tokbox (api key and secret)
 * Godaddy
 
-The following are associated with `sashang@gmail.com`
-* https://github.com/sashang/titan (this is private so not publically visible)
 
 If you want to keep running this then talk to https://compositional-it.com/.
 They're an IT consulting firm that will understand the tech stack used.
