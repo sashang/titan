@@ -1,25 +1,66 @@
 # Titan
 
+## Introduction
+
+### A note about the naming
+Titan is the name of this project (a webapp) associated with this git repo. I
+built to help tutors deliver lessons remotely and manage their classes. The
+provides admin tools for the teacher to manage their students, generate reports
+and manage assignments. It also provides video conferencing facilities.
+
+Tewtin is the customer facing name for the product. It encompasses all services that
+might be needed to deliver the entire service to the customer. This means that
+one can create another project, call it deimos, host it in git, and then place
+it under the umbrella name of Tewtin. For example if I was to create another 
+service that provided an API for taking payments, I might name the repository
+deimos and put all the code related to it there. 
+
+### In case of my passing away into the grave or wherever.
+
+This is a list of services you will need to maintain (or contact to close down
+if you don't feel like running this anymore).
+
+The following accounts are associated with the username `sashang@tewtin.com`
+* Lastpass (password manager contains all of the passwords to the services
+    below)
+* GSuite
+* Azure
+* Google analytics
+* Google credentials (oauth secret and key)
+* Tokbox (api key and secret)
+* Godaddy
+
+The following are associated with `sashang@gmail.com`
+* https://github.com/sashang/titan (this is private so not publically visible)
+
+
 ## Requirements
-The SAFE stack for F# web development.
+The SAFE stack for F# web development. Follow the instructions there to install
+EVERYTHING you need (.net sdk etc...)
 https://safe-stack.github.io/
 
-Install that using the link above. Then see the next section to build and run.
+
+Do a git clone to get the source code.
+```
+git clone git@github.com:sashang/titan.git
+```
 
 Then install the following from the root of the source code
 ```
 yarn install node-sass --dev
 yarn install bulma --dev
 ```
-
+:
 ## Build
+
+I use Fish as my shell so all shell commands below assumes this.
 
 Ensure you have the dotnet sdk 2.2.103 installed. I've found that exporting the
 following variables will ensure a headache free existance:
 
 ```
-export DOTNET_ROOT=<path to dotnet root>
-export PATH="<path to dotnet root>:$PATH"
+set -x DOTNET_ROOT $HOME/code/dotnet/2.2.103
+set -x ASPNETCORE_ENVIRONMENT Development
 ```
 
 Then cd into the directory you downloaded this source code and run:
@@ -28,7 +69,9 @@ Then cd into the directory you downloaded this source code and run:
 fake build
 ```
 
-To run it:
+This will build it. If there are any errors fix them and then try again.
+
+Once errors are fixed, run it:
 ```
 fake build --target run
 ```
@@ -65,12 +108,6 @@ on top of ASP.NET Core.
 It's easiest to use VSCode with the ionide plugin for fsharp installed. It
 gives good code completion (better than the Vim plugin).
 
-```
-export DOTNET_ROOT=<path to dotnet root>
-export PATH="<path to dotnet root>:$PATH"
-code
-```
-
 If you start it without the DOTNET_ROOT path set to the path to the SDK in
 use for development, it will find whatever SDK is on your system and it
 searches from a set of common paths. This SDK may not be in the one you
@@ -94,25 +131,17 @@ set -x ASPNETCORE_ENVIRONMENT Development
 ```
 
 #### Google authentication
-This is all in a state of flux so may or not may not work. Set the following
-environment variables:
+Goto https://console.cloud.google.com/apis/credentials and select titan-231208
+to see the client id and secret. This allows you to authenticate with Google
+when logging in. These values should never be committed to the git repo (TODO:
+find a way to handle the secrets better)
 
-##### Bash:
-```
-export TITAN_GOOGLE_ID="client id"
-export TITAN_GOOGLE_SECRET="client secret"
-```
+They are used in appsettings.json or appsettings.Development.json.
 
-##### Windows Powershell:
 ```
-$Env:TITAN_GOOLGE_ID="client id"
-$Env:TITAN_GOOGLE_SECRET="client secret"
+    "GoogleClientId" : <secret>,
+    "GoogleSecret" : <secret>
 ```
-
-The values for those variables you can get by creating an application for use
-with Google+
-(https://console.cloud.google.com/apis/library/plus.googleapis.com). If those
-environment variables are not set the server will not start.
 
 ### Database
 
@@ -324,11 +353,17 @@ It's too dumbed down. So I went here
 (https://www.sessions.edu/color-calculator/) to pick more colors and did some
 research on colour theory.
 
-## Deploying on azure
+## Deploying production on Azure
 
 Using a docker image but the fake build.fsx should handle all of that
+Make sure your appsettings.json file is correct. appsettings.json should not be
+committed to the repo as it contains passwords. It also contains the connection
+string the +production database+. So when developing locally *do not* use
+appsettings.json. Use appsetting.Development.json instead.
 
 ```
+source <path to .net sdk>
+set -e ASPNETCORE_ENVIRONMENT
 fake build --target Docker
 ```
 
@@ -348,4 +383,10 @@ Then click configure container and setup the path to dockerhub where azure will 
 Then click `Create`
 
 
+## Azure architecture
 
+Azure is used to host tewtin.com. There are 2 major services running here. One
+is the database, the other is the App Service that runs .NET Core. Most of the
+setup is faily trivial, and point and click. There is a webhook to docker hub
+that dockerhub uses to callback azure when `docker push sashang/titan`
+completes.
