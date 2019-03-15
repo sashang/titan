@@ -33,6 +33,8 @@ The following accounts are associated with the username `sashang@tewtin.com`
 The following are associated with `sashang@gmail.com`
 * https://github.com/sashang/titan (this is private so not publically visible)
 
+If you want to keep running this then talk to https://compositional-it.com/.
+They're an IT consulting firm that will understand the tech stack used.
 
 ## Requirements
 The SAFE stack for F# web development. Follow the instructions there to install
