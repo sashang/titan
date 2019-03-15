@@ -195,10 +195,7 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | model, Success _ ->
         {model with Active = false
                     SubForm = None},
-        Navigation.newUrl (Pages.to_path (match model.SubForm with
-                                          | Some (TutorForm model) -> Pages.DashboardTutor
-                                          | Some (StudentForm model) -> Pages.DashboardStudent
-                                          | None -> Pages.Home))
+        Navigation.newUrl (Pages.to_path Pages.Home)
 
     | model, Failure e ->
         match e with

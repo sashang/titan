@@ -2,6 +2,7 @@ module Student.Dashboard
 
 open Client.Shared
 open Domain
+open Elmish.Browser.Navigation
 open Elmish
 open Fable.Import
 open Fable.PowerPack
@@ -64,28 +65,41 @@ let update model msg =
     | {Child = ClassModel child}, SignOut ->
         Browser.console.info ("SignOut message")
         let new_model, new_cmd = Student.Class.update child Student.Class.SignOut
-        {model with Child = ClassModel new_model}, Cmd.map ClassMsg new_cmd
+        {model with Child = ClassModel new_model}, Cmd.batch [ Cmd.map ClassMsg new_cmd
+                                                               Navigation.newUrl (Pages.to_path Pages.Home) ]
 
     | _, ClassMsg _ ->
         Browser.console.error ("Received ClassMsg when child page is not ClassModel")
         model, Cmd.none
 
-    | {Child = EnrolledModel child}, EnrolledMsg  msg ->
+    | {Child = EnrolledModel child}, EnrolledMsg msg ->
         Browser.console.info ("Enrolled message")
         let new_model, new_cmd = Enrolled.update child msg
         {model with Child = EnrolledModel new_model }, Cmd.map EnrolledMsg new_cmd
+
+    | {Child = EnrolledModel child}, SignOut ->
+        Browser.console.info ("SignOut message")
+        let new_model, _ = Enrolled.update child Enrolled.SignOut
+        {model with Child = EnrolledModel new_model}, Navigation.newUrl (Pages.to_path Pages.Home)
 
     | _, EnrolledMsg _ ->
         Browser.console.error ("Received EnrolledMsg when child page is not EnrolledModel")
         model, Cmd.none
 
+    | {Child = HomeModel}, SignOut ->
+        Browser.console.info ("SignOut message")
+        model, Navigation.newUrl (Pages.to_path Pages.Home)
+
     | model, GetEnrolledSchoolsSuccess schools ->
         {model with EnrolledSchools = schools}, Cmd.none
+
     | model, ClickClassroom school ->
+        Browser.console.info "Got message ClickClassroom"
         let new_state, new_cmd = Student.Class.init school model.Claims.Email
         {model with Child = ClassModel new_state}, Cmd.map ClassMsg new_cmd
     
     | model, ClickEnrol ->
+        Browser.console.info "Got message ClickEnrol"
         let new_state, new_cmd = Enrolled.init ()
         {model with Child = EnrolledModel new_state}, Cmd.map EnrolledMsg new_cmd
 
@@ -101,7 +115,6 @@ let update model msg =
             Browser.console.warn ("Failed to get_all_schools: " + e.Message)
             model, Cmd.none
 
-    
 // Helper to generate a menu item
 let menu_item label isActive dispatch msg =
     Menu.Item.li [ Menu.Item.IsActive isActive
