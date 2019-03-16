@@ -1,21 +1,22 @@
 /// A class in the school
 module Class
 
-open CustomColours
+open Client.Shared
 open Domain
 open Elmish
-open Elmish.Browser.Navigation
+open Fable.Core
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.Import
+open Fable.Import.React
 open Fable.PowerPack
-open Fable.PowerPack.Fetch
 open Fable.Core.JsInterop
 open Fulma
 open ModifiedFableFetch
 open System
-open Client.Shared
 open Thoth.Json
+open TitanOpenTokBinding
+
 
 type LiveState =
     | On
@@ -26,7 +27,6 @@ type Model =
       OTI : OpenTokInfo option
       StartTime : DateTimeOffset option
       Error : APIError option
-      Session : obj option
       Live : LiveState
       Email : string //tutor's email
       EndTime : DateTimeOffset  option }
@@ -37,6 +37,8 @@ type Msg =
     | SignOut
     | GetSessionSuccess of OpenTokInfo
     | GetSessionFailure of exn
+
+
 
 
 exception GetSessionEx of APIError
@@ -60,7 +62,7 @@ let private get_live_session_id () = promise {
 
 
 let init email =
-    { Session = None; Students = []; StartTime = None; Live = Off
+    { Students = []; StartTime = None; Live = Off
       EndTime = None; OTI = None; Error = None; Email = email},
       Cmd.ofPromise get_live_session_id () GetSessionSuccess GetSessionFailure
 
@@ -69,10 +71,10 @@ let update (model : Model) (msg : Msg) =
 
     | model, GetSessionSuccess oti ->
         Browser.console.info ("Got session id")
-        let session = OpenTokJSInterop.init_session oti.Key oti.SessionId
-        OpenTokJSInterop.on_streamcreate_subscribe session 640 480
-        if session = null then failwith "failed to get js session"
-        {model with OTI = Some oti; Session = Some session; Error = None}, Cmd.none
+        //let session = OpenTokJSInterop.init_session oti.Key oti.SessionId
+        //OpenTokJSInterop.on_streamcreate_subscribe session 640 480
+        //if session = null then failwith "failed to get js session"
+        {model with OTI = Some oti; Error = None}, Cmd.none
 
     |  model,GetSessionFailure e ->
         match e with
@@ -83,11 +85,11 @@ let update (model : Model) (msg : Msg) =
             Browser.console.warn ("Failed to get session: " + e.Message)
             model, Cmd.none
 
-    |  {Live = Off; OTI = Some oti; Session = Some session}, GoLive ->
+    |  {Live = Off; OTI = Some _}, GoLive ->
         Browser.console.info (sprintf "Clicked GoLive...initialzing publisher with session id = %s" model.OTI.Value.SessionId)
-        let publisher = OpenTokJSInterop.init_pub "publisher" "1280x720" model.Email
-        OpenTokJSInterop.connect_session_with_pub session publisher model.OTI.Value.Token
-        {model with Live = On; Session = Some session}, Cmd.none
+        //let publisher = OpenTokJSInterop.init_pub "publisher" "1280x720" model.Email
+        //OpenTokJSInterop.connect_session_with_pub session publisher model.OTI.Value.Token
+        {model with Live = On}, Cmd.none
 
     | _, GoLive ->
         Browser.console.error ("Bad state for GoLive message")
@@ -95,12 +97,7 @@ let update (model : Model) (msg : Msg) =
 
 
     | {Live = On }, StopLive ->
-        match model.Session with
-        | Some session ->
-            OpenTokJSInterop.disconnect session
-            {model with Live = Off}, Cmd.none
-        | None ->
-            model, Cmd.none
+        {model with Live = Off}, Cmd.none
 
     | _, StopLive ->
         Browser.console.warn "Clicked StopLive ... but we are not live."
@@ -108,12 +105,7 @@ let update (model : Model) (msg : Msg) =
 
     | _, SignOut ->
         Browser.console.info "Received signout msg"
-        match model.Session with
-        | Some session ->
-            OpenTokJSInterop.disconnect session
-            {model with Live = Off; Session = None}, Cmd.none
-        | None ->
-            model, Cmd.none
+        model, Cmd.none
 
 
 let private  nav_item_stop_button (dispatch : Msg -> unit) =
@@ -130,10 +122,10 @@ let private classroom_level model dispatch =
                                                Modifier.TextSize (Screen.All, TextSize.Is5) ]
                             Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "classroom" ] ]
         Level.right [ ] [
-            (match model.Live, model.Session, model.OTI with
-            | On, Some _, Some _ ->
+            (match model.Live, model.OTI with
+            | On, Some _ ->
                 nav_item_stop_button dispatch
-            | Off, Some _ , Some _ ->
+            | Off, Some _ ->
                 Client.Style.button dispatch GoLive "Go Live!" [ ]
             | _ -> nothing)
         ]
@@ -144,17 +136,26 @@ let private students_in_room (model : Model) =
     | [] -> str "Nobody here"
     | students -> nothing
 
-let private video = 
+let private video model = 
     div [ HTMLAttr.Id "videos"] [
-        div [ HTMLAttr.Id "layoutContainer"] [
-        ]
-        div [ HTMLAttr.Id "publisher" ] [
-
-        ]
+        (match model.OTI, model.Live with
+        | Some oti, On ->
+            Columns.columns [ ] [
+                Column.column [ ] [
+                    // TutorPublisher [ TutorPublisherProps.Session oti.SessionId; TutorPublisherProps.ApiKey oti.Key;
+                    //                  TutorEmail model.Email; TutorPublisherProps.Token oti.Token] [ ]
+                ]
+                Column.column [ ] [
+                    TutorSubscriber [ TutorSubscriberProps.Session oti.SessionId; TutorSubscriberProps.ApiKey oti.Key
+                                      TutorSubscriberProps.Token oti.Token ] [ ]
+                ]
+            ]
+        | _, _ ->
+            nothing)
     ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
     div [ ] [
         classroom_level model dispatch
-        video
+        video model
     ]
