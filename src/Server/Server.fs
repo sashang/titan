@@ -167,7 +167,7 @@ let titan_api =  router {
     get "/get-pending-schools" API.get_pending_schools
     get "/get-all-students" API.get_all_students
     get "/get-pending" API.get_pending
-    get "/go-live" API.go_live
+    get "/get-session-id" API.get_session_id
     get "/get-enrolled-schools" API.get_enrolled_schools
     get "/get-users-for-titan" API.get_users_for_titan
 

@@ -44,7 +44,7 @@ exception GetSessionEx of APIError
 let private get_live_session_id () = promise {
     let request = make_get 
     let decoder = Decode.Auto.generateDecoder<OTIResponse>()
-    let! response = Fetch.tryFetchAs "/api/go-live" decoder request
+    let! response = Fetch.tryFetchAs "/api/get-session-id" decoder request
     match response with
     | Ok result ->
         match result.Error with
