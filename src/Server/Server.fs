@@ -25,6 +25,7 @@ open System.Security.Claims
 open System.Security.Cryptography.X509Certificates
 open Thoth.Json.Net
 open TitanOpenTok
+open TokBoxCB
 
 type AspNetCoreGoogleOpts = Microsoft.AspNetCore.Authentication.Google.GoogleOptions
 
@@ -182,6 +183,9 @@ let titan_api =  router {
     post "/save-tutor" API.save_tutor
     post "/student-get-session" API.get_session_id_for_student
     post "/update-user-approval" API.update_user_approval
+
+    //calback for tokbox to tell us about sessions starting/ending etc.
+    post "/tokbox-cb" TokBoxCB.callback
 }
 
 ///Define the pipeline that http request headers will see

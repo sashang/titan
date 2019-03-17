@@ -2,7 +2,6 @@ module API
 
 open Database
 open Domain
-open Domain
 open FSharp.Control.Tasks.ContextInsensitive
 open Giraffe
 open Microsoft.AspNetCore.Http
@@ -439,4 +438,3 @@ let dismiss_student (next : HttpFunc) (ctx : HttpContext) = task {
     else
         return! ctx.WriteJsonAsync APIError.unauthorized
 }
-
