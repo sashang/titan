@@ -28,6 +28,7 @@ let from_base64 (s:string) : string = jsNative
 
 
 type RootMsg =
+    | TenSecondsTimer
     | ClickSignOut
     | ClickStopLive
     | ClickTitle
@@ -240,6 +241,13 @@ let view model dispatch =
 let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     match msg, state with    
 
+    | TenSecondsTimer, {Child = DashboardRouterModel model} ->
+        let model', cmd = DashboardRouter.update model DashboardRouter.TenSecondsTimer
+        {state with Child = DashboardRouterModel model'}, Cmd.map DashboardRouterMsg cmd
+
+    | TenSecondsTimer, _ -> //ignore other one second timer messages
+        state, Cmd.none
+
     | SignOutMsg sign_out, state ->
         let cmd = SignOut.update sign_out
         //assume that signing out worked so we delete the sesison
@@ -362,6 +370,3 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         Browser.console.error "Received unknown message but child is LoginModel. There should be no messages for this model."
         state, Cmd.none
     
-    | UrlUpdatedMsg msg, {Child = some_child; Session = Some session} ->
-        Browser.console.info "got updatedurlmsg"
-        state, Cmd.none

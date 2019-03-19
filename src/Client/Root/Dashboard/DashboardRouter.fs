@@ -18,6 +18,7 @@ type Msg =
     | StudentMsg of Student.Dashboard.Msg
     | TitanMsg of Titan.Dashboard.Msg
     | SignOut
+    | TenSecondsTimer
 
 
 type Model =
@@ -48,6 +49,14 @@ let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
 
     | _, TutorMsg _  ->
         Browser.console.error("Received bad TutorMsg.")
+        model, Cmd.none
+
+    | {Child = StudentModel model}, TenSecondsTimer ->
+        let new_model, cmd = Student.Dashboard.update model Student.Dashboard.TenSecondsTimer
+        {Child = StudentModel new_model}, Cmd.map StudentMsg cmd
+
+    //ignore other pages for the moment.
+    | _ , TenSecondsTimer -> 
         model, Cmd.none
 
     | {Child = StudentModel model}, StudentMsg msg  ->

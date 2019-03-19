@@ -20,20 +20,35 @@ type LiveState =
 
 type Msg =
     | GoLive
+    | CheckTutorIsLive
     | SignOut
     | GetSessionSuccess of OpenTokInfo
+    | TokBoxFindByNameSuccess of bool
     | Failure of exn
     | StopLive
+    | TenSecondsTimer
 
 type Model =
     { Session : obj option
       School : School 
-      Live : LiveState
+      Live : LiveState //we are live
+      TutorLive : LiveState //tutor is live
       StudentEmail: string
       OTI : OpenTokInfo option
       Error : APIError option}
 
 exception GetSessionEx of APIError
+
+let private tokbox_find_by_name (tutor_email : EmailRequest) = promise {
+    let request = make_post 1 tutor_email
+    let decoder = Decode.Auto.generateDecoder<bool>()
+    let! response = Fetch.tryFetchAs "/api/tokbox-find-by-name" decoder request
+    match response with
+    | Ok result ->
+        return result
+    | Error msg ->
+        return failwith ("Failed to call get find_by_name_result: " + msg)
+}
 
 let private get_live_session_id (tutor_email : EmailRequest) = promise {
     let request = make_post 1 tutor_email
@@ -59,29 +74,55 @@ let private  nav_item_stop_button (dispatch : Msg -> unit) =
               Button.OnClick (fun e -> dispatch StopLive)  ]
             [ str "Stop" ] ]
 
+let private class_text (model : Model) =
+    match model.TutorLive with
+    | On ->
+        "Class has started"
+    | Off ->
+        "Class has not started"
+
 let private classroom_level model dispatch =
     Level.level [ ] [ 
         Level.left [ ]
             [ Level.title [ Common.Modifiers [ Modifier.TextTransform TextTransform.UpperCase
-                                               Modifier.TextSize (Screen.All, TextSize.Is5) ]
-                            Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "classroom" ] ]
+                                               Modifier.TextSize (Screen.All, TextSize.Is6) ]
+                            Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str (class_text model) ] ]
         Level.right [ ] [
-            (match model.Live, model.Session, model.OTI with
-            | On, Some _, Some _ ->
+            (match model.Live, model.Session, model.OTI, model.TutorLive with
+            | On, Some _, Some _, _ ->
                 nav_item_stop_button dispatch
-            | Off, Some _ , Some _ -> //only show the go live button when we have values for session and oti and we are off
+            | Off, Some _ , Some _, Off -> 
+                //disbale the button if the tutor has not started
+                Client.Style.button dispatch GoLive "Go Live!" [ Button.Disabled true ]
+            | Off, Some _ , Some _, On -> 
                 Client.Style.button dispatch GoLive "Go Live!" [ ]
             | _ -> nothing)
         ]
     ]
 
+
 let init school student_email = 
-    {School = school; StudentEmail = student_email; Session = None; OTI = None; Error = None; Live = Off},
+    {School = school; StudentEmail = student_email; Session = None;
+     OTI = None; Error = None; Live = Off; TutorLive = Off},
     Cmd.ofPromise get_live_session_id {Email = school.Email} GetSessionSuccess Failure
 
 let update (model : Model) (msg : Msg) =
     //TODO: map this to the OTI record based on the email
     match model, msg with
+    | {OTI = Some oti; Session = Some session}, TenSecondsTimer ->
+        model, Cmd.ofPromise tokbox_find_by_name {Email = model.School.Email} TokBoxFindByNameSuccess Failure
+
+    | _, TenSecondsTimer ->
+        model, Cmd.none
+
+    | model, TokBoxFindByNameSuccess true ->
+        Browser.console.info "TokBox says tutor has started class"
+        {model with TutorLive = On}, Cmd.none
+
+    | model, TokBoxFindByNameSuccess false ->
+        Browser.console.info "TokBox says tutor has not started class"
+        {model with TutorLive = Off}, Cmd.none
+
     | {OTI = Some oti; Session = Some session; Live = Off}, GoLive ->
         Browser.console.info (sprintf "received GoLive for student at school %s with session = %s" model.School.SchoolName oti.SessionId)
         let publisher = OpenTokJSInterop.init_pub "publisher" "640x480" model.StudentEmail
@@ -95,7 +136,8 @@ let update (model : Model) (msg : Msg) =
     | {Session = Some session; Live = On}, StopLive ->
         Browser.console.info (sprintf "received StopLive for student at school %s" model.School.SchoolName)
         OpenTokJSInterop.disconnect session
-        {model with Live = Off}, Cmd.none
+        //we need to check if the tutor is still live.
+        {model with Live = Off}, Cmd.ofPromise tokbox_find_by_name {Email = model.School.Email} TokBoxFindByNameSuccess Failure
 
     | {Session = Some session}, SignOut ->
         //we need to porcess the signout click in order to stop the opentok stuff.

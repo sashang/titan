@@ -186,6 +186,7 @@ let titan_api =  router {
 
     //calback for tokbox to tell us about sessions starting/ending etc.
     post "/tokbox-cb" TokBoxCB.callback
+    post "/tokbox-find-by-name" TokBoxCB.find_by_name
 }
 
 ///Define the pipeline that http request headers will see
