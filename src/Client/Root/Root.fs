@@ -180,8 +180,8 @@ let view model dispatch =
                 Container.container [ Container.Props [ Style [ ] ] ] [
                     Navbar.Brand.div [ ] [
                         Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
-                            Image.image [ Image.IsSquare; Image.Is24x24 ] [
-                                img [ Src "Images/tewtin-cube-logo-circle.svg" ]
+                            Image.image [ Image.IsSquare; Image.Is32x32] [
+                                img [ Src "Images/favicon_symbol.png" ]
                             ]
                         ]
                         Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
