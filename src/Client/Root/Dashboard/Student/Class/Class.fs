@@ -86,7 +86,7 @@ let private classroom_level model dispatch =
         Level.left [ ]
             [ Level.title [ Common.Modifiers [ Modifier.TextTransform TextTransform.UpperCase
                                                Modifier.TextSize (Screen.All, TextSize.Is6) ]
-                            Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str (class_text model) ] ]
+                            Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ] ] ] [ str (class_text model) ] ]
         Level.right [ ] [
             (match model.Live, model.Session, model.OTI, model.TutorLive with
             | On, Some _, Some _, _ ->
