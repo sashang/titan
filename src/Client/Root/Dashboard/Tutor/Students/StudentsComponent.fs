@@ -106,7 +106,7 @@ let private card_footer (student : Student) (dispatch : Msg -> unit) =
 let private student_content (student : Student) =
       Text.div
         [ Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [
-            Columns.columns [] [
+            Columns.columns [ ] [
                 Column.column [] [
                     Label.label [ ] [ str "Email" ]
                 ]
@@ -123,7 +123,7 @@ let private student_content (student : Student) =
         ]
 
 let private single_student model dispatch (student : Domain.Student) = 
-    Column.column [ ]
+    Column.column [ Column.Width (Screen.All, Column.Is6) ]
       [ Card.card [ ] 
           [ Card.header [ Modifiers [ Modifier.BackgroundColor IsTitanSecondary ] ]
               [ Card.Header.title 
@@ -133,13 +133,30 @@ let private single_student model dispatch (student : Domain.Student) =
             Card.footer [ ]
                 [ yield! card_footer student dispatch ] ] ]
 
+let rec private render_2_students (model : Model) (dispatch : Msg->unit) (students : Domain.Student list) =
+    match students with
+    | [] -> nothing
+    | x::[] -> 
+        Columns.columns [ ] [
+            single_student model dispatch x
+        ]
+    | x::y::others -> 
+        div [ ] [
+            Columns.columns [ ] [
+                single_student model dispatch x
+                single_student model dispatch y
+            ]
+            render_2_students model dispatch others
+        ]
+
 let private render_all_students (model : Model) (dispatch : Msg->unit) =
     match model.Students with
     | [] ->
         nothing
     | _ ->
-       div [ ] [ for x in model.Students do
-                    yield single_student model dispatch x] 
+        render_2_students model dispatch model.Students
+    //    Columns.columns [ ] [ for x in model.Students do
+    //                             yield single_student model dispatch x] 
 
 let private students_level =
     Level.level [ ] 
