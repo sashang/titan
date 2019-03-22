@@ -78,6 +78,11 @@ type EmailRequest =
     { Email : string }
 
 [<CLIMutable>]
+type AzureMapsKeys =
+    { ClientId : string
+      PKey : string }
+
+[<CLIMutable>]
 type UserForTitan =
     { FirstName : string
       LastName : string

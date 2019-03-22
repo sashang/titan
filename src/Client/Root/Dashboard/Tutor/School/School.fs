@@ -26,6 +26,8 @@ type Model =
       LastName : string
       UserLoadState : LoadingState
       SchoolLoadState : LoadingState
+      AzureMapsClientId : string
+      AzureMapsPKey : string
       Info : string
       Error : APIError option}
 
@@ -38,6 +40,7 @@ type Msg =
     | ClickSave
     | SaveSuccess of unit
     | Success of SchoolResponse
+    | GetAzureMapsKeys of Domain.AzureMapsKeys
     | LoadUserSuccess of UserResponse
     | Failure of exn
 
@@ -54,6 +57,20 @@ let private load_school () = promise {
             return raise (LoadSchoolEx api_error)
     | Error e ->
         return failwith "no school"
+}
+
+let private get_azure_maps_keys () = promise {
+
+    let request = make_get 
+    let decoder = Decode.Auto.generateDecoder<Domain.AzureMapsKeys>()
+    let! response = Fetch.tryFetchAs "/api/get-azure-maps-keys" decoder request
+    match response with
+    | Ok keys ->
+        Browser.console.info("Got azure client id = " +  keys.ClientId);
+        Browser.console.info("Got azure pkey = " +  keys.PKey);
+        return keys
+    | Error message ->
+        return failwith "no azure maps keys"
 }
 
 let private load_user () = promise {
@@ -80,9 +97,10 @@ let private save (data : SaveRequest) = promise {
 
 let init () : Model*Cmd<Msg> =
     {SchoolName = ""; Error = None; Subjects = ""; UserLoadState = Loading; SchoolLoadState = Loading;
-     FirstName = ""; LastName = ""; Info = ""; Location = ""},
+     FirstName = ""; LastName = ""; Info = ""; Location = ""; AzureMapsClientId = ""; AzureMapsPKey = ""},
      Cmd.batch [Cmd.ofPromise load_school () Success Failure
-                Cmd.ofPromise load_user () LoadUserSuccess Failure]
+                Cmd.ofPromise load_user () LoadUserSuccess Failure
+                Cmd.ofPromise get_azure_maps_keys () GetAzureMapsKeys Failure]
 
 
 let private of_api_error (result : APIError) =
@@ -221,6 +239,8 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
         {model with SchoolLoadState = Loaded; SchoolName = result.SchoolName; Info = result.Info; Subjects = result.Subjects; Location = result.Location}, Cmd.none
     | LoadUserSuccess result ->
         {model with UserLoadState = Loaded; FirstName = result.FirstName; LastName = result.LastName}, Cmd.none
+    | GetAzureMapsKeys keys ->
+        {model with AzureMapsClientId = keys.ClientId; AzureMapsPKey = keys.PKey}, Cmd.none
     | Failure e ->
         match e with
         | :? SaveEx as ex ->

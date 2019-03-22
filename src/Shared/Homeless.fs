@@ -9,6 +9,8 @@ type RecStartupOptions = {
     GoogleClientId : string
     GoogleSecret : string
     OpenTokSecret : string
+    AzureMapsClientId : string
+    AzureMapsPrimaryKey : string
     OpenTokKey : int
 }
 //make a list that breaks the original list into one that contains x elem list

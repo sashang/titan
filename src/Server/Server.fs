@@ -1,6 +1,6 @@
 module Server
 
-
+open AzureMaps
 open Database
 open Domain
 open FSharp.Control.Tasks
@@ -171,6 +171,7 @@ let titan_api =  router {
     get "/get-session-id" API.get_session_id
     get "/get-enrolled-schools" API.get_enrolled_schools
     get "/get-users-for-titan" API.get_users_for_titan
+    get "/get-azure-maps-keys" API.get_azure_maps_keys
 
     //get "/signin-google" (redirectTo false "/api/secure")
     post "/enrol-student" API.enrol
@@ -224,6 +225,7 @@ let configure_services startup_options (services:IServiceCollection) =
     services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
     services.AddSingleton<IDatabase>(Database(startup_options.ConnectionString)) |> ignore
     services.AddSingleton<ITitanOpenTok>(TitanOpenTok(startup_options.OpenTokKey, startup_options.OpenTokSecret)) |> ignore
+    services.AddSingleton<IAzureMaps>(AzureMaps(startup_options.AzureMapsClientId, startup_options.AzureMapsPrimaryKey)) |> ignore
 
     services.AddFluentMigratorCore()
             .ConfigureRunner(fun rb ->

@@ -1,5 +1,6 @@
 module API
 
+open AzureMaps
 open Database
 open Domain
 open FSharp.Control.Tasks.ContextInsensitive
@@ -11,6 +12,17 @@ open System.Net.Mail
 open System
 open TitanOpenTok
 
+
+let get_azure_maps_keys (next : HttpFunc) (ctx : HttpContext) = task {
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        logger.LogInformation("getting azure maps keys")
+        let az_keys = ctx.GetService<IAzureMaps>()
+        let result = az_keys.get_azure_maps_keys
+        return! ctx.WriteJsonAsync result
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
+}
 
 let get_enrolled_schools (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
@@ -186,6 +198,7 @@ let register_student (next : HttpFunc) (ctx : HttpContext) = task {
     else
         return! ctx.WriteJsonAsync APIError.unauthorized
 }
+
 
 let add_student_to_school (next : HttpFunc) (ctx : HttpContext) = task {
     let! student = ctx.BindJsonAsync<Domain.Student>()
