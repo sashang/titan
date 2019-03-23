@@ -89,6 +89,10 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | {Child = SchoolModel child_model}, SchoolMsg msg ->
         let new_state, cmd = School.update child_model msg
         {model with Child = SchoolModel new_state}, Cmd.map SchoolMsg cmd
+
+    | {Child = SchoolModel child_model}, SignOut ->
+        model, Cmd.none
+
     | _, SchoolMsg _ ->
         Browser.console.error("Unexpected SchoolMsg in Dashboard.Tutor")
         model, Cmd.none
@@ -129,6 +133,8 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | model, ClickAccount ->
         let new_state, new_cmd = School.init ()
         {model with Child = SchoolModel new_state}, Cmd.map SchoolMsg new_cmd
+
+
     | model, ClickEnrol ->
         let new_state, new_cmd = PendingStudents.init ()
         {model with Child = EnrolModel new_state}, Cmd.map EnrolMsg new_cmd

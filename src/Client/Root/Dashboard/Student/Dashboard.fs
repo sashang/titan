@@ -62,6 +62,9 @@ let update model msg =
         let model', cmd = Student.Class.update child Student.Class.TenSecondsTimer
         {model with Child = ClassModel model'}, Cmd.map ClassMsg cmd
 
+    | _, TenSecondsTimer ->
+        model, Cmd.none
+
     | {Child = ClassModel child}, ClassMsg msg ->
         Browser.console.info ("ClassMsg message")
         let new_model, new_cmd = Student.Class.update child msg

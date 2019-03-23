@@ -293,10 +293,9 @@ let settings_file =
     match get_env_var "ASPNETCORE_ENVIRONMENT" with
         | None -> "appsettings.json"
         | Some e -> "appsettings."+e+".json"
-printfn "Settings file= %s" settings_file
 let settings = System.IO.File.ReadAllText(settings_file)
 let decoder = Decode.Auto.generateDecoder<RecStartupOptions>()
 let result = Decode.fromString decoder settings
 match result with
-| Ok startup_options -> run (app settings_file startup_options)
-| Error e -> failwith ("failed to read appsettings.json: " + e)
+    | Ok startup_options -> run (app settings_file startup_options)
+    | Error e -> failwith ("failed to read appsettings.json: " + e)

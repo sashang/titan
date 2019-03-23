@@ -7,8 +7,9 @@ open Domain
 open Elmish
 open Fable.Helpers.React
 open Fable.Import
-open Fable.Helpers.React.Props
 open Fable.PowerPack
+open Fable.PowerPack.Fetch
+open Fable.Helpers.React.Props
 open Fulma
 open ModifiedFableFetch
 open Thoth.Json
@@ -17,6 +18,33 @@ exception SaveEx of APIError
 exception LoadSchoolEx of APIError
 exception LoadUserEx of APIError
 
+type AzureMapsSummary = 
+    { Query : string
+      QueryType : string
+      QueryTime: int
+      NumResults : int
+      Offset : int
+      TotalResults : int
+      FuzzyLevel : int }
+
+    static member decoder : Decode.Decoder<AzureMapsSummary> =
+        Decode.object
+            (fun get ->
+                { Query = get.Required.Field "query" Decode.string
+                  QueryType = get.Required.Field "queryType" Decode.string
+                  QueryTime = get.Required.Field "queryTime" Decode.int
+                  NumResults = get.Required.Field "numResults" Decode.int
+                  Offset = get.Required.Field "offset" Decode.int
+                  TotalResults = get.Required.Field "totalResults" Decode.int
+                  FuzzyLevel = get.Required.Field "fuzzyLevel" Decode.int })
+
+type AzureMapsResponse = 
+    { Summary : AzureMapsSummary }
+
+    static member decoder : Decode.Decoder<AzureMapsResponse> =
+        Decode.object
+            (fun get ->
+                { Summary = get.Required.Field "summary" AzureMapsSummary.decoder })
 
 type Model =
     { SchoolName : string
@@ -42,6 +70,8 @@ type Msg =
     | Success of SchoolResponse
     | GetAzureMapsKeys of Domain.AzureMapsKeys
     | LoadUserSuccess of UserResponse
+    | ClickAzureMapsSearch
+    | AMSearch of AzureMapsResponse
     | Failure of exn
 
 let private load_school () = promise {
@@ -60,7 +90,6 @@ let private load_school () = promise {
 }
 
 let private get_azure_maps_keys () = promise {
-
     let request = make_get 
     let decoder = Decode.Auto.generateDecoder<Domain.AzureMapsKeys>()
     let! response = Fetch.tryFetchAs "/api/get-azure-maps-keys" decoder request
@@ -71,6 +100,24 @@ let private get_azure_maps_keys () = promise {
         return keys
     | Error message ->
         return failwith "no azure maps keys"
+}
+
+
+let private azure_maps_search (sub_key, query) = promise {
+    let request =
+        [ RequestProperties.Method HttpMethod.GET ] 
+    let decoder = AzureMapsResponse.decoder
+    let fetch_url = "https://atlas.microsoft.com/search/address/json?subscription-key=" + sub_key + "&api-version=1.0&query=" + query + "&typeahead=true"
+    //let fetch_url = "https://atlas.microsoft.com/search/address/json"
+    let! response = Fetch.tryFetchAs fetch_url decoder request
+    match response with
+    | Ok keys ->
+        Browser.console.info("Got azure maps response");
+        Browser.console.info("num_results: " + keys.Summary.NumResults.ToString());
+        return keys
+    | Error message ->
+        Browser.console.error("Failed azure maps response: "+ message);
+        return failwith message
 }
 
 let private load_user () = promise {
@@ -206,6 +253,7 @@ let view (model : Model) (dispatch : Msg -> unit) =
                               Level.item [] [
                                   Card.Footer.div [ ] [
                                       save_button dispatch ClickSave "Save"
+                                      Client.Style.button dispatch ClickAzureMapsSearch "Map Search"  []
                                   ]
                               ]
                           ]
@@ -241,6 +289,13 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
         {model with UserLoadState = Loaded; FirstName = result.FirstName; LastName = result.LastName}, Cmd.none
     | GetAzureMapsKeys keys ->
         {model with AzureMapsClientId = keys.ClientId; AzureMapsPKey = keys.PKey}, Cmd.none
+    | ClickAzureMapsSearch ->
+        Browser.console.info("Clicked maps search")
+        model, Cmd.ofPromise azure_maps_search (model.AzureMapsPKey, "mel")  AMSearch Failure
+    | AMSearch am_response ->
+        Browser.console.info("Got " + am_response.Summary.NumResults.ToString() + " results")
+        model, Cmd.none
+
     | Failure e ->
         match e with
         | :? SaveEx as ex ->
