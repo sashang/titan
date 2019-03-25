@@ -13,6 +13,7 @@ open Fable.Helpers.React.Props
 open Fulma
 open ModifiedFableFetch
 open Thoth.Json
+open TitanAutosuggestBinding
 
 exception SaveEx of APIError
 exception LoadSchoolEx of APIError
@@ -38,19 +39,59 @@ type AzureMapsSummary =
                   TotalResults = get.Required.Field "totalResults" Decode.int
                   FuzzyLevel = get.Required.Field "fuzzyLevel" Decode.int })
 
+type AzureMapsAddress = 
+    { MunicipalitySubdivision : string option
+      Municipality : string
+      CountrySecondarySubdivision : string option
+      CountrySubdivision : string
+      CountryCode : string
+      Country : string
+      CountryCodeISO3 : string
+      FreeformAddress : string }
+
+    static member decoder : Decode.Decoder<AzureMapsAddress> =
+        Decode.object
+            (fun get ->
+                { MunicipalitySubdivision = get.Optional.Field "municipalitySubdivision" Decode.string
+                  Municipality = get.Required.Field "municipality" Decode.string
+                  CountrySecondarySubdivision = get.Optional.Field "countrySecondarySubdivision" Decode.string
+                  CountrySubdivision = get.Required.Field "countrySubdivision" Decode.string
+                  CountryCode = get.Required.Field  "countryCode" Decode.string
+                  Country = get.Required.Field  "country" Decode.string
+                  CountryCodeISO3 = get.Required.Field "countryCodeISO3" Decode.string
+                  FreeformAddress = get.Required.Field "freeformAddress" Decode.string })
+                  
+type AzureMapsResult =
+    { Type : string 
+      Address : AzureMapsAddress }
+    static member decoder : Decode.Decoder<AzureMapsResult> =
+        Decode.object
+            (fun get ->
+                { Type = get.Required.Field "type" Decode.string
+                  Address = get.Required.Field "address" AzureMapsAddress.decoder })
+
+
 type AzureMapsResponse = 
-    { Summary : AzureMapsSummary }
+    { Summary : AzureMapsSummary
+      Results : AzureMapsResult list }
 
     static member decoder : Decode.Decoder<AzureMapsResponse> =
         Decode.object
             (fun get ->
-                { Summary = get.Required.Field "summary" AzureMapsSummary.decoder })
+                { Summary = get.Required.Field "summary" AzureMapsSummary.decoder
+                  Results = get.Required.Field "results" (Decode.list AzureMapsResult.decoder) })
+
+type MapsInfo =
+    { Text : string
+      Suggestions : string list }
+    static member init =
+        {Text = ""; Suggestions = []}
 
 type Model =
     { SchoolName : string
       FirstName : string
       Subjects : string
-      Location : string
+      Location : MapsInfo
       LastName : string
       UserLoadState : LoadingState
       SchoolLoadState : LoadingState
@@ -70,8 +111,8 @@ type Msg =
     | Success of SchoolResponse
     | GetAzureMapsKeys of Domain.AzureMapsKeys
     | LoadUserSuccess of UserResponse
-    | ClickAzureMapsSearch
     | AMSearch of AzureMapsResponse
+    | ClickSuggestion of string
     | Failure of exn
 
 let private load_school () = promise {
@@ -107,7 +148,10 @@ let private azure_maps_search (sub_key, query) = promise {
     let request =
         [ RequestProperties.Method HttpMethod.GET ] 
     let decoder = AzureMapsResponse.decoder
-    let fetch_url = "https://atlas.microsoft.com/search/address/json?subscription-key=" + sub_key + "&api-version=1.0&query=" + query + "&typeahead=true"
+    let country_set ="&countrySet=AU,NZ"
+    let api_version ="&api-version=1.0"
+    let type_ahead ="&typeahead=true"
+    let fetch_url = "https://atlas.microsoft.com/search/address/json?subscription-key=" + sub_key + api_version + country_set + type_ahead + "&query=" + query
     //let fetch_url = "https://atlas.microsoft.com/search/address/json"
     let! response = Fetch.tryFetchAs fetch_url decoder request
     match response with
@@ -144,7 +188,7 @@ let private save (data : SaveRequest) = promise {
 
 let init () : Model*Cmd<Msg> =
     {SchoolName = ""; Error = None; Subjects = ""; UserLoadState = Loading; SchoolLoadState = Loading;
-     FirstName = ""; LastName = ""; Info = ""; Location = ""; AzureMapsClientId = ""; AzureMapsPKey = ""},
+     FirstName = ""; LastName = ""; Info = ""; Location = MapsInfo.init; AzureMapsClientId = ""; AzureMapsPKey = ""},
      Cmd.batch [Cmd.ofPromise load_school () Success Failure
                 Cmd.ofPromise load_user () LoadUserSuccess Failure
                 Cmd.ofPromise get_azure_maps_keys () GetAzureMapsKeys Failure]
@@ -211,6 +255,40 @@ let private image_holder url =
     [ Image.image [ Image.Is128x128 ]
         [ img [ Src url ] ] ]
 
+
+let input_field_location (error : APIError option) (code : APICode) (label: string)
+    (text : string) on_change  =
+    [ Field.div [ ]
+        (List.append 
+            [ Field.label [ Field.Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
+                [ Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ str label ] ]
+              Control.div [ ]
+                [ Input.text 
+                    [ Input.Value text
+                      Input.OnChange on_change ] ] ]
+              (match error with
+              |Some e -> Client.Style.make_help code e
+              |None -> [] ))]
+
+let input_autosuggest model dispatch =
+    Field.div [ ] [
+        Field.label [ Field.Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [
+                      Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ str "Location" ] ]
+        Control.div [ ] [
+                Input.text [ Input.Value model.Location.Text; Input.OnChange (fun ev -> dispatch (SetLocation ev.Value))]
+        ]
+        Dropdown.dropdown [ Dropdown.IsActive (model.Location.Suggestions.IsEmpty = false) ] [
+            Dropdown.menu [ ] [
+                Dropdown.content [ ] [
+                    for suggestion in model.Location.Suggestions do
+                        yield Dropdown.Item.a [ Dropdown.Item.Props  [ OnClick (fun ev -> dispatch (ClickSuggestion suggestion)) ] ] [
+                                str suggestion 
+                              ]
+                ]
+            ]
+        ]
+    ]
+
 let school_content (model : Model) (dispatch : Msg->unit) = 
     [ Columns.columns [ ]
         [ Column.column [ ]
@@ -218,7 +296,8 @@ let school_content (model : Model) (dispatch : Msg->unit) =
               yield! input_field model.Error APICode.LastName "Last Name" model.LastName (fun e -> dispatch (SetLastName e.Value)) ]
           Column.column []
             [ yield! input_field model.Error APICode.SchoolName "School Name" model.SchoolName (fun e -> dispatch (SetSchoolName e.Value))
-              yield! input_field model.Error APICode.Location "Location" model.Location (fun e -> dispatch (SetLocation e.Value)) ] ]
+              yield input_autosuggest model dispatch ]]
+              //yield! input_field_location model.Error APICode.Location "City or Suburb" model.Location (fun e -> dispatch (SetLocation e.Value)) ] ]
       Columns.columns [ ]
         [ Column.column []
             [ yield text_area_without_error "Info" model.Info (fun (e : React.FormEvent) -> dispatch (SetInfo e.Value)) ] ] ]
@@ -253,7 +332,6 @@ let view (model : Model) (dispatch : Msg -> unit) =
                               Level.item [] [
                                   Card.Footer.div [ ] [
                                       save_button dispatch ClickSave "Save"
-                                      Client.Style.button dispatch ClickAzureMapsSearch "Map Search"  []
                                   ]
                               ]
                           ]
@@ -269,14 +347,19 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     | ClickSave ->
         let save_request = {SaveRequest.init with FirstName = model.FirstName
                                                   LastName = model.LastName; Info = model.Info; Subjects = model.Subjects
-                                                  SchoolName = model.SchoolName; Location = model.Location}
+                                                  SchoolName = model.SchoolName; Location = model.Location.Text}
         model, Cmd.ofPromise save save_request SaveSuccess Failure
     | SaveSuccess () ->
         model, Cmd.none
     | SetFirstName name ->
         {model with FirstName = name}, Cmd.none
     | SetLocation location ->
-        {model with Location = location}, Cmd.none
+        let cmd =
+            if location.Length >=3 then
+               Cmd.ofPromise azure_maps_search (model.AzureMapsPKey, model.Location.Text) AMSearch Failure
+            else
+                Cmd.none
+        {model with Location = {model.Location with Text = location}}, cmd
     | SetLastName name ->
         {model with LastName = name}, Cmd.none
     | SetInfo info ->
@@ -284,17 +367,30 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     | SetSchoolName name ->
         {model with SchoolName = name}, Cmd.none
     | Success result ->
-        {model with SchoolLoadState = Loaded; SchoolName = result.SchoolName; Info = result.Info; Subjects = result.Subjects; Location = result.Location}, Cmd.none
+        {model with SchoolLoadState = Loaded; SchoolName = result.SchoolName; Info = result.Info;
+                    Subjects = result.Subjects; Location = {model.Location with Text = result.Location}}, Cmd.none
     | LoadUserSuccess result ->
         {model with UserLoadState = Loaded; FirstName = result.FirstName; LastName = result.LastName}, Cmd.none
     | GetAzureMapsKeys keys ->
         {model with AzureMapsClientId = keys.ClientId; AzureMapsPKey = keys.PKey}, Cmd.none
-    | ClickAzureMapsSearch ->
-        Browser.console.info("Clicked maps search")
-        model, Cmd.ofPromise azure_maps_search (model.AzureMapsPKey, "mel")  AMSearch Failure
     | AMSearch am_response ->
         Browser.console.info("Got " + am_response.Summary.NumResults.ToString() + " results")
-        model, Cmd.none
+        try
+            let get_suggestions =
+                am_response.Results
+                |> List.filter (fun (result : AzureMapsResult) -> result.Type = "Geography")
+                |> List.map (fun x -> x.Address.FreeformAddress)
+
+            {model with Location = {model.Location with Suggestions = get_suggestions}}, Cmd.none
+        with
+        | e ->
+            Browser.console.info("No 'Geography' type in results")
+            model, Cmd.none
+
+    | ClickSuggestion suggestion ->
+        //replace the text with the suggestion clicked and empty the list of suggestions, becuase once
+        //the user has chosen the item they want we don't need to display the other options.
+        {model with Location = {model.Location with Text = suggestion; Suggestions = [] }}, Cmd.none
 
     | Failure e ->
         match e with

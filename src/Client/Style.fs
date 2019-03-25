@@ -79,7 +79,7 @@ let private help text =
                         [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
                         [ R.str text ]
                         
-let private make_help (code : APICode) (error : APIError) = 
+let make_help (code : APICode) (error : APIError) = 
     List.fold2 (fun acc the_code msg ->
          if code = the_code then List.append acc [(help msg)] else acc)
          [] error.Codes error.Messages
@@ -134,7 +134,7 @@ let input_field_with_error (error : APIError) (code : APICode) (label: string) (
                 [ Input.text 
                     [ Input.Value text
                       Input.OnChange on_change ] ] ]
-              (make_help code error))]
+            (make_help code error))]
 
 let input_field (error : APIError option) (code : APICode) =
     match error with

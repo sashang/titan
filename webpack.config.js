@@ -74,6 +74,9 @@ var CONFIG = {
                 "useBuiltIns": "usage"
             }]
         ],
+        plugins: [
+            "@babel/plugin-proposal-class-properties"
+        ]
     }
 }
 
