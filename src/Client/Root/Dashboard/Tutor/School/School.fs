@@ -277,7 +277,8 @@ let input_autosuggest model dispatch =
         Control.div [ ] [
                 Input.text [ Input.Value model.Location.Text; Input.OnChange (fun ev -> dispatch (SetLocation ev.Value))]
         ]
-        Dropdown.dropdown [ Dropdown.IsActive (model.Location.Suggestions.IsEmpty = false) ] [
+        Dropdown.dropdown [ Dropdown.IsActive (model.Location.Suggestions.IsEmpty = false)
+                            Dropdown.Props [ Style [ CSSProp.Display "block" ] ] ] [
             Dropdown.menu [ ] [
                 Dropdown.content [ ] [
                     for suggestion in model.Location.Suggestions do
@@ -288,6 +289,7 @@ let input_autosuggest model dispatch =
             ]
         ]
     ]
+
 
 let school_content (model : Model) (dispatch : Msg->unit) = 
     [ Columns.columns [ ]
