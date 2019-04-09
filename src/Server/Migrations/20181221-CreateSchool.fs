@@ -36,7 +36,7 @@ type Initial() =
             .WithColumn("Id").AsInt32().PrimaryKey().Identity().NotNullable().Unique()
             .WithColumn("SchoolId").AsInt32().ForeignKey()
             .WithColumn("UserId").AsInt32().ForeignKey() |> ignore //students user id
-            
+        
         this.Create.ForeignKey("FKStudentUser").FromTable("Student")
             .ForeignColumn("UserId").ToTable("User").PrimaryColumn("Id") |> ignore
         this.Create.ForeignKey("FKStudentSchool").FromTable("Student")

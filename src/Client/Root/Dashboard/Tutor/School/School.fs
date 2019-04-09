@@ -13,7 +13,6 @@ open Fable.Helpers.React.Props
 open Fulma
 open ModifiedFableFetch
 open Thoth.Json
-open TitanAutosuggestBinding
 
 exception SaveEx of APIError
 exception LoadSchoolEx of APIError

@@ -8,5 +8,7 @@
     "GoogleSecret" : "secret"
     "OpenTokSecret" : "secret",
     "OpenTokKey" : 46257672,
+    "AzureMapsClientId" : <see portal.azure.com>,
+    "AzureMapsPrimaryKey" : <see portal.azure.com>
 }
   

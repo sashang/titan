@@ -231,7 +231,9 @@ let configure_services startup_options (services:IServiceCollection) =
             .ConfigureRunner(fun rb ->
                 rb.AddSqlServer2016()
                   .WithGlobalConnectionString(startup_options.ConnectionString)
-                  .ScanIn(typeof<TitanMigrations.Initial>.Assembly).For.Migrations() |> ignore)
+                  .ScanIn(typeof<TitanMigrations.Initial>.Assembly)
+    //              .ScanIn(typeof<TitanMigrations.FixForeignKeys>.Assembly)
+                  .For.Migrations() |> ignore)
             .AddLogging(fun lb -> lb.AddFluentMigratorConsole() |> ignore) |> ignore
 
     //apparently putting this in a scope is the thing to do with asp.net...

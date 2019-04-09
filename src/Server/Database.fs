@@ -536,7 +536,7 @@ type Database(c : string) =
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
-                let cmd = """select "Name","Info","Subjects","Location" from "School" where "School"."UserId" = (select "Id" from "User" where "Email" = @Email)"""
+                let cmd = """select "Name","Info","Subjects","Location" from "School" join "Tutor" on "Tutor"."SchoolId" = "School"."Id" where "Tutor"."UserId" = (select "Id" from "User" where "Email" = @Email)"""
                 let result = conn
                                 |> dapper_map_param_query<Models.SchoolFromEmail> cmd (Map ["Email", email])
                                 |> Seq.head

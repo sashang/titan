@@ -18,6 +18,7 @@
     <Compile Include="../Shared/ValueDeclarations.fs" />
     <Compile Include="./Migrations/DataTypes.fs" />
     <Compile Include="./Migrations/20181221-CreateSchool.fs" />
+    <Compile Include="./Migrations/20190404-FixForeignKeys.fs" />
     <Compile Include="../Shared/FableJson.fs" />
     <Compile Include="Model/Models.fs" />
     <Compile Include="SchoolView.fs" />
