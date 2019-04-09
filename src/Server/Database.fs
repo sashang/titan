@@ -99,6 +99,8 @@ type IDatabase =
     
     abstract member get_enrolled_schools : string -> Task<Result<School list, string>>
 
+    abstract member get_unenrolled_schools : string -> Task<Result<School list, string>>
+
     abstract member get_users_for_titan : unit -> Task<Result<Domain.UsersForTitanResponse, string>>
 
     ///get the pending schools (i.e. the schools that the student has requested enrolement in) given a student's email.
@@ -116,12 +118,13 @@ type Database(c : string) =
                 //the order the table fields appear in the sql select has to match the order in the Models.SchoolTutor
                 //this sql statement needs a comment. We want the tutors info and the school. We're given the email of the student.
                 //Pending table links to User via UserId, School links to Pending via SchoolId
-                //Tutor User links with School via UserId. Then we want to filter all of that based on the students email.
-                let sql = """select "School"."Name","TU"."FirstName","TU"."LastName","School"."Info",
-                             "School"."Subjects", "School"."Location", "TU"."Email" from "User"
+                //Tutor links with School via SchoolId and links with User via UserId.
+                //Then we want to filter all of that based on the students email.
+                let sql = """select "School"."Name","User"."FirstName","User"."LastName","School"."Info",
+                             "School"."Subjects", "School"."Location", "User"."Email" from "User"
                              join "Pending" on "User"."Id" = "Pending"."UserId"
                              join "School" on "School"."Id" = "Pending"."SchoolId"
-                             join "User" as "TU" on "School"."UserId" = "TU"."Id" where "User"."Email" = @Email;"""
+                             join "Tutor" on "Tutor"."UserId" = "User"."Id" where "User"."Email" = @Email;"""
                 
                 let result = conn
                              |> dapper_map_param_query<Models.SchoolTutor> sql (Map["Email", email])
@@ -161,11 +164,13 @@ type Database(c : string) =
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
-                let sql = """select "School"."Name","User"."FirstName","User"."LastName","School"."Info",
-                             "School"."Subjects", "School"."Location", "User"."Email" from "User"
-                             join "School" on "User"."Id" = "School"."UserId"
-                             join "Student" on "School"."Id" = "Student"."SchoolId"
-                             join "User" as "SU" on "Student"."UserId" = "SU"."Id" where "SU"."Email" = @Email;"""
+                let sql = """select "TS"."Name","TU"."FirstName","TU"."LastName","TS"."Info",
+                             "TS"."Subjects", "TS"."Location", "TU"."Email"
+                             from "User" as "TU" join "Tutor" on "Tutor"."UserId" = "TU"."Id"
+                             join "School" as "TS" on "TS"."Id" = "Tutor"."SchoolId"
+                             join "Student" on "Student"."SchoolId" = "Tutor"."SchoolId"
+                             join "User" as "SU" on "SU"."Id" = "Student"."UserId"
+                             where "SU"."Email" = @Email;"""
                 let result = conn
                              |> dapper_map_param_query<Models.SchoolTutor> sql (Map["Email", student_email])
                              |> Seq.toList
@@ -182,7 +187,7 @@ type Database(c : string) =
                 conn.Open()
                 let sql = """delete from "Student" where "Student"."UserId" =
                              (select "Id" from "User" where "User"."Email" = @StudentEmail) and
-                             "Student"."SchoolId" = (select "Id" from "School" where "School"."UserId" =
+                             "Student"."SchoolId" = (select "SchoolId" from "Tutor" where "Tutor"."UserId" =
                              (select "User"."Id" from "User" where "User"."Email" = @TutorEmail))"""
                 let m = (Map ["StudentEmail", student_email; "TutorEmail", tutor_email])
                 if dapper_map_param_exec sql m conn = 1 then  
@@ -193,14 +198,43 @@ type Database(c : string) =
             |  e ->
                 return Error e.Message
         }
+
+        member this.get_unenrolled_schools student_email : Task<Result<School list, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                //tutor must be approved for their school to be valid so we check for it in the sql.
+                //The sql builds up a table of schools and tutors of those schools. then using a left join links with the students.
+                //This creates a new dynamic table and missing entries will be null where the school has no students or the email of the student is not the 
+                //email in the parameter passed to the sql. In those cases the student is not enrolled in the school because their email
+                //is not the same as the email referenced by the query.
+                let sql = """select "School"."Name","TU"."FirstName","TU"."LastName","School"."Info","School"."Subjects", "School"."Location", "TU"."Email"
+                             from "School" join "Tutor" on "School"."Id" = "Tutor"."SchoolId"
+                             join "User" as "TU" on "TU"."Id" = "Tutor"."UserId"
+                             join "TitanClaims" on "TU"."Id" = "TitanClaims"."UserId" and "TitanClaims"."Type" = 'IsApproved' and "TitanClaims"."Value" = 'true'
+                             where "School"."Id" not in 
+                             (select "Student"."SchoolId" from Student join "User" on "User"."Id" = "Student"."UserId" where "User"."Email" = @StudentEmail
+                              union select "Pending"."SchoolId" from "Pending" join "User" on "User"."Id" = "Pending"."UserId" where "User"."Email" = @StudentEmail);
+                             """
+                let m = (Map ["StudentEmail", student_email])
+                let result = conn
+                             |> dapper_map_param_query<Models.SchoolTutor> sql m
+                             |> Seq.toList
+                             |> List.map (fun x -> School.init x.FirstName x.LastName x.SchoolName x.Info x.Subjects x.Location x.Email)
+                return Ok result
+            with
+            |  e ->
+                return Error e.Message
+        }
         
         member this.get_school_view : Task<Result<School list, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
                 //tutor must be approved for their school to be valid so we check for it in the sql.
-                let sql = """select "School"."Name","User"."FirstName","User"."LastName","School"."Info","School"."Subjects",
-                             "School"."Location", "User"."Email" from "School" join "User" on "User"."Id" = "School"."UserId"
+                let sql = """select "School"."Name","User"."FirstName","User"."LastName","School"."Info","School"."Subjects", "School"."Location", "User"."Email"
+                             from Tutor join "School" on "School"."Id" = "Tutor"."SchoolId"
+                             join "User" on "User"."Id" = "Tutor"."UserId"
                              join "TitanClaims" on "User"."Id" = "TitanClaims"."UserId" where "TitanClaims"."Type" = 'IsApproved' and "TitanClaims"."Value" = 'true';"""
                 let result = conn
                              |> dapper_query<Models.SchoolTutor> sql
@@ -232,7 +266,9 @@ type Database(c : string) =
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
                 let cmd = """update "School" set "Name" = @Name, "Info" = @Info, "Subjects" = @Subjects, "Location" = @Location
-                             where "UserId" = (select "Id" from "User" where "Email" = @Email)"""
+                             from "School" join "Tutor" on "Tutor"."SchoolId" = "School"."Id"
+                             join "User" on "Tutor"."UserId" = "User"."Id"
+                             where "User"."Email" = @Email;"""
                 let m = (Map ["Email", tutor_email; "Name", request.SchoolName; "Info", request.Info; "Subjects", request.Subjects;
                               "Location", request.Location])
                 if dapper_map_param_exec cmd m conn = 1 then  
@@ -334,24 +370,23 @@ type Database(c : string) =
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
-                let cmd = """insert into "User" ("FirstName","LastName","Email", "Phone") VALUES (@FirstName, @LastName, @Email, @Phone)"""
-                let m = (Map ["Email", email; "FirstName", first; "LastName", last; "Phone", ""])
-                if dapper_map_param_exec cmd m conn = 1 then  
-                    let cmd = """insert into "TitanClaims" ("UserId","Type","Value") VALUES
-                        ((select "Id" from "User" where "Email" = @Email), 'IsTutor', 'true')"""
-                    let m = (Map ["Email", email])
-                    if dapper_map_param_exec cmd m conn = 1 then  
-                        let cmd = """insert into "School" ("UserId","Name","Info","Subjects","Location")
-                            VALUES ((select "User"."Id" from "User" where "Email" = @Email), @Name, @Info, @Subjects, @Location)"""
-                        let m = (Map ["Email", email;"Name", schoolname;"Info", "";"Subjects", ""; "Location", ""])
-                        if dapper_map_param_exec cmd m conn = 1 then  
-                            return Ok ()
-                        else 
-                            return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
-                    else
-                        return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+                let cmd = """begin transaction
+                                declare @UserId as int;
+                                declare @SchoolId as int;
+                                insert into "User" ("FirstName","LastName","Email", "Phone") VALUES (@FirstName, @LastName, @Email, @Phone);
+                                select @UserId = scope_identity();
+                                insert into "School" ("Name","Info","Subjects","Location") VALUES (@SchoolName, @Info, @Subjects, @Location);
+                                select @SchoolId = scope_identity();
+                                insert into "TitanClaims" ("UserId","Type","Value") VALUES (@UserId, 'IsTutor', 'true');
+                                insert into "Tutor" ("UserId","SchoolId") VALUES (@UserId, @SchoolId);
+                             commit"""
+                let m = (Map ["Email", email; "FirstName", first; "LastName", last; "Phone", ""; "SchoolName", schoolname;
+                              "Info", ""; "Subjects", ""; "Location", ""])
+
+                if dapper_map_param_exec cmd m conn <> 0 then  
+                   return Ok ()
                 else
-                    return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
+                   return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
             with
             |  e ->
                 return Error e.Message
@@ -412,7 +447,7 @@ type Database(c : string) =
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
                 let cmd = """delete from "Pending" where "Pending"."UserId" = (select "Id" from "User" where "User"."Email" = @StudentEmail)
-                             and "Pending"."SchoolId" = (select "Id" from "School" where "School"."UserId" = (select "Id" from "User" where "User"."Email" = @TutorEmail));"""
+                             and "Pending"."SchoolId" = (select "SchoolId" from "Tutor" where "Tutor"."UserId" = (select "Id" from "User" where "User"."Email" = @TutorEmail));"""
                 let m = (Map ["StudentEmail", student_email; "TutorEmail", tutor_email])
                 if dapper_map_param_exec cmd m conn = 1 then  
                     return Ok ()
@@ -476,12 +511,12 @@ type Database(c : string) =
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
-                //holy fucking shit sql can get complicated. I built this up backwards, i.e. worked it out from the last
-                //select statememt.
-                let sql = """select "User"."FirstName","User"."LastName","User"."Email","User"."Phone" from "User" join "Student"
-                             on "User"."Id" = "Student"."UserId" where "Student"."SchoolId" =
-                             (select "School"."Id" from "School" where "School"."UserId" =
-                             (select "User"."Id" from "User" where "User"."Email" = @Email));"""
+                let sql = """select "User"."FirstName","User"."LastName","User"."Email","User"."Phone" from "User"
+                             join Student on "Student"."UserId" = "User"."Id"
+                             join School on "School"."Id" = "Student"."SchoolId"
+                             join "Tutor" on "Tutor"."SchoolId" = "School"."Id"
+                             join "User" as "TU" on "Tutor"."UserId" = "TU"."Id"
+                             where "TU"."Email" = @Email;"""
                 let result = conn
                              |> dapper_map_param_query<Domain.Student> sql (Map["Email", tutor_email])
                              |> Seq.toList
@@ -601,21 +636,20 @@ type Database(c : string) =
                                 |> dapper_map_param_query<int> sql (Map ["Email", student_email])
                                 |> Seq.head
                 //we have the id of the student - lets add the student to the tutor's school
-                let sql = """select "Id" from "School" where "School"."UserId" = (select "Id" from "User" where "User"."Email" = @Email)"""
-                let tutor_id = conn
+                let sql = """select "School"."Id" from "School"
+                             join "Tutor" on "Tutor"."SchoolId" = "School"."Id"
+                             join "User" on "User"."Id" = "Tutor"."UserId" where "User"."Email" = @Email"""
+                let school_id = conn
                                |> dapper_map_param_query<int> sql (Map ["Email", tutor_email])
                                |> Seq.head
                 
-                let cmd = """insert into "Student"("UserId", "SchoolId") values(@UserId,@SchoolId)"""
-                let m = (Map ["UserId", student_id; "SchoolId", tutor_id])
-                if dapper_map_param_exec cmd m conn = 1 then  
-                    //delete student from pending table
-                    let cmd = """delete from "Pending" where "UserId" = @UserId"""
-                    let m = (Map ["UserId", student_id])
-                    if dapper_map_param_exec cmd m conn = 1 then  
-                        return Ok ()
-                    else
-                        return Error ("Failed to delete user. sql is \"" + cmd + "\"")
+                let cmd = """begin transaction
+                                insert into "Student"("UserId", "SchoolId") values(@UserId,@SchoolId)
+                                delete from "Pending" where "UserId" = @UserID
+                              commit"""
+                let m = (Map ["UserId", student_id; "SchoolId", school_id])
+                if dapper_map_param_exec cmd m conn = 2 then  
+                    return Ok ()
                 else
                     return Error ("Failed to insert user. sql is \"" + cmd + "\"")
                     

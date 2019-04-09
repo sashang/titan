@@ -182,6 +182,12 @@ let private save (data : SaveRequest) = promise {
     let request = make_post 6 data
     let decoder = Decode.Auto.generateDecoder<APIError option>()
     let! response = Fetch.tryFetchAs "/api/save-tutor" decoder request
+    match response with
+    | Ok result ->
+        Browser.console.info("Saved successful")
+    | Error e ->
+        Browser.console.warn("Failed to save")
+
     return map_api_error_result response SaveEx
 }
 
@@ -194,9 +200,7 @@ let init () : Model*Cmd<Msg> =
 
 
 let private of_api_error (result : APIError) =
-    List.fold2
-        (fun acc the_code the_message -> if acc <>  "" then acc + " " + the_message else acc)
-        "" result.Codes result.Messages
+    List.reduce (fun acc the_message -> acc + " " + the_message) result.Messages
         
 let private of_load_school_result (code : APICode) (result : APIError) =
     List.fold2
@@ -211,11 +215,19 @@ let private std_label text =
 let private make_error (result : APIError option) =
     match result with
     | Some error ->
-        Help.help [
-            Help.Color IsDanger
-            Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5) ]
-        ] [
-            str (of_api_error error)
+        Browser.console.error(sprintf "Making error message: %s" (of_api_error error))
+        Message.message [ Message.Color IsTitanError
+                          Message.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [
+            Message.header [ ] [
+                str "Error"
+            ]
+            Message.body [   ] [ 
+                Help.help [
+                    Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5) ]
+                ] [
+                    str (of_api_error error)
+                ]
+            ]
         ]
     | _ ->  nothing
 
@@ -322,30 +334,32 @@ let view (model : Model) (dispatch : Msg -> unit) =
     | Loaded, Loaded ->
         div [ ] [
             account_level
-            Card.card [ ] 
-                [ Card.header [ ]
-                    [ Card.Header.title [ ] [ ] ]
-                  Card.content [ ]
-                    [ yield! school_content model dispatch ] 
-                  Card.footer [ ] [
-                      Level.level [] [
-                          Level.left [ ] [
-                              Level.item [] [
-                                  Card.Footer.div [ ] [
-                                      save_button dispatch ClickSave "Save"
-                                  ]
-                              ]
-                          ]
-                      ]
-                      make_error model.Error 
-                  ]
+            Card.card [ ] [
+                Card.header [ ] [
+                    Card.Header.title [ ] [ ]
                 ]
+                Card.content [ ]
+                    [ yield! school_content model dispatch ] 
+                Card.footer [ ] [
+                    Level.level [] [
+                        Level.left [ ] [
+                            Level.item [] [
+                                Card.Footer.div [ ] [
+                                    save_button dispatch ClickSave "Save"
+                                ]
+                           ]
+                        ]
+                    ]
+               ]
+            ]
+            make_error model.Error 
         ]
     | _, _ ->  Client.Style.loading_view
 
 let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     match msg with
     | ClickSave ->
+        Browser.console.info("clicked save")
         let save_request = {SaveRequest.init with FirstName = model.FirstName
                                                   LastName = model.LastName; Info = model.Info; Subjects = model.Subjects
                                                   SchoolName = model.SchoolName; Location = model.Location.Text}
@@ -396,6 +410,7 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     | Failure e ->
         match e with
         | :? SaveEx as ex ->
+            Browser.console.warn("Failed to save")
             { model with Error = Some ex.Data0 }, Cmd.none
         | :? LoadUserEx as ex ->
             { model with Error = Some ex.Data0 }, Cmd.none

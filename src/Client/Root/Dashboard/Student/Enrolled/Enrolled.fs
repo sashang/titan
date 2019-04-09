@@ -24,8 +24,8 @@ type Model =
 type Msg =
     | GetPendingSchools of School list
     | GetPendingSchoolsFailure of exn
-    | GetAllSchoolsSuccess of School list
-    | GetAllSchoolsFailure of exn
+    | GetUnenrolledSchoolsSuccess of School list
+    | GetUnenrolledSchoolsFailure of exn
     | GetEnrolledSchoolsSuccess of School list
     | GetEnrolledSchoolsFailure of exn
     | ClickEnrol of string
@@ -35,6 +35,7 @@ type Msg =
 
 exception GetPendingSchoolsEx of APIError
 exception GetEnrolledSchoolsEx of APIError
+exception GetUnenrolledSchoolsEx of APIError
 exception GetAllSchoolsEx of APIError
 exception EnrolEx of APIError
 
@@ -67,18 +68,23 @@ let private get_pending_schools () = promise {
         return raise (GetPendingSchoolsEx (APIError.init [APICode.Fetch] [e]))
 }
 
-let private get_all_schools () = promise {
+let private get_unenrolled_schools () = promise {
     let request = make_get
     let decoder = Decode.Auto.generateDecoder<GetAllSchoolsResult>()
-    let! response = Fetch.tryFetchAs "/api/get-all-schools" decoder request
-    Browser.console.info "received response from get-all-schools"
+    let! response = Fetch.tryFetchAs "/api/get-unenrolled-schools" decoder request
+    Browser.console.info "received response from get-unenrolled-schools"
     match response with
     | Ok result ->
+        Browser.console.info "result ok"
         match result.Error with
-        | Some api_error -> return raise (GetAllSchoolsEx api_error)
-        | None ->  return result.Schools
+        | Some api_error ->
+            Browser.console.info "error in result"
+            return raise (GetUnenrolledSchoolsEx api_error)
+        | None ->
+            Browser.console.info "result value ok"
+            return result.Schools
     | Error e ->
-        return raise (GetAllSchoolsEx (APIError.init [APICode.Fetch] [e]))
+        return raise (GetUnenrolledSchoolsEx (APIError.init [APICode.Fetch] [e]))
 }
 
 let private enrol_student (er : EnrolRequest) = promise {
@@ -100,15 +106,12 @@ let init () =
     EnrolledLoaded = Loading; PendingLoaded = Loading; ActiveEnrolMessage = false},
     Cmd.batch [Cmd.ofPromise get_enrolled_schools () GetEnrolledSchoolsSuccess GetEnrolledSchoolsFailure
                Cmd.ofPromise get_pending_schools () GetPendingSchools GetPendingSchoolsFailure
-               Cmd.ofPromise get_all_schools () GetAllSchoolsSuccess GetAllSchoolsFailure ]
+               Cmd.ofPromise get_unenrolled_schools () GetUnenrolledSchoolsSuccess GetUnenrolledSchoolsFailure ]
 
 let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     match model, msg with
     | model, GetPendingSchools schools ->
         {model with PendingSchools = schools; PendingLoaded = Loaded }, Cmd.none
-
-    | model, GetAllSchoolsSuccess schools ->
-        {model with AllSchools = schools; AllLoaded = Loaded }, Cmd.none
 
     | model, SignOut ->
         Browser.console.info "Received signout msg" //we don't have to do anything special here.
@@ -122,7 +125,7 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         {model with ActiveEnrolMessage = true; AllLoaded = Loading; EnrolledLoaded = Loading; PendingLoaded = Loading },
         Cmd.batch [Cmd.ofPromise get_enrolled_schools () GetEnrolledSchoolsSuccess GetEnrolledSchoolsFailure
                    Cmd.ofPromise get_pending_schools () GetPendingSchools GetPendingSchoolsFailure
-                   Cmd.ofPromise get_all_schools () GetAllSchoolsSuccess GetAllSchoolsFailure ]
+                   Cmd.ofPromise get_unenrolled_schools () GetUnenrolledSchoolsSuccess GetUnenrolledSchoolsFailure ]
 
     | model, EnrolFailure e ->
         match e with
@@ -142,13 +145,19 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
             Browser.console.warn ("Failed to get pending schools: " + e.Message)
             model, Cmd.none
 
-    | model, GetAllSchoolsFailure e ->
+    | model, GetUnenrolledSchoolsSuccess schools ->
+        Browser.console.info("handling unenrolled schools")
+        schools
+        |> List.iter (fun x -> Browser.console.info (sprintf "%A" x))
+        {model with AllSchools = schools; AllLoaded = Loaded }, Cmd.none
+
+    | model, GetUnenrolledSchoolsFailure e ->
         match e with
-        | :? GetAllSchoolsEx as ex ->
-            Browser.console.warn ("Failed to get all schools: " + List.head ex.Data0.Messages)
+        | :? GetUnenrolledSchoolsEx as ex ->
+            Browser.console.error ("Failed to get unenrolled schools: " + List.head ex.Data0.Messages)
             model, Cmd.none
         | e ->
-            Browser.console.warn ("Failed to get all schools: " + e.Message)
+            Browser.console.error ("Failed to get unenrolled schools: " + e.Message)
             model, Cmd.none
 
     | model, GetEnrolledSchoolsSuccess schools ->
@@ -271,14 +280,7 @@ let private render_all_school_types model dispatch =
         div [] [
             yield all_schools model dispatch 
             yield! [ for school in model.AllSchools do
-                        let result_pend = List.tryFind (fun (pending: School) -> pending.Email = school.Email) model.PendingSchools 
-                        let result_enrolled = List.tryFind (fun (enrolled: School) -> enrolled.Email = school.Email) model.EnrolledSchools 
-                        //don't render the school if it's in the pending
-                        match result_pend, result_enrolled with
-                        | None, None ->
-                            yield render_school_for_enrolment school dispatch 
-                        | _,_ ->
-                            yield nothing ] 
+                        yield render_school_for_enrolment school dispatch ] 
         ]
     ]
 

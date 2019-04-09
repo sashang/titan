@@ -24,6 +24,23 @@ let get_azure_maps_keys (next : HttpFunc) (ctx : HttpContext) = task {
         return! ctx.WriteJsonAsync APIError.unauthorized
 }
 
+let get_unenrolled_schools (next : HttpFunc) (ctx : HttpContext) = task {
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        logger.LogInformation("getting unenrolled schools")
+        let student_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        let db = ctx.GetService<IDatabase>()
+        let! result = db.get_unenrolled_schools student_email
+        match result with
+        | Ok schools ->
+            return! ctx.WriteJsonAsync {GetAllSchoolsResult.init with Schools = schools ; Error = None}
+        | Error msg ->
+            logger.LogError("Failed to get unenrolled schools")
+            return! ctx.WriteJsonAsync ({Info = None; Error = Some (APIError.titan_open_tok msg)})
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
+}
+
 let get_enrolled_schools (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
         let logger = ctx.GetLogger<Debug.DebugLogger>()
@@ -35,7 +52,7 @@ let get_enrolled_schools (next : HttpFunc) (ctx : HttpContext) = task {
         | Ok schools ->
             return! ctx.WriteJsonAsync {GetAllSchoolsResult.init with Schools = schools ; Error = None}
         | Error msg ->
-            logger.LogError("Failed to get session info from opentok")
+            logger.LogError("Failed to get enrolled schools")
             return! ctx.WriteJsonAsync ({Info = None; Error = Some (APIError.titan_open_tok msg)})
     else
         return! ctx.WriteJsonAsync APIError.unauthorized
@@ -314,6 +331,7 @@ let save_tutor (next :HttpFunc) (ctx : HttpContext) = task {
         let! data = ctx.BindJsonAsync<SaveRequest>()
         let db_service = ctx.GetService<IDatabase>()
         let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        logger.LogInformation(sprintf "%A" data)
         let! result = db_service.handle_save_request user_email data
         match result with
         | Ok () ->

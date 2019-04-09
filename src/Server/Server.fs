@@ -170,6 +170,7 @@ let titan_api =  router {
     get "/get-pending" API.get_pending
     get "/get-session-id" API.get_session_id
     get "/get-enrolled-schools" API.get_enrolled_schools
+    get "/get-unenrolled-schools" API.get_unenrolled_schools
     get "/get-users-for-titan" API.get_users_for_titan
     get "/get-azure-maps-keys" API.get_azure_maps_keys
 
