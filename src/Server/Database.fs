@@ -101,6 +101,10 @@ type IDatabase =
 
     abstract member get_unenrolled_schools : string -> Task<Result<School list, string>>
 
+    //get the unapproved users for the titan(titan is our code word for admin) user
+    abstract member get_unapproved_users_for_titan : unit -> Task<Result<Domain.UsersForTitanResponse, string>>
+
+    //get all the users
     abstract member get_users_for_titan : unit -> Task<Result<Domain.UsersForTitanResponse, string>>
 
     ///get the pending schools (i.e. the schools that the student has requested enrolement in) given a student's email.
@@ -131,6 +135,34 @@ type Database(c : string) =
                              |> Seq.toList
                              |> List.map (fun x -> School.init x.FirstName x.LastName x.SchoolName x.Info x.Subjects x.Location x.Email)
                 return Ok {Schools = result; Error = None}
+            with
+            |  e ->
+                return Error e.Message
+        }
+
+        member this.get_unapproved_users_for_titan () : Task<Result<Domain.UsersForTitanResponse, string>> = task {
+            try
+                use conn = new SqlConnection(this.connection)
+                conn.Open()
+                let sql = """select "User"."FirstName","User"."LastName","User"."Email",
+                             "TitanClaims"."Type","TitanClaims"."Value" from "User"
+                             join "TitanClaims" on "TitanClaims"."UserId" = "User"."Id"
+                             where "User"."Id" not in
+                             (select "User"."Id" from "User" join "TitanClaims" as "TC" on "User"."Id" = "TC"."UserId"
+                             where "TC"."Type" = 'IsApproved' and "TC"."Value" = 'true');"""
+                let result =
+                    conn
+                    |> dapper_query<Models.UserForTitan> sql
+                    |> Seq.toList
+                    |> List.groupBy (fun x -> x.Email)
+                    |> List.map (fun (key, values) -> 
+                        List.fold (fun (state : Domain.UserForTitan) (x : Models.UserForTitan) ->
+                            {state with FirstName = x.FirstName; LastName = x.LastName; Email = x.Email;
+                                        IsApproved = state.IsApproved || (x.Type = "IsApproved" && x.Value = "true");
+                                        IsTitan = state.IsTitan || (x.Type = "IsTitan" && x.Value = "true");
+                                        IsTutor = state.IsTutor || (x.Type = "IsTutor" && x.Value = "true");
+                                        IsStudent = state.IsStudent || (x.Type = "IsStudent" && x.Value = "true")}) Domain.UserForTitan.init values)
+                return Ok {Users = result; Error = None}
             with
             |  e ->
                 return Error e.Message

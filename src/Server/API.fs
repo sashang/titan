@@ -390,8 +390,31 @@ let get_all_students (next : HttpFunc) (ctx : HttpContext) = task {
         return! ctx.WriteJsonAsync APIError.unauthorized
 }
 
+let private update_or_insert_claim (db_service : IDatabase) (email : string) (claim : string) (value : bool) = task {
+    let! result = db_service.has_claim email claim
+    match result with
+    | Ok true ->
+        //update the claim
+        let! result = db_service.update_user_claim email claim (if value then "true" else "false")
+        match result with
+        | Ok response ->
+            return None
+        | Error message ->
+            return Some (APIError.db message)
+    | Ok false ->
+        //insert the claim
+        let! result = db_service.insert_user_claim email claim (if value then "true" else "false")
+        match result with
+        | Ok response ->
+            return None
+        | Error message ->
+            return Some (APIError.db message)
+    | Error msg ->
+        return Some (APIError.db msg)
+}
+
 ///update the user and its claims
-let update_user_approval (next : HttpFunc) (ctx : HttpContext) = task {
+let update_user_claims (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
         let logger = ctx.GetLogger<Debug.DebugLogger>()
         logger.LogInformation("called update_user_claims")
@@ -399,35 +422,56 @@ let update_user_approval (next : HttpFunc) (ctx : HttpContext) = task {
         let db_service = ctx.GetService<IDatabase>()
         logger.LogInformation("titan is " + titan_email)
         let! is_titan = db_service.has_claim titan_email "IsTitan"
+
+        //get the update information.
         let! data = ctx.BindJsonAsync<UserForTitan>()
         match is_titan with
         | Ok _ ->
-            let! result = db_service.has_claim data.Email "IsApproved"
-            match result with
-            | Ok true ->
-                //update the claim
-                logger.LogInformation("Updating existing claim for " + data.Email)
-                let! result = db_service.update_user_claim data.Email "IsApproved" (if data.IsApproved then "true" else "false")
-                match result with
-                | Ok response ->
-                    return! ctx.WriteJsonAsync None
-                | Error message ->
-                    return! ctx.WriteJsonAsync (APIError.db message)
-            | Ok false ->
-                //insert the claim
-                logger.LogInformation("Inserting new claim for " + data.Email)
-                let! result = db_service.insert_user_claim data.Email "IsApproved" (if data.IsApproved then "true" else "false")
-                match result with
-                | Ok response ->
-                    return! ctx.WriteJsonAsync None
-                | Error message ->
-                    return! ctx.WriteJsonAsync (APIError.db message)
-            | Error msg ->
-                logger.LogInformation("has_claim failed for " + data.Email)
-                return! ctx.WriteJsonAsync (APIError.db msg)
+            let claims = [("IsApproved", data.IsApproved);("IsTitan", data.IsTitan);("IsTutor", data.IsTutor);("IsStudent", data.IsStudent)]
+            let err_opt = 
+                claims
+                |> List.map (fun (claim_name, claim_value) ->
+                                    let t = update_or_insert_claim db_service data.Email claim_name claim_value
+                                    t.Result
+                                    //See MSDN. accessing the property Result will blcok this thread, so we don't need to call WaitAll
+                                    //https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1.result?view=netframework-4.8#System_Threading_Tasks_Task_1_Result
+                                    //https://stackoverflow.com/questions/5116712/task-waitall-on-a-list-in-f
+                                )
+                |> List.tryFind (fun x ->
+                                    match x with
+                                    | Some _ -> true
+                                    | None ->  false) 
+
+            match err_opt with
+            | Some error ->
+                return! ctx.WriteJsonAsync error
+            | None ->
+                return! ctx.WriteJsonAsync None
+
         | Error msg ->
-            logger.LogError("Failed to update claim for " + data.Email)
-            return! ctx.WriteJsonAsync (APIError.db msg)
+            logger.LogError("User " + data.Email + " must be titan to execute this operation.")
+            return! ctx.WriteJsonAsync APIError.unauthorized 
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
+}
+
+let get_unapproved_users_for_titan (next : HttpFunc) (ctx : HttpContext) = task {
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        logger.LogInformation("called get_unapproved_users_for_titan")
+        let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        let db_service = ctx.GetService<IDatabase>()
+        let! is_titan = db_service.has_claim user_email "IsTitan"
+        match is_titan with
+        | Ok _ ->
+            let! result = db_service.get_unapproved_users_for_titan ()
+            match result with
+            | Ok response ->
+                return! ctx.WriteJsonAsync response
+            | Error message ->
+                return! ctx.WriteJsonAsync (UsersForTitanResponse.db_error message)
+        | Error _ ->
+            return! ctx.WriteJsonAsync APIError.unauthorized
     else
         return! ctx.WriteJsonAsync APIError.unauthorized
 }

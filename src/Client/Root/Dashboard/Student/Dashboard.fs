@@ -144,8 +144,8 @@ let view (model : Model) (dispatch : Msg -> unit) =
             Menu.menu [ ] [
                 Menu.list [ ] [
                     sub_menu "Classrooms" false [
-                    yield! [ for school in model.EnrolledSchools do
-                                yield menu_item school.SchoolName false dispatch (ClickClassroom school) ]
+                        yield! [ for school in model.EnrolledSchools do
+                                   yield menu_item school.SchoolName false dispatch (ClickClassroom school) ]
                     ]
                     menu_item "Enrol" false dispatch ClickEnrol
                     menu_item "Account" false dispatch ClickAccount

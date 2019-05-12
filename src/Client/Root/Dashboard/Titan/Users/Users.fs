@@ -31,6 +31,23 @@ type Msg =
 exception GetUsersForTitanEx of APIError
 exception UpdateUserApprovalEx of APIError
 
+let private get_unapproved_users () = promise {
+    let request = make_get
+    let decoder = Decode.Auto.generateDecoder<UsersForTitanResponse>()
+    let! response = Fetch.tryFetchAs "/api/get-unapproved-users-for-titan" decoder request
+    match response with
+    | Ok result ->
+        match result.Error with
+        | Some error ->
+            Browser.console.error ("get_unapproved-users_for_titan: " + (List.head error.Messages))
+            return (raise (GetUsersForTitanEx error))
+        | None ->
+            return result.Users
+    | Error e ->
+        Browser.console.error ("get_unapproved_users failed: " + e)
+        return raise (GetUsersForTitanEx (APIError.init [APICode.Fetch] [e]))
+}
+
 let private get_users_for_titan () = promise {
     let request = make_get
     let decoder = Decode.Auto.generateDecoder<UsersForTitanResponse>()
@@ -64,8 +81,9 @@ let private update_user_approval (user : UserForTitan)  = promise {
         return raise (UpdateUserApprovalEx (APIError.init [APICode.Fetch] [e]))
 }
 
+
 let init () =
-    {Users = []; Error = None}, Cmd.ofPromise get_users_for_titan () GetUsersSuccess Failure
+    {Users = []; Error = None}, Cmd.ofPromise get_unapproved_users () GetUsersSuccess Failure
 
 
 let render_user (user : UserForTitan) (dispatch : Msg->unit) =

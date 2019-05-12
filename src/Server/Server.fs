@@ -172,6 +172,7 @@ let titan_api =  router {
     get "/get-enrolled-schools" API.get_enrolled_schools
     get "/get-unenrolled-schools" API.get_unenrolled_schools
     get "/get-users-for-titan" API.get_users_for_titan
+    get "/get-unapproved-users-for-titan" API.get_unapproved_users_for_titan
     get "/get-azure-maps-keys" API.get_azure_maps_keys
 
     //get "/signin-google" (redirectTo false "/api/secure")
@@ -184,7 +185,7 @@ let titan_api =  router {
     post "/dismiss-pending" API.dismiss_pending
     post "/save-tutor" API.save_tutor
     post "/student-get-session" API.get_session_id_for_student
-    post "/update-user-approval" API.update_user_approval
+    post "/update-user-approval" API.update_user_claims
 
     //calback for tokbox to tell us about sessions starting/ending etc.
     post "/tokbox-cb" TokBoxCB.callback
