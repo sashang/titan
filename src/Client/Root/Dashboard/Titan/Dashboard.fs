@@ -16,18 +16,19 @@ type Model =
       Claims : TitanClaim }
 
 type Msg =
-    | ClickUsers
+    | ClickApprovedUsers
+    | ClickUnapprovedUsers
     | SignOut
     | UsersMsg of Users.Msg
 
 
 let init (claims : TitanClaim) : Model*Cmd<Msg> =
-    let (users_model, users_cmd) = Users.init ()
+    let (users_model, users_cmd) = Users.init Users.Unapproved
     { Child = UsersModel users_model; Claims = claims},
     Cmd.map UsersMsg users_cmd
 
 // Helper to generate a menu item
-let menuItem label isActive dispatch msg =
+let menu_item label isActive dispatch msg =
     Menu.Item.li [ Menu.Item.IsActive isActive
                    Menu.Item.OnClick (fun e -> dispatch msg)
                    Menu.Item.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
@@ -52,7 +53,8 @@ let view (model : Model) (dispatch : Msg -> unit) =
                 Column.column [ Column.Width (Screen.All, Column.Is1) ] [
                     Menu.menu [ ] [
                         Menu.list [ ] [
-                            menuItem "Users" false dispatch ClickUsers
+                            menu_item "Unapproved Users" false dispatch ClickUnapprovedUsers
+                            menu_item "Approved Users" false dispatch ClickApprovedUsers
                         ]
                     ]
                 ]
@@ -71,9 +73,15 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         let new_model, new_cmd = Users.update users_model msg
         {model with Child = UsersModel new_model}, Cmd.map UsersMsg new_cmd
 
-    | _, ClickUsers ->
-        Browser.console.info ("ClickUsers message")
-        model, Cmd.none
+    | {Child = UsersModel users_model}, ClickApprovedUsers ->
+        Browser.console.info ("ClickApprovedUsers message")
+        let new_model, new_cmd = Users.update users_model Users.InitApproved
+        {model with Child = UsersModel new_model}, Cmd.map UsersMsg new_cmd
+
+    | {Child = UsersModel users_model}, ClickUnapprovedUsers ->
+        Browser.console.info ("ClickUnapprovedUsers message")
+        let new_model, new_cmd = Users.update users_model Users.InitUnapproved
+        {model with Child = UsersModel new_model}, Cmd.map UsersMsg new_cmd
 
     | _, SignOut ->
         //let the root handle the signout request.

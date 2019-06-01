@@ -14,6 +14,10 @@ open Fulma
 open ModifiedFableFetch
 open Thoth.Json
 
+type UsersToInit =
+    | Approved
+    | Unapproved
+
 type Model =
     { Users : UserForTitan list
       Error : APIError option }
@@ -26,6 +30,8 @@ type Msg =
     | ClickUpdate of Email
     | UpdateSuccess of unit
     | GetUsersSuccess of UserForTitan list
+    | InitApproved
+    | InitUnapproved
     | Failure of exn
 
 exception GetUsersForTitanEx of APIError
@@ -82,8 +88,9 @@ let private update_user_approval (user : UserForTitan)  = promise {
 }
 
 
-let init () =
-    {Users = []; Error = None}, Cmd.ofPromise get_unapproved_users () GetUsersSuccess Failure
+let init (init_data : UsersToInit) =
+    {Users = []; Error = None}, 
+    Cmd.ofPromise (if init_data = Approved then get_users_for_titan else get_unapproved_users) () GetUsersSuccess Failure
 
 
 let render_user (user : UserForTitan) (dispatch : Msg->unit) =
@@ -179,6 +186,12 @@ let update (model : Model) (msg : Msg) =
         | _ ->
             Browser.console.error ("Unknown claim type: " + claim_type)
             model, Cmd.none
+
+    | model, InitApproved ->
+        model, Cmd.ofPromise get_users_for_titan () GetUsersSuccess Failure
+
+    | model, InitUnapproved ->
+        model, Cmd.ofPromise get_unapproved_users () GetUsersSuccess Failure
 
     | model, GetUsersSuccess users ->
         {model with Users = users}, Cmd.none
