@@ -497,6 +497,28 @@ let get_users_for_titan (next : HttpFunc) (ctx : HttpContext) = task {
         return! ctx.WriteJsonAsync APIError.unauthorized
 }
 
+let delete_user_titan (next : HttpFunc) (ctx : HttpContext) = task {
+    if ctx.User.Identity.IsAuthenticated then
+        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        logger.LogInformation("called delete_user_titan")
+        let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
+        let! data = ctx.BindJsonAsync<UserForTitan>()
+        let db_service = ctx.GetService<IDatabase>()
+        let! is_titan = db_service.has_claim user_email "IsTitan"
+        match is_titan with
+        | Ok _ ->
+            let! result = db_service.delete_user_titan data.Email
+            match result with
+            | Ok response ->
+                return! ctx.WriteJsonAsync response
+            | Error message ->
+                return! ctx.WriteJsonAsync (APIError.db message)
+        | Error _ ->
+            return! ctx.WriteJsonAsync APIError.unauthorized
+    else
+        return! ctx.WriteJsonAsync APIError.unauthorized
+}
+
 let dismiss_student (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
         let logger = ctx.GetLogger<Debug.DebugLogger>()

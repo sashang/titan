@@ -110,11 +110,26 @@ type IDatabase =
     ///get the pending schools (i.e. the schools that the student has requested enrolement in) given a student's email.
     abstract member get_pending_schools : string -> Task<Result<Domain.SchoolsResponse, string>>
 
+
+    ///function for titan user to call to delete another user
+    abstract member delete_user_titan : string -> Task<Result<unit, string>>
+
     
 type Database(c : string) = 
     member this.connection = c
 
     interface IDatabase with
+        member this.delete_user_titan (email : string) : Task<Result<unit, string>> = task {
+            use conn = new SqlConnection(this.connection)
+            conn.Open()
+            let sql = """delete from "User" where "User"."Email" = @Email;"""
+            let map = (Map ["Email", email])
+            if dapper_map_param_exec sql map conn >= 1 then  
+                return Ok ()
+            else 
+                return Error ("Did not delete the user with email " + email)
+        }
+
         member this.get_pending_schools (email : string) : Task<Result<Domain.SchoolsResponse, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)

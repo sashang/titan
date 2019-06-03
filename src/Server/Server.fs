@@ -186,6 +186,7 @@ let titan_api =  router {
     post "/save-tutor" API.save_tutor
     post "/student-get-session" API.get_session_id_for_student
     post "/update-user-approval" API.update_user_claims
+    post "/delete-user-titan" API.delete_user_titan
 
     //calback for tokbox to tell us about sessions starting/ending etc.
     post "/tokbox-cb" TokBoxCB.callback

@@ -29,17 +29,21 @@ type Msg =
     | ClickRadio of (Email*ClaimType)
     | ClickUpdate of Email
     | UpdateSuccess of unit
+    | DeleteSuccess of unit
     | GetUsersSuccess of UserForTitan list
     | InitApproved
     | InitUnapproved
+    | ClickDelete of Email
     | Failure of exn
 
 exception GetUsersForTitanEx of APIError
 exception UpdateUserApprovalEx of APIError
+exception DeleteUserEx of APIError
 
 let private get_unapproved_users () = promise {
     let request = make_get
     let decoder = Decode.Auto.generateDecoder<UsersForTitanResponse>()
+    Browser.console.info("called get_unapproved_users")
     let! response = Fetch.tryFetchAs "/api/get-unapproved-users-for-titan" decoder request
     match response with
     | Ok result ->
@@ -87,6 +91,24 @@ let private update_user_approval (user : UserForTitan)  = promise {
         return raise (UpdateUserApprovalEx (APIError.init [APICode.Fetch] [e]))
 }
 
+let private delete_user (user : UserForTitan)  = promise {
+    let request = make_post 1 user
+    Browser.console.info ("Deleting user " + user.Email)
+    let decoder = Decode.Auto.generateDecoder<APIError option>()
+    //use the delete user titan for htis becuase this is the admin/titan deleting the user
+    let! response = Fetch.tryFetchAs "/api/delete-user-titan" decoder request
+    match response with
+    | Ok result ->
+        match result with
+        | Some error ->
+            Browser.console.error ("delete_user: " + (List.head error.Messages))
+            return (raise (DeleteUserEx error))
+        | None ->
+            return ()
+    | Error e ->
+        return raise (DeleteUserEx (APIError.init [APICode.Fetch] [e]))
+}
+
 
 let init (init_data : UsersToInit) =
     {Users = []; Error = None}, 
@@ -125,6 +147,9 @@ let render_user (user : UserForTitan) (dispatch : Msg->unit) =
         Column.column [] [
             Client.Style.button dispatch (ClickUpdate user.Email) "Update" []
         ]
+        Column.column [] [
+            Client.Style.button dispatch (ClickDelete user.Email) "Delete" []
+        ]
     ]
 
 let users (model : Model) (dispatch : Msg->unit) = 
@@ -151,9 +176,20 @@ let update (model : Model) (msg : Msg) =
             model.Users
             |> List.find (fun user -> user.Email = email)
         model, Cmd.ofPromise update_user_approval user_to_update UpdateSuccess Failure
+
+    | model, ClickDelete email ->
+        //update the user with the given email
+        let user_to_update = 
+            model.Users
+            |> List.find (fun user -> user.Email = email)
+        model, Cmd.ofPromise delete_user user_to_update DeleteSuccess Failure
     
     | model, UpdateSuccess () ->
         Browser.console.info ("Updated user")
+        model, Cmd.none
+
+    | model, DeleteSuccess () ->
+        Browser.console.info ("Deleted user")
         model, Cmd.none
 
     | model, ClickRadio (email, claim_type) ->
@@ -188,12 +224,15 @@ let update (model : Model) (msg : Msg) =
             model, Cmd.none
 
     | model, InitApproved ->
+        Browser.console.info("getting approved users")
         model, Cmd.ofPromise get_users_for_titan () GetUsersSuccess Failure
 
     | model, InitUnapproved ->
+        Browser.console.info("getting unapproved users")
         model, Cmd.ofPromise get_unapproved_users () GetUsersSuccess Failure
 
     | model, GetUsersSuccess users ->
+        Browser.console.info("got users")
         {model with Users = users}, Cmd.none
 
     | model, Failure e ->
