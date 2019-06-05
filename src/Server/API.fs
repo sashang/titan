@@ -476,7 +476,7 @@ let get_unapproved_users_for_titan (next : HttpFunc) (ctx : HttpContext) = task 
         return! ctx.WriteJsonAsync APIError.unauthorized
 }
 
-let get_users_for_titan (next : HttpFunc) (ctx : HttpContext) = task {
+let get_approved_users_for_titan (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
         let logger = ctx.GetLogger<Debug.DebugLogger>()
         logger.LogInformation("called get_users_for_titan")
@@ -485,7 +485,7 @@ let get_users_for_titan (next : HttpFunc) (ctx : HttpContext) = task {
         let! is_titan = db_service.has_claim user_email "IsTitan"
         match is_titan with
         | Ok _ ->
-            let! result = db_service.get_users_for_titan ()
+            let! result = db_service.get_approved_users_for_titan ()
             match result with
             | Ok response ->
                 return! ctx.WriteJsonAsync response

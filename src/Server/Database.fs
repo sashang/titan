@@ -105,7 +105,7 @@ type IDatabase =
     abstract member get_unapproved_users_for_titan : unit -> Task<Result<Domain.UsersForTitanResponse, string>>
 
     //get all the users
-    abstract member get_users_for_titan : unit -> Task<Result<Domain.UsersForTitanResponse, string>>
+    abstract member get_approved_users_for_titan : unit -> Task<Result<Domain.UsersForTitanResponse, string>>
 
     ///get the pending schools (i.e. the schools that the student has requested enrolement in) given a student's email.
     abstract member get_pending_schools : string -> Task<Result<Domain.SchoolsResponse, string>>
@@ -183,12 +183,16 @@ type Database(c : string) =
                 return Error e.Message
         }
 
-        member this.get_users_for_titan () : Task<Result<Domain.UsersForTitanResponse, string>> = task {
+        member this.get_approved_users_for_titan () : Task<Result<Domain.UsersForTitanResponse, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
                 let sql = """select "User"."FirstName","User"."LastName","User"."Email",
-                             "TitanClaims"."Type","TitanClaims"."Value" from "User" join "TitanClaims" on "User"."Id" = "TitanClaims"."UserId";"""
+                             "TitanClaims"."Type","TitanClaims"."Value" from "User"
+                             join "TitanClaims" on "User"."Id" = "TitanClaims"."UserId"
+                             where "User"."Id" in
+                             (select "User"."Id" from "User" join "TitanClaims" as "TC" on "User"."Id" = "TC"."UserId"
+                             where "TC"."Type" = 'IsApproved' and "TC"."Value" = 'true');"""
                 let result =
                     conn
                     |> dapper_query<Models.UserForTitan> sql
