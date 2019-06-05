@@ -81,7 +81,7 @@ export function on_streamcreate_subscribe_filter(session, w, h, email) {
 }
 export function on_streamcreate_subscribe(session, w, h) {
     session.on('streamCreated', function (event) {
-        if (sub_count_for_tutor < 2) {
+        if (sub_count_for_tutor < 4) {
             var sub = session.subscribe(event.stream, 'layoutContainer', {
                 insertMode: 'append',
                 preferedResolution: { width: w, height: h }
@@ -103,7 +103,6 @@ export function on_streamcreate_subscribe(session, w, h) {
         var layoutContainer = document.getElementById("layoutContainer");
         // Initialize the layout container and get a reference to the layout method
         var layout = initLayoutContainer(layoutContainer).layout;
-        layout();
         layout();
         if (sub_count_for_tutor < 0) {
             sub_count_for_tutor = 0
