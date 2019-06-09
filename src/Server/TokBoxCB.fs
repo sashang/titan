@@ -18,7 +18,7 @@ type TokBoxConnection =
     static member init =
         {Id = ""; CreatedAt = 0UL; Data = "" }
 
-    static member decoder : Decode.Decoder<TokBoxConnection> =
+    static member decoder : Decoder<TokBoxConnection> =
         Decode.object
             (fun get ->
                 { Id = get.Required.Field "id" Decode.string
@@ -32,7 +32,7 @@ type TokBoxStream =
       Name : string
       VideoType : string }
 
-    static member decoder : Decode.Decoder<TokBoxStream> =
+    static member decoder : Decoder<TokBoxStream> =
         Decode.object
             (fun get ->
                 { Id = get.Required.Field "id" Decode.string
@@ -49,7 +49,7 @@ type TokBoxSession =
       Connection : TokBoxConnection option
       Stream : TokBoxStream option }
 
-    static member decoder : Decode.Decoder<TokBoxSession> =
+    static member decoder : Decoder<TokBoxSession> =
         Decode.object
             (fun get ->
                 { SessionId = get.Required.Field "sessionId" Decode.string

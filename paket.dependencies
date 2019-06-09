@@ -28,6 +28,7 @@ group Server
     nuget Fable.JsonConverter //fable.JsonConverter only works on the server. don't try it in the client.
     nuget Saturn.Extensions.Authorization 0.8.0
     nuget Thoth.Json.Net
+    nuget Elmish.Bridge.Giraffe
 
 group Client
     source https://api.nuget.org/v3/index.json
@@ -45,6 +46,8 @@ group Client
     nuget Fable.FontAwesome.Free
     nuget Fable.React ~> 4
     nuget Fulma ~> 1
+    nuget Elmish.Bridge.Client
+    nuget Elmish.Bridge.Fabulous
 
     clitool dotnet-fable ~> 2
 

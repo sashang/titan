@@ -14,3 +14,4 @@ Microsoft.Extensions.Configuration.Json
 Thoth.Json.Net
 OpenTokCore
 Microsoft.AspNetCore.Authentication.Google
+Elmish.Bridge.Giraffe

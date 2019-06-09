@@ -122,10 +122,6 @@ Target.create "Docker" (fun _ ->
     buildDocker dockerFullName
 )
 
-
-
-
-
 open Fake.Core.TargetOperators
 
 "Clean"
