@@ -59,11 +59,11 @@ yarn install bulma --dev
 
 I use Fish as my shell so all shell commands below assumes this.
 
-Ensure you have the dotnet sdk 2.2.103 installed. I've found that exporting the
+Ensure you have the dotnet sdk 2.2.300 installed. I've found that exporting the
 following variables will ensure a headache free existance:
 
 ```
-set -x DOTNET_ROOT $HOME/code/dotnet/2.2.103
+set -x DOTNET_ROOT $HOME/code/dotnet/2.2.300
 set -x ASPNETCORE_ENVIRONMENT Development
 ```
 
@@ -88,7 +88,7 @@ fake build --target run
 * The version numbering isn't lexicographically ordered. After years of reading
   version numbers as strings I expected that 2.1.4 came after 2.1.300. This is not true.
   2.1.300 was released after 2.1.4.
-* Check this link for reference https://dotnet.microsoft.com/download/dotnet-core/2.1
+* Check this link for reference https://dotnet.microsoft.com/download/dotnet-core/2.2 and to download the .NET core sdk.
 
 ## Running
 
@@ -173,6 +173,8 @@ Server=tcp:titan-sql-server.database.windows.net,1433;Initial Catalog=titan-dev;
 
 
 #### Migrations
+
+* _This is broken at the moment_...
 
 Migrations are handled using Fluentmigrator.
 
@@ -321,10 +323,6 @@ Things to notice:
 3. The Root component doesn't sign out the user. It doesn't make a request to the server to sign out. This is
 delegated to the SignOut module.
 
-
-
-
-
 ## Notes about the stack
 
 Notes and hints I need to remember because I keep forgetting.
@@ -381,8 +379,14 @@ If it's ok then push to dockerhub
 docker push sashang/titan
 ```
 
-The login to Azure and create a Web App. Under `OS` select Linux, under `Publish` select Docker image
-Then click configure container and setup the path to dockerhub where azure will fetch the container
+### Intial setup
+
+This only needs to be done once.
+The login to Azure and create a Web App. Under `OS` select Linux, under
+`Publish` select Docker image Then click configure container and setup the
+path to dockerhub where azure will fetch the container. Enable a webhook so
+that future pushes to dockerhub will call azure back and tell it a new image
+is available. Azure will then go ahead and reload the image.
 
 Then click `Create`
 
@@ -394,3 +398,39 @@ is the database, the other is the App Service that runs .NET Core. Most of the
 setup is faily trivial, and point and click. There is a webhook to docker hub
 that dockerhub uses to callback azure when `docker push sashang/titan`
 completes.
+
+## Troubleshooting
+
+### Getting the logs
+```
+lftp -u 'tewtin\$tewtin',2Bk0Lvdtg2EpzXtae9pa0498ynP1FP0mXH2hCjepvJKzm9JlGBmhLstkrMl7 ftp://waws-prod-mwh-007.ftp.azurewebsites.windows.net/site/wwwroot
+```
+
+Then cd to the root (cd \)
+```
+ cd /
+lftp tewtin\$tewtin@waws-prod-mwh-007.ftp.azurewebsites.windows.net:/> ls
+02-11-19  10:40AM       <DIR>          .mono
+07-18-19  02:41PM       <DIR>          ASP.NET
+07-31-19  04:19AM       <DIR>          LogFiles
+07-18-19  02:41PM       <DIR>          site
+lftp tewtin\$tewtin@waws-prod-mwh-007.ftp.azurewebsites.windows.net:/> cd LogFiles/
+lftp tewtin\$tewtin@waws-prod-mwh-007.ftp.azurewebsites.windows.net:/LogFiles> ls
+07-07-19  07:28PM                 7123 2019_07_07_RD00155DA0177E_docker.log
+07-23-19  12:17AM               197625 2019_07_22_RD00155DA0177E_default_docker.log
+07-24-19  01:50AM              2040767 2019_07_23_RD00155DA0177E_default_docker.log
+07-24-19  11:59PM              1188340 2019_07_24_RD00155DA0177E_default_docker.log
+07-25-19  09:10AM              2098660 2019_07_25_RD00155DA0177E_default_docker.1.log
+07-26-19  12:12AM               456792 2019_07_25_RD00155DA0177E_default_docker.log
+07-27-19  12:56AM               264332 2019_07_26_RD00155DA0177E_default_docker.log
+07-28-19  12:54AM               114737 2019_07_27_RD00155DA0177E_default_docker.log
+07-29-19  12:03AM               193224 2019_07_28_RD00155DA0177E_default_docker.log
+07-29-19  10:33PM               218130 2019_07_29_RD00155DA0177E_default_docker.log
+07-31-19  12:15AM              1927251 2019_07_30_RD00155DA0177E_default_docker.log
+07-31-19  12:15AM              1397436 2019_07_31_RD00155DA0177E_default_docker.log
+04-21-19  03:46AM       <DIR>          kudu
+02-14-19  12:00AM       <DIR>          webssh
+07-18-19  02:40PM                   18 __lastCheckTime.txt
+lftp tewtin\$tewtin@waws-prod-mwh-007.ftp.azurewebsites.windows.net:/LogFiles>
+```
+
