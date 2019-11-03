@@ -81,7 +81,7 @@ export function on_streamcreate_subscribe_filter(session, w, h, email) {
 }
 export function on_streamcreate_subscribe(session, w, h) {
     session.on('streamCreated', function (event) {
-        if (sub_count_for_tutor < 4) {
+        if (sub_count_for_tutor < 6) {
             var sub = session.subscribe(event.stream, 'layoutContainer', {
                 insertMode: 'append',
                 preferedResolution: { width: w, height: h }
