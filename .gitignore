@@ -24,3 +24,4 @@ deploy/
 src/Server/appsettings.azure.json
 src/Server/appsettings.google.json
 src/Server/appsettings.json.template
+.ionide/symbolCache.db
