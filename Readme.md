@@ -131,7 +131,7 @@ export ASPNETCORE_ENVIRONMENT="Development"
 ```
 #### Fish (friendly interactive shell)
 ```
-set -x ASPNETCORE_ENVIRONMENT Development
+set -e ASPNETCORE_ENVIRONMENT Development
 ```
 
 #### Google authentication
