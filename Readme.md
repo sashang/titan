@@ -131,7 +131,7 @@ export ASPNETCORE_ENVIRONMENT="Development"
 ```
 #### Fish (friendly interactive shell)
 ```
-set -e ASPNETCORE_ENVIRONMENT Development
+set -x ASPNETCORE_ENVIRONMENT Development
 ```
 
 #### Google authentication
@@ -370,7 +370,7 @@ appsettings.json. Use appsetting.Development.json instead.
 
 ```
 source <path to .net sdk>
-set -x ASPNETCORE_ENVIRONMENT
+set -e ASPNETCORE_ENVIRONMENT
 fake build --target Docker
 ```
 
