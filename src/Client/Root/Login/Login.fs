@@ -1,18 +1,10 @@
 module Login
 
 open CustomColours
-open Domain
-open Elmish
-open Elmish.Browser.Navigation
 open Fable.FontAwesome
-open Fable.Helpers.React
-open Fable.Helpers.React.Props
-open Fable.Import
-open Fable.PowerPack
-open Fable.PowerPack.Fetch
-open Fable.Core.JsInterop
+open Fable.React
+open Fable.React.Props
 open Fulma
-open Thoth.Json
 
 
 let login_with_google_button =

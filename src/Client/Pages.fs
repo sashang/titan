@@ -1,7 +1,7 @@
 module Pages
 
-open Elmish.Browser.UrlParser
-
+open Elmish.UrlParser
+open Elmish.Navigation
 /// The different pages of the application. If you add a new page, then add an entry here.
 type PageType =
     | Home

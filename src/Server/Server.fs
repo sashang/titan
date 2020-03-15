@@ -24,6 +24,7 @@ open System.Net
 open System.Security.Claims
 open System.Security.Cryptography.X509Certificates
 open Thoth.Json.Net
+open Thoth.Json.Giraffe
 open TitanOpenTok
 open TokBoxCB
 
@@ -50,8 +51,8 @@ let auth_null : HttpHandler =
 
 let sign_out (next : HttpFunc) (ctx : HttpContext) = task {
     return! ctx.WriteJsonAsync
-        { SignOutResult.code = [SignOutCode.Success]
-          SignOutResult.message = [] }
+        { SignOutResult.Code = SignOutCode.Success
+          SignOutResult.Message = "Successfully signed out" }
 }
 
 let sign_out_pipeline = pipeline {
@@ -106,7 +107,7 @@ let generate_token secret issuer (ctx : HttpContext) = task {
 
 let check_session (next : HttpFunc) (ctx : HttpContext) = task {
     try
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         let config = ctx.GetService<IConfiguration>()
         logger.LogInformation ("checking if user is authenticated")
         if ctx.User.Identity.IsAuthenticated then
@@ -122,14 +123,14 @@ let check_session (next : HttpFunc) (ctx : HttpContext) = task {
         else
             return! RequestErrors.UNAUTHORIZED "Bearer" "" ("no user logged in") next ctx
     with ex ->
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         logger.LogInformation ("no session")
         return! failwith ("no session for user" )
 }
 
 let render_school_view (next : HttpFunc) (ctx : HttpContext) = task {
     try
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         let config = ctx.GetService<IConfiguration>()
         let db = ctx.GetService<IDatabase>()
         let! result = db.get_school_view
@@ -226,6 +227,7 @@ let configure_services startup_options (services:IServiceCollection) =
     let fableJsonSettings = Newtonsoft.Json.JsonSerializerSettings()
     fableJsonSettings.Converters.Add(Fable.JsonConverter())
     services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
+    //services.AddSingleton<IJsonSerializer>(Thoth.Json.Giraffe.ThothSerializer) |> ignore
     services.AddSingleton<IDatabase>(Database(startup_options.ConnectionString)) |> ignore
     services.AddSingleton<ITitanOpenTok>(TitanOpenTok(startup_options.OpenTokKey, startup_options.OpenTokSecret)) |> ignore
     services.AddSingleton<IAzureMaps>(AzureMaps(startup_options.AzureMapsClientId, startup_options.AzureMapsPrimaryKey)) |> ignore
@@ -235,7 +237,7 @@ let configure_services startup_options (services:IServiceCollection) =
                 rb.AddSqlServer2016()
                   .WithGlobalConnectionString(startup_options.ConnectionString)
                   .ScanIn(typeof<TitanMigrations.Initial>.Assembly)
-    //              .ScanIn(typeof<TitanMigrations.FixForeignKeys>.Assembly)
+                  .ScanIn(typeof<TitanMigrations.FixForeignKeys>.Assembly)
                   .For.Migrations() |> ignore)
             .AddLogging(fun lb -> lb.AddFluentMigratorConsole() |> ignore) |> ignore
 

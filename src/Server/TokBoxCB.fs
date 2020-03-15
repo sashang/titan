@@ -64,7 +64,7 @@ type SessionId = string
 let dict_name_to_session = new Dictionary<Name, SessionId>()
 
 let callback (next : HttpFunc) (ctx : HttpContext) = task {
-    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
     logger.LogInformation("called TokBoxCB.callback")
     let! body = ctx.ReadBodyFromRequestAsync()
     logger.LogInformation body
@@ -109,7 +109,7 @@ let callback (next : HttpFunc) (ctx : HttpContext) = task {
 }
 
 let find_by_name (next : HttpFunc) (ctx : HttpContext) = task {
-    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
     logger.LogInformation("called TokBoxCB.callback")
     let! email = ctx.BindJsonAsync<Domain.EmailRequest>()
     let result = dict_name_to_session.ContainsKey(email.Email)

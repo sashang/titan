@@ -1,12 +1,10 @@
 module Titan.Dashboard
 
 open Client.Shared
-open Domain
 open Elmish
 open Fable.Import
-open Fable.Helpers.React
+open Fable.React
 open Fulma
-open Thoth.Json
 
 type PageModel =
     | UsersModel of Users.Model
@@ -74,12 +72,12 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         {model with Child = UsersModel new_model}, Cmd.map UsersMsg new_cmd
 
     | {Child = UsersModel users_model}, ClickApprovedUsers ->
-        Browser.console.info ("ClickApprovedUsers message")
+        Browser.Dom.console.info ("ClickApprovedUsers message")
         let new_model, new_cmd = Users.update users_model Users.InitApproved
         {model with Child = UsersModel new_model}, Cmd.map UsersMsg new_cmd
 
     | {Child = UsersModel users_model}, ClickUnapprovedUsers ->
-        Browser.console.info ("ClickUnapprovedUsers message")
+        Browser.Dom.console.info ("ClickUnapprovedUsers message")
         let new_model, new_cmd = Users.update users_model Users.InitUnapproved
         {model with Child = UsersModel new_model}, Cmd.map UsersMsg new_cmd
 

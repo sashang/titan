@@ -1,21 +1,17 @@
 /// A class in the school
 module Class
 
-open CustomColours
 open Domain
 open Elmish
-open Elmish.Browser.Navigation
-open Fable.Helpers.React
-open Fable.Helpers.React.Props
+open Fable.React
+open Fable.React.Props
 open Fable.Import
-open Fable.PowerPack
-open Fable.PowerPack.Fetch
-open Fable.Core.JsInterop
 open Fulma
 open ModifiedFableFetch
 open System
 open Client.Shared
 open Thoth.Json
+type TF = Thoth.Fetch.Fetch
 
 type LiveState =
     | On
@@ -44,7 +40,7 @@ exception GetSessionEx of APIError
 let private get_live_session_id () = promise {
     let request = make_get 
     let decoder = Decode.Auto.generateDecoder<OTIResponse>()
-    let! response = Fetch.tryFetchAs "/api/get-session-id" decoder request
+    let! response = TF.tryFetchAs("/api/get-session-id", decoder, request)
     match response with
     | Ok result ->
         match result.Error with
@@ -62,13 +58,13 @@ let private get_live_session_id () = promise {
 let init email =
     { Session = None; Students = []; StartTime = None; Live = Off
       EndTime = None; OTI = None; Error = None; Email = email},
-      Cmd.ofPromise get_live_session_id () GetSessionSuccess GetSessionFailure
+      Cmd.OfPromise.either get_live_session_id () GetSessionSuccess GetSessionFailure
 
 let update (model : Model) (msg : Msg) =
     match model, msg with
 
     | model, GetSessionSuccess oti ->
-        Browser.console.info ("Got session id")
+        Browser.Dom.console.info ("Got session id")
         let session = OpenTokJSInterop.init_session oti.Key oti.SessionId
         OpenTokJSInterop.on_streamcreate_subscribe session 640 480
         if session = null then failwith "failed to get js session"
@@ -77,20 +73,20 @@ let update (model : Model) (msg : Msg) =
     |  model,GetSessionFailure e ->
         match e with
         | :? GetSessionEx as ex ->
-            Browser.console.warn ("Failed to get session: " + List.head ex.Data0.Messages)
+            Browser.Dom.console.warn ("Failed to get session: " + List.head ex.Data0.Messages)
             {model with Error = Some ex.Data0} , Cmd.none
         | e ->
-            Browser.console.warn ("Failed to get session: " + e.Message)
+            Browser.Dom.console.warn ("Failed to get session: " + e.Message)
             model, Cmd.none
 
     |  {Live = Off; OTI = Some oti; Session = Some session}, GoLive ->
-        Browser.console.info (sprintf "Clicked GoLive...initialzing publisher with session id = %s" model.OTI.Value.SessionId)
+        Browser.Dom.console.info (sprintf "Clicked GoLive...initialzing publisher with session id = %s" model.OTI.Value.SessionId)
         let publisher = OpenTokJSInterop.init_pub "publisher" "1280x720" model.Email
         OpenTokJSInterop.connect_session_with_pub session publisher model.OTI.Value.Token
         {model with Live = On; Session = Some session}, Cmd.none
 
     | _, GoLive ->
-        Browser.console.error ("Bad state for GoLive message")
+        Browser.Dom.console.error ("Bad state for GoLive message")
         model, Cmd.none
 
 
@@ -103,11 +99,11 @@ let update (model : Model) (msg : Msg) =
             model, Cmd.none
 
     | _, StopLive ->
-        Browser.console.warn "Clicked StopLive ... but we are not live."
+        Browser.Dom.console.warn "Clicked StopLive ... but we are not live."
         model, Cmd.none
 
     | _, SignOut ->
-        Browser.console.info "Received signout msg"
+        Browser.Dom.console.info "Received signout msg"
         match model.Session with
         | Some session ->
             OpenTokJSInterop.disconnect session

@@ -1,7 +1,15 @@
 /// Domain model shared between client and server.
 namespace Domain
 
+//this is so that it works on the server side and client
+//server needs the .NET runtime. Client (browser) has no access to that,
+//so use Thoth.Json
+#if FABLE_COMPILER
 open Thoth.Json
+#else
+open Thoth.Json.Net
+#endif
+
 ///Flexible API error codes. Interpreted by the client side code depending on context.
 [<RequireQualifiedAccess>]
 type APICode =
@@ -62,14 +70,14 @@ type TitanRole =
 [<CLIMutable>] //needed for BindJsonAync to work
 ///The data transmitted with the sign up request
 type SignUp =
-    { username : string
-      email : string
-      password : string
-      role : TitanRole option }
+    { Username : string
+      Email : string
+      Password : string
+      Role : TitanRole option }
 
 type SignOutCode =
-    | Success = 0
-    | Failure = 1
+    | Success
+    | Failure
 
 ///some api handler that uses an email address as a parameter
 /// got tired of writign types for each request that used an email.
@@ -104,8 +112,9 @@ type UsersForTitanResponse =
 
 [<CLIMutable>]
 type SignOutResult =
-    { code : SignOutCode list
-      message : string list }
+    { Code : SignOutCode 
+      Message : string }
+
 
 [<CLIMutable>]
 type SchoolRequest =

@@ -2,11 +2,7 @@ module DashboardRouter
 
 open Client.Shared
 open Elmish
-open Elmish.React
-open Fable.Helpers.React.Props
-open Fulma
 open Fable.Import
-open Fable.Helpers.React
 
 type PageModel =
     | TutorModel of Tutor.Dashboard.Model
@@ -48,7 +44,7 @@ let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
         {Child = TutorModel new_model}, Cmd.map TutorMsg cmd
 
     | _, TutorMsg _  ->
-        Browser.console.error("Received bad TutorMsg.")
+        Browser.Dom.console.error("Received bad TutorMsg.")
         model, Cmd.none
 
     | {Child = StudentModel model}, TenSecondsTimer ->
@@ -68,7 +64,7 @@ let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
         {Child = StudentModel new_model}, Cmd.map StudentMsg cmd
 
     | _, StudentMsg _  ->
-        Browser.console.error("Received bad StudentMsg.")
+        Browser.Dom.console.error("Received bad StudentMsg.")
         model, Cmd.none
 
     | {Child = TitanModel model}, TitanMsg msg  ->
@@ -80,7 +76,7 @@ let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
         {Child = TitanModel new_model}, Cmd.map TitanMsg cmd
 
     | _, TitanMsg _  ->
-        Browser.console.error("Received bad TitanMsg.")
+        Browser.Dom.console.error("Received bad TitanMsg.")
         model, Cmd.none
 
         

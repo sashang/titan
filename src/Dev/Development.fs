@@ -128,7 +128,7 @@ type Development() =
         ()
 
 
-let create_services connection_string =
+let create_services (connection_string : string) =
         // let builder = NpgsqlConnectionStringBuilder(connection_string)
         // builder.SslMode <- SslMode.Require
         // builder.TrustServerCertificate <- true

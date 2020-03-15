@@ -4,14 +4,14 @@ module StudentsComponent
 open CustomColours
 open Domain
 open Elmish
-open Fable.Helpers.React
-open Fable.Helpers.React.Props
+open Fable.React
+open Fable.React.Props
 open Fable.Import
-open Fable.PowerPack
 open Fable.FontAwesome
 open Fulma
 open ModifiedFableFetch
 open Thoth.Json
+type TF = Thoth.Fetch.Fetch
 open Client.Shared
 
 
@@ -37,18 +37,18 @@ type Msg =
 let dismiss_student (student : DismissStudentRequest) = promise {
     let request = make_post 1 student
     let decoder = Decode.Auto.generateDecoder<APIError option>()
-    let! response = Fetch.tryFetchAs "/api/dismiss-student" decoder request
+    let! response = TF.tryFetchAs("/api/dismiss-student", decoder, request)
     return map_api_error_result response DismissStudentEx
 }
 
 let get_all_students () = promise {
     let decoder = Decode.Auto.generateDecoder<Domain.GetAllStudentsResult>()
-    let! response = Fetch.tryFetchAs "/api/get-all-students" decoder make_get
+    let! response = TF.tryFetchAs("/api/get-all-students", decoder, make_get)
     match response with
     | Ok result ->
         match result.Error with
         | Some error ->
-            Browser.console.error ("get_all_students: " + (List.head error.Messages))
+            Browser.Dom.console.error ("get_all_students: " + (List.head error.Messages))
             return (raise (GetAllStudentsEx error))
         | None ->
             return result.Students
@@ -58,40 +58,40 @@ let get_all_students () = promise {
 
 let init () =
     { LoadStudentsState = Loading; Students = [ ]; Error = None },
-    Cmd.ofPromise get_all_students () LoadStudentsSuccess LoadStudentsFailure
+    Cmd.OfPromise.either get_all_students () LoadStudentsSuccess LoadStudentsFailure
 
 let update (model : Model) (msg : Msg) =
     match msg with
     | GetAllStudents ->
-        model, Cmd.ofPromise get_all_students () LoadStudentsSuccess LoadStudentsFailure
+        model, Cmd.OfPromise.either get_all_students () LoadStudentsSuccess LoadStudentsFailure
         
     | LoadStudentsSuccess students ->
         {model with LoadStudentsState = Loaded; Students = students}, Cmd.none
     | LoadStudentsFailure e ->
         match e with 
         | :? GetAllStudentsEx as ex ->
-            Browser.console.warn "Received GetAllStudentsEx"
+            Browser.Dom.console.warn "Received GetAllStudentsEx"
             { model with Error = Some ex.Data0 }, Cmd.none
         | e ->
-            Browser.console.warn ("Received general exception: " + e.Message)
+            Browser.Dom.console.warn ("Received general exception: " + e.Message)
             model, Cmd.none
     | DismissStudent student ->
-        model, Cmd.ofPromise dismiss_student {Email = student.Email} (DismissStudentSuccess) (DismissStudentFailure)
+        model, Cmd.OfPromise.either dismiss_student {Email = student.Email} (DismissStudentSuccess) (DismissStudentFailure)
         
     | DismissStudentSuccess () ->
-        model, Cmd.ofPromise get_all_students () LoadStudentsSuccess LoadStudentsFailure
+        model, Cmd.OfPromise.either get_all_students () LoadStudentsSuccess LoadStudentsFailure
 
     | SignOut ->
-        Browser.console.info "Received signout msg" //we don't have to do anything special here.
+        Browser.Dom.console.info "Received signout msg" //we don't have to do anything special here.
         model, Cmd.none
 
     | DismissStudentFailure e ->
         match e with 
         | :? DismissStudentEx as ex ->
-            Browser.console.warn "Received DismissStudentEx"
+            Browser.Dom.console.warn "Received DismissStudentEx"
             { model with Error = Some ex.Data0 }, Cmd.none
         | e ->
-            Browser.console.warn ("Received general exception: " + e.Message)
+            Browser.Dom.console.warn ("Received general exception: " + e.Message)
             model, Cmd.none
 
 

@@ -4,7 +4,7 @@ open Client.Shared
 open Domain
 open Elmish
 open Fable.Import
-open Fable.Helpers.React
+open Fable.React
 open Fulma
 open Thoth.Json
 
@@ -94,7 +94,7 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         model, Cmd.none
 
     | _, SchoolMsg _ ->
-        Browser.console.error("Unexpected SchoolMsg in Dashboard.Tutor")
+        Browser.Dom.console.error("Unexpected SchoolMsg in Dashboard.Tutor")
         model, Cmd.none
     | {Child = ClassModel child_model}, ClassMsg msg ->
         let new_state, cmd = Class.update child_model msg
@@ -105,7 +105,7 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         {model with Child = ClassModel new_state}, Cmd.map ClassMsg new_cmd
 
     | _, ClassMsg _ ->
-        Browser.console.error("Unexpected ClassMsg in Dashboard.Tutor")
+        Browser.Dom.console.error("Unexpected ClassMsg in Dashboard.Tutor")
         model, Cmd.none
 
     | {Child = StudentsModel child_model}, StudentMsg msg ->
@@ -117,7 +117,7 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         {model with Child = StudentsModel new_state}, Cmd.map StudentMsg new_cmd
 
     | _, StudentMsg _ ->
-        Browser.console.error("Unexpected StudentMsg in Dashboard.Tutor")
+        Browser.Dom.console.error("Unexpected StudentMsg in Dashboard.Tutor")
         model, Cmd.none
     | {Child = EnrolModel child_model}, EnrolMsg msg ->
         let new_state, cmd = PendingStudents.update child_model msg
@@ -128,7 +128,7 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         {model with Child = EnrolModel new_state}, Cmd.map EnrolMsg cmd
 
     | _, EnrolMsg _ ->
-        Browser.console.error("Unexpected EnrolMsg in Dashboard.Tutor")
+        Browser.Dom.console.error("Unexpected EnrolMsg in Dashboard.Tutor")
         model, Cmd.none
     | model, ClickAccount ->
         let new_state, new_cmd = School.init ()

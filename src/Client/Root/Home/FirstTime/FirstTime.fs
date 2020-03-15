@@ -6,14 +6,14 @@ open CustomColours
 open Domain
 open Elmish
 open Elmish.React
-open Elmish.Browser.Navigation
-open Fable.Helpers.React
-open Fable.Helpers.React.Props
+open Elmish.Navigation
+open Fable.React
+open Fable.React.Props
 open Fable.Import
-open Fable.PowerPack
 open Fulma
 open ModifiedFableFetch
 open Thoth.Json
+open Thoth.Fetch
 open ValueDeclarations
 
 type Category =
@@ -69,8 +69,8 @@ let submit_tutor (tutor : TutorRegister) = promise {
     else
         let request = make_post 4 tutor
         let decoder = Decode.Auto.generateDecoder<APIError option>()
-        let! response = Fetch.tryFetchAs "/api/register-tutor" decoder request
-        Browser.console.info "received response from register-tutor"
+        let! response = Fetch.tryFetchAs("/api/register-tutor", decoder, request)
+        Browser.Dom.console.info "received response from register-tutor"
         return map_api_error_result response RegisterEx
 }
 
@@ -80,8 +80,8 @@ let private submit_student (student : StudentRegister) = promise {
     else
         let request = make_post 3 student
         let decoder = Decode.Auto.generateDecoder<APIError option>()
-        let! response = Fetch.tryFetchAs "/api/register-student" decoder request
-        Browser.console.info "received response from register-student"
+        let! response = Fetch.tryFetchAs("/api/register-student", decoder, request)
+        Browser.Dom.console.info "received response from register-student"
         return map_api_error_result response RegisterEx
 }
 
@@ -170,12 +170,11 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         model, Cmd.none
         
     | {Accepted = true; SubForm = Some (TutorForm tutor_model)} , ClickGo ->
-        model, Cmd.ofPromise
-                    submit_tutor 
-                    { TutorRegister.FirstName = tutor_model.FirstName
-                      TutorRegister.LastName = tutor_model.LastName
-                      TutorRegister.Email = tutor_model.Email
-                      TutorRegister.SchoolName = tutor_model.SchoolName }
+        model, Cmd.OfPromise.either 
+                    submit_tutor { TutorRegister.FirstName = tutor_model.FirstName
+                                   TutorRegister.LastName = tutor_model.LastName
+                                   TutorRegister.Email = tutor_model.Email
+                                   TutorRegister.SchoolName = tutor_model.SchoolName }
                     Success
                     Failure
 
@@ -187,7 +186,7 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
 
     | {Consent = true; Accepted = true; SubForm = Some(StudentForm student_model)}, ClickGo ->
        {model with Active = true}, 
-       Cmd.ofPromise submit_student 
+       Cmd.OfPromise.either submit_student 
           {StudentRegister.FirstName = student_model.FirstName
            StudentRegister.LastName = student_model.LastName
            StudentRegister.Email = student_model.Email } Success Failure
@@ -200,10 +199,10 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | model, Failure e ->
         match e with
         | :? RegisterEx as ex ->
-            List.iter (fun m -> Browser.console.warn ("RegisterEx:" + m)) ex.Data0.Messages
+            List.iter (fun m -> Browser.Dom.console.warn ("RegisterEx:" + m)) ex.Data0.Messages
             {model with Error = Some ex.Data0}, Cmd.none
         | e ->
-            Browser.console.warn ("Failed to submit form " + e.Message)
+            Browser.Dom.console.warn ("Failed to submit form " + e.Message)
             model, Cmd.none
 
     | model, ClickStudent ->
@@ -234,5 +233,5 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         {model with Consent = not model.Consent}, Cmd.none
     
     | _, msg ->
-        Browser.console.warn(sprintf "message not handled %A" msg)
+        Browser.Dom.console.warn(sprintf "message not handled %A" msg)
         model,Cmd.none

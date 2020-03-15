@@ -1,13 +1,9 @@
 module Client.Main
 
-open Client.Shared
-open Domain
+open Browser
 open Elmish
-open Elmish.Browser
-open Elmish.Browser.Navigation
+open Elmish.Navigation
 open Elmish.React
-open Fable.Import
-open Fable.Import.Browser
 open Pages
 open Root
 
@@ -18,6 +14,7 @@ open Elmish.HMR
 #endif
 
 let  [<Literal>]  nav_event = "NavigationEvent"
+let  [<Literal>]  hash_change = "hashchange"
 let url_sub appState : Cmd<_> = 
     [ fun dispatch -> 
         let on_change _ = 
@@ -26,7 +23,7 @@ let url_sub appState : Cmd<_> =
             | None -> ()
         
         // listen to manual hash changes or page refresh
-        window.addEventListener_hashchange(unbox on_change)
+        window.addEventListener(hash_change, unbox on_change)
         // listen to custom navigation events published by `Urls.navigate [ . . .  ]`
         window.addEventListener(nav_event, unbox on_change) ]  
 
@@ -43,9 +40,8 @@ Program.mkProgram Root.init Root.update Root.view
 |> Program.toNavigable Pages.url_parser url_update
 #if DEBUG
 |> Program.withConsoleTrace
-|> Program.withHMR
 #endif
-|> Program.withReact "elmish-app"
+|> Program.withReactBatched "elmish-app"
 #if DEBUG
 |> Program.withDebugger
 #endif

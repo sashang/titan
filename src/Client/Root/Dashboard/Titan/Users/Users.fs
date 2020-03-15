@@ -6,13 +6,12 @@ open Client.Style
 open Domain
 open Elmish
 open Fable.Import
-open Fable.PowerPack
-open Fable.Helpers.React
-open Fable.Helpers.React.Props
-open Fable.Core.JsInterop
+open Fable.React
 open Fulma
+open Fetch
 open ModifiedFableFetch
 open Thoth.Json
+type TF = Thoth.Fetch.Fetch
 
 type UsersToInit =
     | Approved
@@ -43,30 +42,30 @@ exception DeleteUserEx of APIError
 let private get_unapproved_users () = promise {
     let request = make_get
     let decoder = Decode.Auto.generateDecoder<UsersForTitanResponse>()
-    Browser.console.info("called get_unapproved_users")
-    let! response = Fetch.tryFetchAs "/api/get-unapproved-users-for-titan" decoder request
+    Browser.Dom.console.info("called get_unapproved_users")
+    let! response = TF.tryFetchAs("/api/get-unapproved-users-for-titan", decoder, request)
     match response with
     | Ok result ->
         match result.Error with
         | Some error ->
-            Browser.console.error ("get_unapproved-users_for_titan: " + (List.head error.Messages))
+            Browser.Dom.console.error ("get_unapproved-users_for_titan: " + (List.head error.Messages))
             return (raise (GetUsersForTitanEx error))
         | None ->
             return result.Users
     | Error e ->
-        Browser.console.error ("get_unapproved_users failed: " + e)
+        Browser.Dom.console.error ("get_unapproved_users failed: " + e)
         return raise (GetUsersForTitanEx (APIError.init [APICode.Fetch] [e]))
 }
 
 let private get_users_for_titan () = promise {
     let request = make_get
     let decoder = Decode.Auto.generateDecoder<UsersForTitanResponse>()
-    let! response = Fetch.tryFetchAs "/api/get-users-for-titan" decoder request
+    let! response = TF.tryFetchAs("/api/get-users-for-titan", decoder, request)
     match response with
     | Ok result ->
         match result.Error with
         | Some error ->
-            Browser.console.error ("get_users_for_titan: " + (List.head error.Messages))
+            Browser.Dom.console.error ("get_users_for_titan: " + (List.head error.Messages))
             return (raise (GetUsersForTitanEx error))
         | None ->
             return result.Users
@@ -76,14 +75,14 @@ let private get_users_for_titan () = promise {
 
 let private update_user_approval (user : UserForTitan)  = promise {
     let request = make_post 1 user
-    Browser.console.info ("Updating user claims for" + user.Email)
+    Browser.Dom.console.info ("Updating user claims for" + user.Email)
     let decoder = Decode.Auto.generateDecoder<APIError option>()
-    let! response = Fetch.tryFetchAs "/api/update-user-approval" decoder request
+    let! response = TF.tryFetchAs("/api/update-user-approval", decoder, request)
     match response with
     | Ok result ->
         match result with
         | Some error ->
-            Browser.console.error ("update_user_approval: " + (List.head error.Messages))
+            Browser.Dom.console.error ("update_user_approval: " + (List.head error.Messages))
             return (raise (UpdateUserApprovalEx error))
         | None ->
             return ()
@@ -93,15 +92,15 @@ let private update_user_approval (user : UserForTitan)  = promise {
 
 let private delete_user (user : UserForTitan)  = promise {
     let request = make_post 1 user
-    Browser.console.info ("Deleting user " + user.Email)
+    Browser.Dom.console.info ("Deleting user " + user.Email)
     let decoder = Decode.Auto.generateDecoder<APIError option>()
     //use the delete user titan for htis becuase this is the admin/titan deleting the user
-    let! response = Fetch.tryFetchAs "/api/delete-user-titan" decoder request
+    let! response = TF.tryFetchAs("/api/delete-user-titan", decoder, request)
     match response with
     | Ok result ->
         match result with
         | Some error ->
-            Browser.console.error ("delete_user: " + (List.head error.Messages))
+            Browser.Dom.console.error ("delete_user: " + (List.head error.Messages))
             return (raise (DeleteUserEx error))
         | None ->
             return ()
@@ -112,7 +111,7 @@ let private delete_user (user : UserForTitan)  = promise {
 
 let init (init_data : UsersToInit) =
     {Users = []; Error = None}, 
-    Cmd.ofPromise (if init_data = Approved then get_users_for_titan else get_unapproved_users) () GetUsersSuccess Failure
+    Cmd.OfPromise.either (if init_data = Approved then get_users_for_titan else get_unapproved_users) () GetUsersSuccess Failure
 
 
 let render_user (user : UserForTitan) (dispatch : Msg->unit) =
@@ -175,25 +174,25 @@ let update (model : Model) (msg : Msg) =
         let user_to_update = 
             model.Users
             |> List.find (fun user -> user.Email = email)
-        model, Cmd.ofPromise update_user_approval user_to_update UpdateSuccess Failure
+        model, Cmd.OfPromise.either update_user_approval user_to_update UpdateSuccess Failure
 
     | model, ClickDelete email ->
         //update the user with the given email
         let user_to_update = 
             model.Users
             |> List.find (fun user -> user.Email = email)
-        model, Cmd.ofPromise delete_user user_to_update DeleteSuccess Failure
+        model, Cmd.OfPromise.either delete_user user_to_update DeleteSuccess Failure
     
     | model, UpdateSuccess () ->
-        Browser.console.info ("Updated user")
+        Browser.Dom.console.info ("Updated user")
         model, Cmd.none
 
     | model, DeleteSuccess () ->
-        Browser.console.info ("Deleted user")
+        Browser.Dom.console.info ("Deleted user")
         model, Cmd.none
 
     | model, ClickRadio (email, claim_type) ->
-        Browser.console.info ("changed " + claim_type + " for " + email)
+        Browser.Dom.console.info ("changed " + claim_type + " for " + email)
         match claim_type with
         | "IsTutor" ->
             let users' = 
@@ -220,29 +219,29 @@ let update (model : Model) (msg : Msg) =
                                 if user.Email = email then {user with IsTitan = not user.IsTitan} else user)
             {model with Users = users'}, Cmd.none
         | _ ->
-            Browser.console.error ("Unknown claim type: " + claim_type)
+            Browser.Dom.console.error ("Unknown claim type: " + claim_type)
             model, Cmd.none
 
     | model, InitApproved ->
-        Browser.console.info("getting approved users")
-        model, Cmd.ofPromise get_users_for_titan () GetUsersSuccess Failure
+        Browser.Dom.console.info("getting approved users")
+        model, Cmd.OfPromise.either get_users_for_titan () GetUsersSuccess Failure
 
     | model, InitUnapproved ->
-        Browser.console.info("getting unapproved users")
-        model, Cmd.ofPromise get_unapproved_users () GetUsersSuccess Failure
+        Browser.Dom.console.info("getting unapproved users")
+        model, Cmd.OfPromise.either get_unapproved_users () GetUsersSuccess Failure
 
     | model, GetUsersSuccess users ->
-        Browser.console.info("got users")
+        Browser.Dom.console.info("got users")
         {model with Users = users}, Cmd.none
 
     | model, Failure e ->
         match e with
         | :? UpdateUserApprovalEx as ex ->
-            Browser.console.warn ("Failed to update user approval status: " + List.head ex.Data0.Messages)
+            Browser.Dom.console.warn ("Failed to update user approval status: " + List.head ex.Data0.Messages)
             {model with Error = Some ex.Data0}, Cmd.none
         | :? GetUsersForTitanEx as ex ->
-            Browser.console.warn ("Failed to get users for titan: " + List.head ex.Data0.Messages)
+            Browser.Dom.console.warn ("Failed to get users for titan: " + List.head ex.Data0.Messages)
             {model with Error = Some ex.Data0}, Cmd.none
         | e ->
-            Browser.console.warn ("Failed to get users for titan" + e.Message)
+            Browser.Dom.console.warn ("Failed to get users for titan" + e.Message)
             model, Cmd.none

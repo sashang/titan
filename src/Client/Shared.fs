@@ -22,7 +22,7 @@ type TitanClaim =
         IsTutor = false
         IsStudent = false }
 
-    static member decoder : Decode.Decoder<TitanClaim> =
+    static member decoder : Decoder<TitanClaim> =
         Decode.object
             (fun get -> 
                 { Surname = get.Required.Field "family_name" Decode.string

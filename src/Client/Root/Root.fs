@@ -7,18 +7,15 @@ open CustomColours
 open DashboardRouter
 open Domain
 open Elmish
-open Elmish.Browser
-open Elmish.Browser.Navigation
-open Fable.Helpers.React.Props
+open Elmish.Navigation
+open Fable.React.Props
 open Fable.Import
-open Fable.PowerPack
-open Fable.PowerPack.Fetch
 open Fulma
-open Fable.Helpers.React
+open Fetch
+open Fable.React
 open Fable.Core
-open Fable.Core.JsInterop
-open ModifiedFableFetch
 open Thoth.Json
+type TF = Thoth.Fetch.Fetch
 open ValueDeclarations
 
 
@@ -123,20 +120,20 @@ let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMs
             model, Cmd.none
 
 let check_session () = promise {
-    Browser.console.info "check_session"
+    Browser.Dom.console.info "check_session"
     let props = [ RequestProperties.Method HttpMethod.GET
                   RequestProperties.Credentials RequestCredentials.Include ]
     let decoder = Decode.Auto.generateDecoder<Session>()
     try
-        let! response = Fetch.fetchAs<Session> "/check-session" decoder props
-        Browser.console.info "decoded response"
+        let! response = TF.fetchAs<Session>("/check-session", decoder, props)
+        Browser.Dom.console.info "decoded response"
         return response
     with 
         | e -> return failwith (e.Message)
 }
 
 let init _ : State * Cmd<RootMsg> =
-    State.init, Cmd.ofPromise check_session () CheckSessionSuccess CheckSessionFailure
+    State.init, Cmd.OfPromise.either check_session () CheckSessionSuccess CheckSessionFailure
 
 let private goto_url page e =
     Navigation.newUrl (Pages.to_path page) |> List.map (fun f -> f ignore) |> ignore
@@ -271,7 +268,7 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         {state with Child = FAQModel model'}, Cmd.map FAQMsg cmd'
 
     | _, {Child = FAQModel _} ->
-        Browser.console.error "Received unknown message but child is FAQModel"
+        Browser.Dom.console.error "Received unknown message but child is FAQModel"
         state, Cmd.none
 
     | PrivacyPolicyMsg msg, {Child = PrivacyPolicyModel model} ->
@@ -279,7 +276,7 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         {state with Child = PrivacyPolicyModel model'}, Cmd.map PrivacyPolicyMsg cmd'
 
     | _, {Child = PrivacyPolicyModel _} ->
-        Browser.console.error "Received unknown message but child is PrivacyPolicyModel"
+        Browser.Dom.console.error "Received unknown message but child is PrivacyPolicyModel"
         state, Cmd.none
 
     | TermsMsg msg, {Child = TermsModel model} ->
@@ -287,7 +284,7 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         {state with Child = TermsModel model'}, Cmd.map TermsMsg cmd'
 
     | _, {Child = TermsModel _} ->
-        Browser.console.error "Received unknown message but child is TermsModel"
+        Browser.Dom.console.error "Received unknown message but child is TermsModel"
         state, Cmd.none
 
     | ClickSignOut, state ->
@@ -303,7 +300,7 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     | CheckSessionSuccess session, state ->
         let jwt_parts = session.Token.Split '.'
         let jwt_content = from_base64 (Array.get jwt_parts 1)
-        Browser.console.info jwt_content
+        Browser.Dom.console.info jwt_content
         let result = Decode.fromString TitanClaim.decoder jwt_content
         match result with
         | Ok claims ->
@@ -328,15 +325,15 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
                     Child = DashboardRouterModel(student_model)}, Cmd.map DashboardRouterMsg cmd
             | model when not claims.IsApproved ->
                 let message = "User needs approval from Tewtin"
-                Browser.console.warn message
+                Browser.Dom.console.warn message
                 { state with Session = Some session; Claims = Some claims}, Cmd.none
             | _ ->
                 let message = "Unknown state or claim."
-                Browser.console.error message
+                Browser.Dom.console.error message
                 state, Cmd.none
 
         | Error e -> 
-            Browser.console.warn e
+            Browser.Dom.console.warn e
             {state with Session = None}, Cmd.none 
 
     | CheckSessionFailure session, state ->
@@ -347,11 +344,11 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         {state with Child = HomeModel new_model}, Cmd.map HomeMsg cmd
 
     | _, {Child = HomeModel model} ->
-        Browser.console.error "Received unknown message but child is HomeModel"
+        Browser.Dom.console.error "Received unknown message but child is HomeModel"
         state, Cmd.none
 
     | Failure e, state ->
-        Browser.console.error ("Failure: " + e.Message)
+        Browser.Dom.console.error ("Failure: " + e.Message)
         state, Cmd.none
 
     | DashboardRouterMsg msg, {Child = DashboardRouterModel model} ->
@@ -359,14 +356,14 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         {state with Child = DashboardRouterModel new_model}, Cmd.map DashboardRouterMsg cmd
 
     | DashboardRouterMsg _, {Child = _} ->
-        Browser.console.error "Received DashboardRouterMsg but child is not DashboarRouterModel"
+        Browser.Dom.console.error "Received DashboardRouterMsg but child is not DashboarRouterModel"
         state, Cmd.none
 
     | _, {Child = DashboardRouterModel _} ->
-        Browser.console.error "Received unknown message but child is DashboarRouterModel"
+        Browser.Dom.console.error "Received unknown message but child is DashboarRouterModel"
         state, Cmd.none
 
     | _, {Child = LoginModel} ->
-        Browser.console.error "Received unknown message but child is LoginModel. There should be no messages for this model."
+        Browser.Dom.console.error "Received unknown message but child is LoginModel. There should be no messages for this model."
         state, Cmd.none
     

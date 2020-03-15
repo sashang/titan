@@ -5,14 +5,12 @@ open Client.Shared
 open CustomColours
 open Domain
 open Elmish
-open Elmish.Browser
-open Elmish.Browser.Navigation
-open Fable.Helpers.React.Props
+open Elmish.Navigation
+open Fable.React.Props
 open Fable.Import
-open Fable.PowerPack
-open Fable.PowerPack.Fetch
 open Fulma
-open Fable.Helpers.React
+open Fable.React
+open Fetch
 open ValueDeclarations
 open ReactMarkdown
 
@@ -24,7 +22,7 @@ type Msg =
     | Failure of exn
 
 let load_pp () = promise {
-    Browser.console.info "load_pp"
+    Browser.Dom.console.info "load_pp"
     let request = [ RequestProperties.Method HttpMethod.GET ]
     try
         let! response = Fetch.fetch "/docs/privacy-policy.md" request
@@ -35,15 +33,15 @@ let load_pp () = promise {
 
 let init () =
     //Client.Shared.PP.wait_for_dom ()
-    {Policy = ""}, Cmd.ofPromise load_pp () LoadPPSuccess Failure
+    {Policy = ""}, Cmd.OfPromise.either load_pp () LoadPPSuccess Failure
 
 let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
     match model, msg with 
     | model, LoadPPSuccess pp ->
-        Browser.console.info ("loaded pp")
+        Browser.Dom.console.info ("loaded pp")
         {model with Policy = pp}, Cmd.none
     | model, Failure e ->
-        Browser.console.error ("Failure in PrivacyPolicy: " + e.Message)
+        Browser.Dom.console.error ("Failure in PrivacyPolicy: " + e.Message)
         model, Cmd.none
 
 let view (model : Model) (dispatch : Msg -> unit) =

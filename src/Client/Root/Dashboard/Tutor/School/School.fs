@@ -5,14 +5,14 @@ open Client.Style
 open CustomColours
 open Domain
 open Elmish
-open Fable.Helpers.React
+open Fable.React
 open Fable.Import
-open Fable.PowerPack
-open Fable.PowerPack.Fetch
-open Fable.Helpers.React.Props
+open Fable.React.Props
+open Fetch
 open Fulma
 open ModifiedFableFetch
 open Thoth.Json
+type TF = Thoth.Fetch.Fetch
 
 exception SaveEx of APIError
 exception LoadSchoolEx of APIError
@@ -27,7 +27,7 @@ type AzureMapsSummary =
       TotalResults : int
       FuzzyLevel : int }
 
-    static member decoder : Decode.Decoder<AzureMapsSummary> =
+    static member decoder : Decoder<AzureMapsSummary> =
         Decode.object
             (fun get ->
                 { Query = get.Required.Field "query" Decode.string
@@ -48,7 +48,7 @@ type AzureMapsAddress =
       CountryCodeISO3 : string
       FreeformAddress : string }
 
-    static member decoder : Decode.Decoder<AzureMapsAddress> =
+    static member decoder : Decoder<AzureMapsAddress> =
         Decode.object
             (fun get ->
                 { MunicipalitySubdivision = get.Optional.Field "municipalitySubdivision" Decode.string
@@ -63,7 +63,7 @@ type AzureMapsAddress =
 type AzureMapsResult =
     { Type : string 
       Address : AzureMapsAddress }
-    static member decoder : Decode.Decoder<AzureMapsResult> =
+    static member decoder : Decoder<AzureMapsResult> =
         Decode.object
             (fun get ->
                 { Type = get.Required.Field "type" Decode.string
@@ -74,7 +74,7 @@ type AzureMapsResponse =
     { Summary : AzureMapsSummary
       Results : AzureMapsResult list }
 
-    static member decoder : Decode.Decoder<AzureMapsResponse> =
+    static member decoder : Decoder<AzureMapsResponse> =
         Decode.object
             (fun get ->
                 { Summary = get.Required.Field "summary" AzureMapsSummary.decoder
@@ -117,7 +117,7 @@ type Msg =
 let private load_school () = promise {
     let request = make_get 
     let decoder = Decode.Auto.generateDecoder<SchoolResponse>()
-    let! response = Fetch.tryFetchAs "/api/load-school" decoder request
+    let! response = TF.tryFetchAs("/api/load-school", decoder, request)
     match response with
     | Ok result ->
         match result.Error with
@@ -132,11 +132,11 @@ let private load_school () = promise {
 let private get_azure_maps_keys () = promise {
     let request = make_get 
     let decoder = Decode.Auto.generateDecoder<Domain.AzureMapsKeys>()
-    let! response = Fetch.tryFetchAs "/api/get-azure-maps-keys" decoder request
+    let! response = TF.tryFetchAs("/api/get-azure-maps-keys", decoder, request)
     match response with
     | Ok keys ->
-        Browser.console.info("Got azure client id = " +  keys.ClientId);
-        Browser.console.info("Got azure pkey = " +  keys.PKey);
+        Browser.Dom.console.info("Got azure client id = " +  keys.ClientId);
+        Browser.Dom.console.info("Got azure pkey = " +  keys.PKey);
         return keys
     | Error message ->
         return failwith "no azure maps keys"
@@ -152,21 +152,21 @@ let private azure_maps_search (sub_key, query) = promise {
     let type_ahead ="&typeahead=true"
     let fetch_url = "https://atlas.microsoft.com/search/address/json?subscription-key=" + sub_key + api_version + country_set + type_ahead + "&query=" + query
     //let fetch_url = "https://atlas.microsoft.com/search/address/json"
-    let! response = Fetch.tryFetchAs fetch_url decoder request
+    let! response = TF.tryFetchAs(fetch_url, decoder, request)
     match response with
     | Ok keys ->
-        Browser.console.info("Got azure maps response");
-        Browser.console.info("num_results: " + keys.Summary.NumResults.ToString());
+        Browser.Dom.console.info("Got azure maps response");
+        Browser.Dom.console.info("num_results: " + keys.Summary.NumResults.ToString());
         return keys
     | Error message ->
-        Browser.console.error("Failed azure maps response: "+ message);
+        Browser.Dom.console.error("Failed azure maps response: "+ message);
         return failwith message
 }
 
 let private load_user () = promise {
     let request = make_get 
     let decoder = Decode.Auto.generateDecoder<UserResponse>()
-    let! response = Fetch.tryFetchAs "/api/load-user" decoder request
+    let! response = TF.tryFetchAs("/api/load-user", decoder, request)
     match response with
     | Ok result ->
         match result.Error with
@@ -181,12 +181,12 @@ let private load_user () = promise {
 let private save (data : SaveRequest) = promise {
     let request = make_post 6 data
     let decoder = Decode.Auto.generateDecoder<APIError option>()
-    let! response = Fetch.tryFetchAs "/api/save-tutor" decoder request
+    let! response = TF.tryFetchAs("/api/save-tutor", decoder, request)
     match response with
     | Ok result ->
-        Browser.console.info("Saved successful")
+        Browser.Dom.console.info("Saved successful")
     | Error e ->
-        Browser.console.warn("Failed to save")
+        Browser.Dom.console.warn("Failed to save")
 
     return map_api_error_result response SaveEx
 }
@@ -194,9 +194,9 @@ let private save (data : SaveRequest) = promise {
 let init () : Model*Cmd<Msg> =
     {SchoolName = ""; Error = None; Subjects = ""; UserLoadState = Loading; SchoolLoadState = Loading;
      FirstName = ""; LastName = ""; Info = ""; Location = MapsInfo.init; AzureMapsClientId = ""; AzureMapsPKey = ""},
-     Cmd.batch [Cmd.ofPromise load_school () Success Failure
-                Cmd.ofPromise load_user () LoadUserSuccess Failure
-                Cmd.ofPromise get_azure_maps_keys () GetAzureMapsKeys Failure]
+     Cmd.batch [Cmd.OfPromise.either load_school () Success Failure
+                Cmd.OfPromise.either load_user () LoadUserSuccess Failure
+                Cmd.OfPromise.either get_azure_maps_keys () GetAzureMapsKeys Failure]
 
 
 let private of_api_error (result : APIError) =
@@ -215,7 +215,7 @@ let private std_label text =
 let private make_error (result : APIError option) =
     match result with
     | Some error ->
-        Browser.console.error(sprintf "Making error message: %s" (of_api_error error))
+        Browser.Dom.console.error(sprintf "Making error message: %s" (of_api_error error))
         Message.message [ Message.Color IsTitanError
                           Message.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [
             Message.header [ ] [
@@ -289,7 +289,7 @@ let input_autosuggest model dispatch =
                 Input.text [ Input.Value model.Location.Text; Input.OnChange (fun ev -> dispatch (SetLocation ev.Value))]
         ]
         Dropdown.dropdown [ Dropdown.IsActive (model.Location.Suggestions.IsEmpty = false)
-                            Dropdown.Props [ Style [ CSSProp.Display "block" ] ] ] [
+                            Dropdown.Props [ Style [ Display DisplayOptions.Block ] ] ] [
             Dropdown.menu [ ] [
                 Dropdown.content [ ] [
                     for suggestion in model.Location.Suggestions do
@@ -313,7 +313,7 @@ let school_content (model : Model) (dispatch : Msg->unit) =
               //yield! input_field_location model.Error APICode.Location "City or Suburb" model.Location (fun e -> dispatch (SetLocation e.Value)) ] ]
       Columns.columns [ ]
         [ Column.column []
-            [ yield text_area_without_error "Info" model.Info (fun (e : React.FormEvent) -> dispatch (SetInfo e.Value)) ] ] ]
+            [ yield text_area_without_error "Info" model.Info (fun e -> dispatch (SetInfo e.Value)) ] ] ]
 
 
 let private save_button dispatch msg text =
@@ -359,11 +359,11 @@ let view (model : Model) (dispatch : Msg -> unit) =
 let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     match msg with
     | ClickSave ->
-        Browser.console.info("clicked save")
+        Browser.Dom.console.info("clicked save")
         let save_request = {SaveRequest.init with FirstName = model.FirstName
                                                   LastName = model.LastName; Info = model.Info; Subjects = model.Subjects
                                                   SchoolName = model.SchoolName; Location = model.Location.Text}
-        model, Cmd.ofPromise save save_request SaveSuccess Failure
+        model, Cmd.OfPromise.either save save_request SaveSuccess Failure
     | SaveSuccess () ->
         model, Cmd.none
     | SetFirstName name ->
@@ -371,7 +371,7 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     | SetLocation location ->
         let cmd =
             if location.Length >=3 then
-               Cmd.ofPromise azure_maps_search (model.AzureMapsPKey, model.Location.Text) AMSearch Failure
+               Cmd.OfPromise.either azure_maps_search (model.AzureMapsPKey, model.Location.Text) AMSearch Failure
             else
                 Cmd.none
         {model with Location = {model.Location with Text = location}}, cmd
@@ -389,7 +389,7 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     | GetAzureMapsKeys keys ->
         {model with AzureMapsClientId = keys.ClientId; AzureMapsPKey = keys.PKey}, Cmd.none
     | AMSearch am_response ->
-        Browser.console.info("Got " + am_response.Summary.NumResults.ToString() + " results")
+        Browser.Dom.console.info("Got " + am_response.Summary.NumResults.ToString() + " results")
         try
             let get_suggestions =
                 am_response.Results
@@ -399,7 +399,7 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
             {model with Location = {model.Location with Suggestions = get_suggestions}}, Cmd.none
         with
         | e ->
-            Browser.console.info("No 'Geography' type in results")
+            Browser.Dom.console.info("No 'Geography' type in results")
             model, Cmd.none
 
     | ClickSuggestion suggestion ->
@@ -410,7 +410,7 @@ let update  (model : Model) (msg : Msg): Model*Cmd<Msg> =
     | Failure e ->
         match e with
         | :? SaveEx as ex ->
-            Browser.console.warn("Failed to save")
+            Browser.Dom.console.warn("Failed to save")
             { model with Error = Some ex.Data0 }, Cmd.none
         | :? LoadUserEx as ex ->
             { model with Error = Some ex.Data0 }, Cmd.none

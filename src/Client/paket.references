@@ -4,6 +4,8 @@ group Client
 FSharp.Core
 Fulma.Extensions.Wikiki.Divider
 Fable.Core
+Fable.Fetch
+Fable.Promise
 Fable.Elmish.Browser
 Fable.Elmish.Debugger
 Fable.Elmish.React
@@ -13,5 +15,5 @@ Fulma
 Fable.FontAwesome
 Fable.FontAwesome.Free
 Elmish.Bridge.Client
-Elmish.Bridge.Fabulous
-
+Thoth.Json
+Thoth.Fetch

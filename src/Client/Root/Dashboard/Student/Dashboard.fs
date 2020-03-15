@@ -2,19 +2,18 @@ module Student.Dashboard
 
 open Client.Shared
 open Domain
-open Elmish.Browser.Navigation
 open Elmish
+open Elmish.Navigation
 open Fable.Import
-open Fable.PowerPack
-open Fable.Helpers.React
+open Fable.React
 open Fulma
 open ModifiedFableFetch
-open Enrolled
 open Thoth.Json
+type TF = Thoth.Fetch.Fetch
 
 type PageModel =
     | EnrolledModel of Enrolled.Model //page of schools this student is enroled in
-    | ClassModel of Student.Class.Model //live view of the classroom
+    | ClassModel of Class.Model //live view of the classroom
     | HomeModel 
 
 type Model =
@@ -30,7 +29,7 @@ type Msg =
     | SignOut
     | TenSecondsTimer
     | GetEnrolledSchoolsSuccess of School list
-    | ClassMsg of Student.Class.Msg
+    | ClassMsg of Class.Msg
     | EnrolledMsg of Enrolled.Msg
     | Failure of exn
 
@@ -39,8 +38,8 @@ exception GetEnrolledSchoolsEx of APIError
 let private get_enroled_schools () = promise {
     let request = make_get
     let decoder = Decode.Auto.generateDecoder<GetAllSchoolsResult>()
-    let! response = Fetch.tryFetchAs "/api/get-enrolled-schools" decoder request
-    Browser.console.info "received response from get-enroled-schools"
+    let! response = TF.tryFetchAs("/api/get-enrolled-schools", decoder, request)
+    Browser.Dom.console.info "received response from get-enroled-schools"
     match response with
     | Ok result ->
         match result.Error with
@@ -54,7 +53,7 @@ let private get_enroled_schools () = promise {
 
 let init claims = 
     {Claims = claims; Error = None; Child = HomeModel; EnrolledSchools = [] },
-     Cmd.ofPromise get_enroled_schools () GetEnrolledSchoolsSuccess Failure
+     Cmd.OfPromise.either get_enroled_schools () GetEnrolledSchoolsSuccess Failure
 
 let update model msg =
     match model, msg with
@@ -66,48 +65,48 @@ let update model msg =
         model, Cmd.none
 
     | {Child = ClassModel child}, ClassMsg msg ->
-        Browser.console.info ("ClassMsg message")
+        Browser.Dom.console.info ("ClassMsg message")
         let new_model, new_cmd = Student.Class.update child msg
         {model with Child = ClassModel new_model}, Cmd.map ClassMsg new_cmd
 
     | {Child = ClassModel child}, SignOut ->
-        Browser.console.info ("SignOut message")
+        Browser.Dom.console.info ("SignOut message")
         let new_model, new_cmd = Student.Class.update child Student.Class.SignOut
         {model with Child = ClassModel new_model}, Cmd.batch [ Cmd.map ClassMsg new_cmd
                                                                Navigation.newUrl (Pages.to_path Pages.Home) ]
 
     | _, ClassMsg _ ->
-        Browser.console.error ("Received ClassMsg when child page is not ClassModel")
+        Browser.Dom.console.error ("Received ClassMsg when child page is not ClassModel")
         model, Cmd.none
 
     | {Child = EnrolledModel child}, EnrolledMsg msg ->
-        Browser.console.info ("Enrolled message")
+        Browser.Dom.console.info ("Enrolled message")
         let new_model, new_cmd = Enrolled.update child msg
         {model with Child = EnrolledModel new_model }, Cmd.map EnrolledMsg new_cmd
 
     | {Child = EnrolledModel child}, SignOut ->
-        Browser.console.info ("SignOut message")
+        Browser.Dom.console.info ("SignOut message")
         let new_model, _ = Enrolled.update child Enrolled.SignOut
         {model with Child = EnrolledModel new_model}, Navigation.newUrl (Pages.to_path Pages.Home)
 
     | _, EnrolledMsg _ ->
-        Browser.console.error ("Received EnrolledMsg when child page is not EnrolledModel")
+        Browser.Dom.console.error ("Received EnrolledMsg when child page is not EnrolledModel")
         model, Cmd.none
 
     | {Child = HomeModel}, SignOut ->
-        Browser.console.info ("SignOut message")
+        Browser.Dom.console.info ("SignOut message")
         model, Navigation.newUrl (Pages.to_path Pages.Home)
 
     | model, GetEnrolledSchoolsSuccess schools ->
         {model with EnrolledSchools = schools}, Cmd.none
 
     | model, ClickClassroom school ->
-        Browser.console.info "Got message ClickClassroom"
+        Browser.Dom.console.info "Got message ClickClassroom"
         let new_state, new_cmd = Student.Class.init school model.Claims.Email
         {model with Child = ClassModel new_state}, Cmd.map ClassMsg new_cmd
     
     | model, ClickEnrol ->
-        Browser.console.info "Got message ClickEnrol"
+        Browser.Dom.console.info "Got message ClickEnrol"
         let new_state, new_cmd = Enrolled.init ()
         {model with Child = EnrolledModel new_state}, Cmd.map EnrolledMsg new_cmd
 
@@ -117,10 +116,10 @@ let update model msg =
     | model, Failure e ->
         match e with
         | :? GetEnrolledSchoolsEx as ex ->
-            Browser.console.warn ("GetEnrolledSchoolsEx: " + ex.Message)
+            Browser.Dom.console.warn ("GetEnrolledSchoolsEx: " + ex.Message)
             {model with Error = Some ex.Data0}, Cmd.none
         | e ->
-            Browser.console.warn ("Failed to get_all_schools: " + e.Message)
+            Browser.Dom.console.warn ("Failed to get_all_schools: " + e.Message)
             model, Cmd.none
 
 // Helper to generate a menu item

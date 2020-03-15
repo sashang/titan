@@ -4,19 +4,14 @@ open Client.Shared
 open CustomColours
 open Domain
 open Elmish
-open Elmish.Browser.Navigation
+open Elmish.Navigation
 open Fulma
-open Fable.Core.JsInterop
-open Fable.Helpers.React
-open Fable.Helpers.React.Props
+open Fetch
+open Fable.React
+open Fable.React.Props
 open Fable.Import
-open Fable.PowerPack
-open Fable.PowerPack.Fetch
-open Fulma
-open Fulma
-open Fulma
-open Fulma
 open Thoth.Json
+type TF = Thoth.Fetch.Fetch
 open ValueDeclarations
 
 type Msg =
@@ -48,16 +43,18 @@ let private register_punter (punter : Domain.BetaRegistration) = promise {
     let body = Encode.Auto.toString (1, punter)
     let props =
         [ RequestProperties.Method HttpMethod.POST
-          RequestProperties.Credentials RequestCredentials.Include
+          Credentials RequestCredentials.Include
           requestHeaders [ HttpRequestHeaders.ContentType "application/json"
                            HttpRequestHeaders.Accept "application/json" ]
-          RequestProperties.Body !^(body) ]
+          Body (unbox body) ]
     let decoder = Decode.Auto.generateDecoder<BetaRegistrationResult>()
-    let! response = Fetch.fetchAs<BetaRegistrationResult> "/api/register-punter" decoder props
-    match response.Codes with
-    | BetaRegistrationCode.Success::_ ->
+    let! response = TF.tryFetchAs("/api/register-punter", decoder, props)
+    match response with
+    | Ok codes ->
         return ()
-    | _  -> return (raise (RegisterException response))
+    | Error msg ->
+        let error = {Codes = [BetaRegistrationCode.Failure]; Messages = [msg]}
+        return (raise (RegisterException error))
 }
 
 let init () = Model.init
@@ -69,7 +66,7 @@ let update  (model : Model) (msg : Msg) (claims : TitanClaim option): Model*Cmd<
     | _, ClickDelNot, _ ->
         {model with BetaRegistrationResult = None}, Cmd.none
     | _, ClickRegister, _ ->
-        model, Cmd.ofPromise register_punter {Domain.BetaRegistration.Email = model.Email} RegisterSuccess RegisterFailure
+        model, Cmd.OfPromise.either register_punter {Domain.BetaRegistration.Email = model.Email} RegisterSuccess RegisterFailure
     | _, RegisterSuccess (), _ ->
         {model with BetaRegistrationResult = None}, Cmd.none
     | _, RegisterFailure err, _ ->
@@ -79,21 +76,21 @@ let update  (model : Model) (msg : Msg) (claims : TitanClaim option): Model*Cmd<
         | _ ->
             { model with BetaRegistrationResult = None }, Cmd.none
     | {Child = None}, FirstTimeUser, claims ->
-        Browser.console.info "FirstTimeUser message"
+        Browser.Dom.console.info "FirstTimeUser message"
         match claims with 
         | Some claims ->
             {model with Child = Some (FirstTimeModel (FirstTime.init true claims))}, Cmd.none
         | None ->
-            Browser.console.error "Need claims for FirstTimeUser otherwise how do we know who this is?"
+            Browser.Dom.console.error "Need claims for FirstTimeUser otherwise how do we know who this is?"
             model, Cmd.none
 
     | {Child = Some (FirstTimeModel child) }, FirstTimeMsg msg, _ ->
-        Browser.console.info "FirstTimeMsg message"
+        Browser.Dom.console.info "FirstTimeMsg message"
         let new_ft_model, new_cmd = FirstTime.update child msg
         {model with Child = Some (FirstTimeModel new_ft_model) }, Cmd.map FirstTimeMsg new_cmd
 
     | _ ->
-        Browser.console.info "Unknown HomeMsg"
+        Browser.Dom.console.info "Unknown HomeMsg"
         model, Cmd.none
 
 

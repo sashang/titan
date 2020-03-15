@@ -1,30 +1,30 @@
 module Client.Style
 
+open Browser.Types
+open CustomColours
 open Domain
-open Fable.Helpers.React.Props
-open Fable.Core
+open Elmish
+open Elmish.React
+open Fable.React
+open Fable.React.Props
 open Fable.Core.JsInterop
 open Fable.Import
-open Fable.PowerPack
-open Fable.Helpers.React
-open Elmish.Browser.Navigation
-open Fulma
-open Fulma.Extensions
-module R = Fable.Helpers.React
-open CustomColours
-open Fulma
+open Elmish.Navigation
 open Fulma
 
-let goToUrl (e: React.MouseEvent) =
+let [<Literal>] ESC_KEY = 27.
+let [<Literal>] ENTER_KEY = 13.
+
+let goToUrl (e: MouseEvent) =
     e.preventDefault()
     let href = !!e.target?href
-    Browser.console.info ("href = " + href)
+    Browser.Dom.console.info ("href = " + href)
     Navigation.newUrl href |> List.map (fun f -> f ignore) |> ignore
 
 (*for documentation about these react properties and styles see for example
 https://facebook.github.io/react-native/docs/layout-props#flexdirection*)
 let viewLink page description =
-    R.a [
+    a [
         Style [
             CSSProp.Padding "0 20px"
             CSSProp.TextDecorationLine "underline"
@@ -32,13 +32,13 @@ let viewLink page description =
         ]
         Href (Pages.to_path page)
         OnClick goToUrl
-    ] [ R.str description]
+    ] [ str description]
 
 
 let centerStyle direction =
-    Style [ CSSProp.Display "flex"
+    Style [ CSSProp.Display DisplayOptions.Flex
             FlexDirection direction
-            AlignItems "center"
+            AlignItems AlignItemsOptions.Center
             JustifyContent "center"
             Padding "20px 0"
     ]
@@ -47,7 +47,7 @@ let button dispatch msg text props =
     Button.button (List.append [
         Button.Color IsTitanInfo
         Button.OnClick (fun _ -> (dispatch msg)) ] props)
-        [ R.str text ]
+        [ str text ]
 
 let button_enabled dispatch msg text enable =
     button dispatch msg text [Button.Disabled (not enable)]
@@ -67,7 +67,7 @@ let loading_view =
 
 let onEnter msg dispatch =
     function
-    | (ev:React.KeyboardEvent) when ev.keyCode = Keyboard.Codes.enter ->
+    | (ev:KeyboardEvent) when ev.keyCode = ENTER_KEY ->
         ev.preventDefault()
         dispatch msg
     | _ -> ()
@@ -77,7 +77,7 @@ let private help text =
        Help.help [ Help.Color IsTitanError
                    Help.Modifiers 
                         [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
-                        [ R.str text ]
+                        [ str text ]
                         
 let make_help (code : APICode) (error : APIError) = 
     List.fold2 (fun acc the_code msg ->
@@ -88,7 +88,7 @@ let make_help (code : APICode) (error : APIError) =
 let radio_buttons label yes_string no_string value dispatch msg =
     Field.div [ ] [
         Field.label [ Field.Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
-            [ Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ R.str label ] ]
+            [ Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ str label ] ]
         Control.div [ ]
 
             [ Radio.radio [ ]
@@ -96,20 +96,20 @@ let radio_buttons label yes_string no_string value dispatch msg =
                                 Radio.Input.Props [ OnChange (fun ev -> dispatch msg)
                                                     Checked value
                                                     Disabled false ] ]
-                  R.str yes_string ]
+                  str yes_string ]
               Radio.radio [ ]
                 [ Radio.input [ Radio.Input.Name label
                                 Radio.Input.Props [ OnChange (fun ev -> dispatch msg)
                                                     Disabled false
                                                     Checked (not value) ] ]
-                  R.str no_string ] ] 
+                  str no_string ] ] 
     ]
 
 //a read only input field
 let input_field_ro label text =
     [ Field.div [ ] 
         [ Field.label [ Field.Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
-            [ Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ R.str label ] ]
+            [ Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ str label ] ]
           Control.div [ ]
             [ Input.text 
                 [ Input.Value text
@@ -119,7 +119,7 @@ let input_field_ro label text =
 let input_field_without_error label text on_change =
     [ Field.div [ ] 
         [ Field.label [ Field.Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
-            [ Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ R.str label ] ]
+            [ Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ str label ] ]
           Control.div [ ]
             [ Input.text 
                 [ Input.Value text
@@ -129,7 +129,7 @@ let input_field_with_error (error : APIError) (code : APICode) (label: string) (
     [ Field.div [ ]
         (List.append 
             [ Field.label [ Field.Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
-                [ Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ R.str label ] ]
+                [ Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ str label ] ]
               Control.div [ ]
                 [ Input.text 
                     [ Input.Value text
@@ -143,7 +143,7 @@ let input_field (error : APIError option) (code : APICode) =
     
 let text_area_without_error (label: string) (text : string) on_change  =
     Field.div [Field.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left)] ] [
-        Label.label [] [ R.str label ]
+        Label.label [] [ str label ]
         Control.div [ ] [
             Textarea.textarea [ Textarea.Value text
                                 Textarea.OnChange on_change ] [ ]
@@ -155,16 +155,16 @@ let notification (code : APICode) (error : APIError option) =
     
     match error with
     | Some e ->
-        Browser.console.warn ("notification: " + List.head (e.Messages))
+        Browser.Dom.console.warn ("notification: " + List.head (e.Messages))
         if List.contains code e.Codes then
             let zipped = List.zip e.Codes e.Messages
             Notification.notification [ Notification.Color IsTitanError ] [
-                yield! [for (c,m) in zipped do yield (if c = code then R.str m else R.nothing)]
+                yield! [for (c,m) in zipped do yield (if c = code then str m else nothing)]
             ]
             
         else
-            R.nothing
-    | _ -> R.nothing
+            nothing
+    | _ -> nothing
 
 let checkbox text ticked dispatch msg = 
     Field.div [ ]
@@ -173,4 +173,4 @@ let checkbox text ticked dispatch msg =
                 [ Checkbox.input [ Common.Props [ 
                     Checked ticked
                     OnChange (fun ev -> dispatch msg)] ]
-                  R.str text ] ] ]
+                  str text ] ] ]

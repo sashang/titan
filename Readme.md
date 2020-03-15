@@ -163,6 +163,11 @@ mssql -s titan-sql-server.database.windows.net -u <username> -p <password> -d ti
 ```
 username and password are setup when you create the database in the Azure portal.
 
+Example: Inserting a new student in a school
+```
+mssql> insert into "Student" (SchoolId,"UserId") values ('1','141');
+```
+
 #### Connection string
 
 Use this something like this. You'll need your own account in Azure.
@@ -365,7 +370,7 @@ appsettings.json. Use appsetting.Development.json instead.
 
 ```
 source <path to .net sdk>
-set -e ASPNETCORE_ENVIRONMENT
+set -x ASPNETCORE_ENVIRONMENT
 fake build --target Docker
 ```
 

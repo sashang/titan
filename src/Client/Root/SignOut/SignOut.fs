@@ -2,12 +2,9 @@ module SignOut
 
 open Domain
 open Elmish
-open Elmish.Browser.Navigation
-open Fable.Helpers.React.Props
-open Fable.PowerPack
-open Fable.PowerPack.Fetch
+open Elmish.Navigation
+open Fetch
 open Thoth.Json
-module R = Fable.Helpers.React
 
 type Msg =
 | SignOut 
@@ -28,9 +25,9 @@ let sign_out () = promise {
     let result = Decode.fromString decoder text
     match result with
     | Ok sign_out_result ->
-        match sign_out_result.code with
-        | SignOutCode.Success :: _ ->
-            Fable.Import.Browser.console.info "Successfully called /api/sign-out"
+        match sign_out_result.Code with
+        | SignOutCode.Success ->
+            Browser.Dom.console.info sign_out_result.Message
             return sign_out_result
         | _ -> return raise (SignOutEx "Failed to logout")
     | Error e -> return failwithf "fail: %s" e
@@ -39,10 +36,10 @@ let sign_out () = promise {
 let update (msg : Msg) : Cmd<Msg> =
     match msg with
     | SignOut ->
-        Fable.Import.Browser.console.info "SignOut.update received SignOut"
-        Cmd.ofPromise sign_out () SignOutSuccess Failure
+        Browser.Dom.console.info "SignOut.update received SignOut"
+        Cmd.OfPromise.either sign_out () SignOutSuccess Failure
     | SignOutSuccess result -> 
-        Fable.Import.Browser.console.info "SignOut.update received SignOutSuccess"
+        Browser.Dom.console.info "SignOut.update received SignOutSuccess"
         Navigation.newUrl (Pages.to_path Pages.Home)
     | Failure ex -> failwith ("Failed to sign out " + ex.Message)
 

@@ -1,10 +1,10 @@
 module ModifiedFableFetch
 
 open Domain
+open Fable.Core
 open Fable.Core.JsInterop
+open Fetch
 open Fable.Import
-open Fable.PowerPack
-open Fable.PowerPack.Fetch
 open Thoth.Json
 
 
@@ -13,9 +13,9 @@ type FetchResult =
     | BadStatus of Response
     | NetworkError
 
-let fetch (url: string) (init: RequestProperties list) : JS.Promise<FetchResult> =
+let fetch (url: string) (init: RequestProperties list) :  JS.Promise<FetchResult> =
     GlobalFetch.fetch (RequestInfo.Url url, requestProps init)
-    |> Promise.map (fun response ->
+    |> Promise.map (fun (response : Response) ->
         if response.Ok then
             Success response
         else
@@ -58,7 +58,7 @@ let map_api_error_result (response : Result<APIError option,string>) ex_to_raise
     | Error e ->
         raise (ex_to_raise (APIError.init [APICode.Fetch] [e]))
 
-let make_post (count : int) (data : 'a) =
+let inline make_post (count : int) (data : 'a) =
     let body = Encode.Auto.toString (count, data)
     let props =
         [ RequestProperties.Method HttpMethod.POST

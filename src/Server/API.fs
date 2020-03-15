@@ -15,7 +15,7 @@ open TitanOpenTok
 
 let get_azure_maps_keys (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         logger.LogInformation("getting azure maps keys")
         let az_keys = ctx.GetService<IAzureMaps>()
         let result = az_keys.get_azure_maps_keys
@@ -26,7 +26,7 @@ let get_azure_maps_keys (next : HttpFunc) (ctx : HttpContext) = task {
 
 let get_unenrolled_schools (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         logger.LogInformation("getting unenrolled schools")
         let student_email = ctx.User.FindFirst(ClaimTypes.Email).Value
         let db = ctx.GetService<IDatabase>()
@@ -43,7 +43,7 @@ let get_unenrolled_schools (next : HttpFunc) (ctx : HttpContext) = task {
 
 let get_enrolled_schools (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         logger.LogInformation("getting enrolled schools")
         let student_email = ctx.User.FindFirst(ClaimTypes.Email).Value
         let db = ctx.GetService<IDatabase>()
@@ -62,7 +62,7 @@ let get_enrolled_schools (next : HttpFunc) (ctx : HttpContext) = task {
 ///email of the tutor since that is what links the session id.
 let get_session_id_for_student (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         let! request = ctx.BindJsonAsync<EmailRequest>()
         let student_email = ctx.User.FindFirst(ClaimTypes.Email).Value
         logger.LogInformation(sprintf "get_session_id_for_student: student with email %s joining tutor with email %s " student_email request.Email)
@@ -80,7 +80,7 @@ let get_session_id_for_student (next : HttpFunc) (ctx : HttpContext) = task {
 /// tutor request to go live
 let get_session_id (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         let email = ctx.User.FindFirst(ClaimTypes.Email).Value
         logger.LogInformation(sprintf "get_session_id: tutor with email %s" email)
         let titan_open_tok = ctx.GetService<ITitanOpenTok>()
@@ -98,7 +98,7 @@ let get_session_id (next : HttpFunc) (ctx : HttpContext) = task {
 let enrol (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
         let! enrol_request = ctx.BindJsonAsync<Domain.EnrolRequest>()
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         logger.LogInformation("processing enrol request")
         let db = ctx.GetService<IDatabase>()
         let student_email = ctx.User.FindFirst(ClaimTypes.Email).Value
@@ -119,7 +119,7 @@ let enrol (next : HttpFunc) (ctx : HttpContext) = task {
 
 let dismiss_pending (next :HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         let db = ctx.GetService<IDatabase>()
         let! info = ctx.BindJsonAsync<DismissPendingRequest>()
         //get the user id of the tutor
@@ -138,7 +138,7 @@ let dismiss_pending (next :HttpFunc) (ctx : HttpContext) = task {
 
 let approve_enrolment_request (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         let db = ctx.GetService<IDatabase>()
         let tutor_email = ctx.User.FindFirst(ClaimTypes.Email).Value
         let! student = ctx.BindJsonAsync<Domain.ApprovePendingRequest>()
@@ -156,7 +156,7 @@ let approve_enrolment_request (next : HttpFunc) (ctx : HttpContext) = task {
 
 let get_pending (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         let db = ctx.GetService<IDatabase>()
         let tutor_email = ctx.User.FindFirst(ClaimTypes.Email).Value
         let! result = db.query_pending tutor_email
@@ -179,7 +179,7 @@ let get_pending (next : HttpFunc) (ctx : HttpContext) = task {
 let register_tutor (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
         let! registration = ctx.BindJsonAsync<Domain.TutorRegister>()
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         let db = ctx.GetService<IDatabase>()
         let! result = db.insert_tutor registration.FirstName registration.LastName registration.SchoolName registration.Email 
         match result with
@@ -199,7 +199,7 @@ let register_tutor (next : HttpFunc) (ctx : HttpContext) = task {
 let register_student (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
         let! registration = ctx.BindJsonAsync<Domain.StudentRegister>()
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         let db = ctx.GetService<IDatabase>()
         let! result = db.insert_student registration.FirstName registration.LastName registration.Email 
         match result with
@@ -219,7 +219,7 @@ let register_student (next : HttpFunc) (ctx : HttpContext) = task {
 
 let add_student_to_school (next : HttpFunc) (ctx : HttpContext) = task {
     let! student = ctx.BindJsonAsync<Domain.Student>()
-    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
     let db = ctx.GetService<IDatabase>()
     //get the user id of the tutor
     let user_id = ctx.User.FindFirst(ClaimTypes.NameIdentifier).Value
@@ -235,7 +235,7 @@ let add_student_to_school (next : HttpFunc) (ctx : HttpContext) = task {
 
 let register_punter (next : HttpFunc) (ctx : HttpContext) = task {
     let! punter = ctx.BindJsonAsync<Domain.BetaRegistration>()
-    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
     let db = ctx.GetService<IDatabase>()
     try
         let address = MailAddress(punter.Email)//test that the email is valid.
@@ -268,7 +268,7 @@ let register_punter (next : HttpFunc) (ctx : HttpContext) = task {
 }
 
 let get_name  (next :HttpFunc) (ctx : HttpContext) = task {
-    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
     logger.LogInformation("called get_name")
     let db_service = ctx.GetService<IDatabase>()
     let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
@@ -290,7 +290,7 @@ let get_name  (next :HttpFunc) (ctx : HttpContext) = task {
 /// Load the user's school.
 let load_school (next :HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         logger.LogInformation("called load_school")
         let db_service = ctx.GetService<IDatabase>()
         let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
@@ -307,7 +307,7 @@ let load_school (next :HttpFunc) (ctx : HttpContext) = task {
 }
 
 let load_user (next :HttpFunc) (ctx : HttpContext) = task {
-    let logger = ctx.GetLogger<Debug.DebugLogger>()
+    let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
     logger.LogInformation("called load_user")
     let db_service = ctx.GetService<IDatabase>()
     let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
@@ -326,7 +326,7 @@ let load_user (next :HttpFunc) (ctx : HttpContext) = task {
 
 let save_tutor (next :HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         logger.LogInformation("called save_tutor")
         let! data = ctx.BindJsonAsync<SaveRequest>()
         let db_service = ctx.GetService<IDatabase>()
@@ -344,7 +344,7 @@ let save_tutor (next :HttpFunc) (ctx : HttpContext) = task {
 
 let get_pending_schools (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         logger.LogInformation("called get_pending_schools")
         let db_service = ctx.GetService<IDatabase>()
         let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
@@ -360,7 +360,7 @@ let get_pending_schools (next : HttpFunc) (ctx : HttpContext) = task {
 
 let get_all_schools (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         logger.LogInformation("called get_all_schools")
         let db_service = ctx.GetService<IDatabase>()
         let! result = db_service.get_school_view
@@ -375,7 +375,7 @@ let get_all_schools (next : HttpFunc) (ctx : HttpContext) = task {
 
 let get_all_students (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         logger.LogInformation("called get_all_students")
         let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
         let db_service = ctx.GetService<IDatabase>()
@@ -416,7 +416,7 @@ let private update_or_insert_claim (db_service : IDatabase) (email : string) (cl
 ///update the user and its claims
 let update_user_claims (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         logger.LogInformation("called update_user_claims")
         let titan_email = ctx.User.FindFirst(ClaimTypes.Email).Value
         let db_service = ctx.GetService<IDatabase>()
@@ -457,7 +457,7 @@ let update_user_claims (next : HttpFunc) (ctx : HttpContext) = task {
 
 let get_unapproved_users_for_titan (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         logger.LogInformation("called get_unapproved_users_for_titan")
         let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
         let db_service = ctx.GetService<IDatabase>()
@@ -478,7 +478,7 @@ let get_unapproved_users_for_titan (next : HttpFunc) (ctx : HttpContext) = task 
 
 let get_approved_users_for_titan (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         logger.LogInformation("called get_users_for_titan")
         let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
         let db_service = ctx.GetService<IDatabase>()
@@ -499,7 +499,7 @@ let get_approved_users_for_titan (next : HttpFunc) (ctx : HttpContext) = task {
 
 let delete_user_titan (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         logger.LogInformation("called delete_user_titan")
         let user_email = ctx.User.FindFirst(ClaimTypes.Email).Value
         let! data = ctx.BindJsonAsync<UserForTitan>()
@@ -521,7 +521,7 @@ let delete_user_titan (next : HttpFunc) (ctx : HttpContext) = task {
 
 let dismiss_student (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
-        let logger = ctx.GetLogger<Debug.DebugLogger>()
+        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
         logger.LogInformation("called dismiss_student")
         let! data = ctx.BindJsonAsync<DismissStudentRequest>()
         let tutor_email = ctx.User.FindFirst(ClaimTypes.Email).Value

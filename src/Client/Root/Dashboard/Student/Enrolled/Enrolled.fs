@@ -4,12 +4,12 @@ open CustomColours
 open Domain
 open Elmish
 open Fable.Import
-open Fable.PowerPack
-open Fable.Helpers.React
-open Fable.Helpers.React.Props
+open Fable.React
+open Fable.React.Props
 open Fulma
 open ModifiedFableFetch
 open Thoth.Json
+type TF = Thoth.Fetch.Fetch
 open Client.Shared
 
 type Model =
@@ -42,8 +42,8 @@ exception EnrolEx of APIError
 let private get_enrolled_schools () = promise {
     let request = make_get
     let decoder = Decode.Auto.generateDecoder<GetAllSchoolsResult>()
-    let! response = Fetch.tryFetchAs "/api/get-enrolled-schools" decoder request
-    Browser.console.info "received response from get-enrolled-schools"
+    let! response = TF.tryFetchAs("/api/get-enrolled-schools", decoder, request)
+    Browser.Dom.console.info "received response from get-enrolled-schools"
     match response with
     | Ok result ->
         match result.Error with
@@ -57,8 +57,8 @@ let private get_enrolled_schools () = promise {
 let private get_pending_schools () = promise {
     let request = make_get
     let decoder = Decode.Auto.generateDecoder<SchoolsResponse>()
-    let! response = Fetch.tryFetchAs "/api/get-pending-schools" decoder request
-    Browser.console.info "received response from get-pending-schools"
+    let! response = TF.tryFetchAs("/api/get-pending-schools", decoder, request)
+    Browser.Dom.console.info "received response from get-pending-schools"
     match response with
     | Ok result ->
         match result.Error with
@@ -71,17 +71,17 @@ let private get_pending_schools () = promise {
 let private get_unenrolled_schools () = promise {
     let request = make_get
     let decoder = Decode.Auto.generateDecoder<GetAllSchoolsResult>()
-    let! response = Fetch.tryFetchAs "/api/get-unenrolled-schools" decoder request
-    Browser.console.info "received response from get-unenrolled-schools"
+    let! response = TF.tryFetchAs("/api/get-unenrolled-schools", decoder, request)
+    Browser.Dom.console.info "received response from get-unenrolled-schools"
     match response with
     | Ok result ->
-        Browser.console.info "result ok"
+        Browser.Dom.console.info "result ok"
         match result.Error with
         | Some api_error ->
-            Browser.console.info "error in result"
+            Browser.Dom.console.info "error in result"
             return raise (GetUnenrolledSchoolsEx api_error)
         | None ->
-            Browser.console.info "result value ok"
+            Browser.Dom.console.info "result value ok"
             return result.Schools
     | Error e ->
         return raise (GetUnenrolledSchoolsEx (APIError.init [APICode.Fetch] [e]))
@@ -90,8 +90,8 @@ let private get_unenrolled_schools () = promise {
 let private enrol_student (er : EnrolRequest) = promise {
     let request = make_post 1 er
     let decoder = Decode.Auto.generateDecoder<APIError option>()
-    let! response = Fetch.tryFetchAs "/api/enrol-student" decoder request
-    Browser.console.info "received response from enrol-student"
+    let! response = TF.tryFetchAs("/api/enrol-student", decoder, request)
+    Browser.Dom.console.info "received response from enrol-student"
     match response with
     | Ok result ->
         match result with
@@ -104,9 +104,9 @@ let private enrol_student (er : EnrolRequest) = promise {
 let init () =
     {EnrolledSchools = []; PendingSchools = []; AllLoaded = Loading; AllSchools = [];
     EnrolledLoaded = Loading; PendingLoaded = Loading; ActiveEnrolMessage = false},
-    Cmd.batch [Cmd.ofPromise get_enrolled_schools () GetEnrolledSchoolsSuccess GetEnrolledSchoolsFailure
-               Cmd.ofPromise get_pending_schools () GetPendingSchools GetPendingSchoolsFailure
-               Cmd.ofPromise get_unenrolled_schools () GetUnenrolledSchoolsSuccess GetUnenrolledSchoolsFailure ]
+    Cmd.batch [Cmd.OfPromise.either get_enrolled_schools () GetEnrolledSchoolsSuccess GetEnrolledSchoolsFailure
+               Cmd.OfPromise.either get_pending_schools () GetPendingSchools GetPendingSchoolsFailure
+               Cmd.OfPromise.either get_unenrolled_schools () GetUnenrolledSchoolsSuccess GetUnenrolledSchoolsFailure ]
 
 let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     match model, msg with
@@ -114,50 +114,50 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         {model with PendingSchools = schools; PendingLoaded = Loaded }, Cmd.none
 
     | model, SignOut ->
-        Browser.console.info "Received signout msg" //we don't have to do anything special here.
+        Browser.Dom.console.info "Received signout msg" //we don't have to do anything special here.
         model, Cmd.none
 
     | model, ClickEnrol school ->
-        model, Cmd.ofPromise enrol_student {SchoolName = school} EnrolSuccess EnrolFailure
+        model, Cmd.OfPromise.either enrol_student {SchoolName = school} EnrolSuccess EnrolFailure
 
     | model, EnrolSuccess () ->
-        Browser.console.info ("Student request for enrolment succeeded")
+        Browser.Dom.console.info ("Student request for enrolment succeeded")
         {model with ActiveEnrolMessage = true; AllLoaded = Loading; EnrolledLoaded = Loading; PendingLoaded = Loading },
-        Cmd.batch [Cmd.ofPromise get_enrolled_schools () GetEnrolledSchoolsSuccess GetEnrolledSchoolsFailure
-                   Cmd.ofPromise get_pending_schools () GetPendingSchools GetPendingSchoolsFailure
-                   Cmd.ofPromise get_unenrolled_schools () GetUnenrolledSchoolsSuccess GetUnenrolledSchoolsFailure ]
+        Cmd.batch [Cmd.OfPromise.either get_enrolled_schools () GetEnrolledSchoolsSuccess GetEnrolledSchoolsFailure
+                   Cmd.OfPromise.either get_pending_schools () GetPendingSchools GetPendingSchoolsFailure
+                   Cmd.OfPromise.either get_unenrolled_schools () GetUnenrolledSchoolsSuccess GetUnenrolledSchoolsFailure ]
 
     | model, EnrolFailure e ->
         match e with
         | :? GetAllSchoolsEx as ex ->
-            Browser.console.warn ("Failed to enrol: " + List.head ex.Data0.Messages)
+            Browser.Dom.console.warn ("Failed to enrol: " + List.head ex.Data0.Messages)
             model, Cmd.none
         | e ->
-            Browser.console.warn ("Failed to enrol: " + e.Message)
+            Browser.Dom.console.warn ("Failed to enrol: " + e.Message)
             model, Cmd.none
 
     | model, GetPendingSchoolsFailure e ->
         match e with
         | :? GetPendingSchoolsEx as ex ->
-            Browser.console.warn ("Failed to get pending schools: " + List.head ex.Data0.Messages)
+            Browser.Dom.console.warn ("Failed to get pending schools: " + List.head ex.Data0.Messages)
             model, Cmd.none
         | e ->
-            Browser.console.warn ("Failed to get pending schools: " + e.Message)
+            Browser.Dom.console.warn ("Failed to get pending schools: " + e.Message)
             model, Cmd.none
 
     | model, GetUnenrolledSchoolsSuccess schools ->
-        Browser.console.info("handling unenrolled schools")
+        Browser.Dom.console.info("handling unenrolled schools")
         schools
-        |> List.iter (fun x -> Browser.console.info (sprintf "%A" x))
+        |> List.iter (fun x -> Browser.Dom.console.info (sprintf "%A" x))
         {model with AllSchools = schools; AllLoaded = Loaded }, Cmd.none
 
     | model, GetUnenrolledSchoolsFailure e ->
         match e with
         | :? GetUnenrolledSchoolsEx as ex ->
-            Browser.console.error ("Failed to get unenrolled schools: " + List.head ex.Data0.Messages)
+            Browser.Dom.console.error ("Failed to get unenrolled schools: " + List.head ex.Data0.Messages)
             model, Cmd.none
         | e ->
-            Browser.console.error ("Failed to get unenrolled schools: " + e.Message)
+            Browser.Dom.console.error ("Failed to get unenrolled schools: " + e.Message)
             model, Cmd.none
 
     | model, GetEnrolledSchoolsSuccess schools ->
@@ -166,10 +166,10 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | model, GetEnrolledSchoolsFailure e ->
         match e with
         | :? GetEnrolledSchoolsEx as ex ->
-            Browser.console.error ("Failed to get enrolled schools: " + List.head ex.Data0.Messages)
+            Browser.Dom.console.error ("Failed to get enrolled schools: " + List.head ex.Data0.Messages)
             model, Cmd.none
         | e ->
-            Browser.console.error ("Failed to get enrolled schools: " + e.Message)
+            Browser.Dom.console.error ("Failed to get enrolled schools: " + e.Message)
             model, Cmd.none
 
 let private card_footer (school : School) (dispatch : Msg -> unit) =

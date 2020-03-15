@@ -4,15 +4,14 @@ module PendingStudents
 open CustomColours
 open Domain
 open Elmish
-open Fable.Helpers.React
-open Fable.Helpers.React.Props
+open Fable.React
+open Fable.React.Props
 open Fable.Import
-open Fable.PowerPack
-open Fable.PowerPack.Fetch
-open Fable.Core.JsInterop
 open Fulma
 open Fable.FontAwesome
 open ModifiedFableFetch
+type TF = Thoth.Fetch.Fetch
+
 
 open Domain
 open Thoth.Json
@@ -43,46 +42,46 @@ type Msg =
 let private approve_pending (pending : ApprovePendingRequest) = promise {
     let request = make_post 3 pending
     let decoder = Decode.Auto.generateDecoder<APIError option>()
-    let! response = Fetch.tryFetchAs "/api/approve-pending" decoder request
+    let! response = TF.tryFetchAs("/api/approve-pending", decoder, request)
     match response with
     | Ok result ->
         match result with
         | Some error ->
-            Browser.console.info ("got some error: " + (List.head error.Messages))
+            Browser.Dom.console.info ("got some error: " + (List.head error.Messages))
             return (raise (ApprovePendingEx error))
         | None ->
             return ()
     | Error e ->
-        Browser.console.info ("got generic error: " + e)
+        Browser.Dom.console.info ("got generic error: " + e)
         return raise (ApprovePendingEx (APIError.init [APICode.Fetch] [e]))
 }
 
 let private dismiss_pending (pending : DismissPendingRequest) = promise {
     let request = make_post 3 pending 
     let decoder = Decode.Auto.generateDecoder<DismissPendingResult>()
-    let! response = Fetch.tryFetchAs "/api/dismiss-pending" decoder request
+    let! response = TF.tryFetchAs("/api/dismiss-pending", decoder, request)
     match response with
     | Ok result ->
         match result.Error with
         | Some error -> 
-            Browser.console.error ("dismiss_pending: " + (List.head error.Messages))
+            Browser.Dom.console.error ("dismiss_pending: " + (List.head error.Messages))
             return (raise (DismissPendingEx error))
         | _ ->
             return pending.Email //return email, use it to id the student to remove from the model
     | Error e ->
-        Browser.console.info ("got generic error: " + e)
+        Browser.Dom.console.info ("got generic error: " + e)
         return (raise (DismissPendingEx (APIError.init [APICode.Fetch] [e])))
 }
 
 let private get_pending () = promise {
     let request = make_get
     let decoder = Decode.Auto.generateDecoder<Domain.PendingResult>()
-    let! response = Fetch.tryFetchAs "/api/get-pending" decoder request
+    let! response = TF.tryFetchAs("/api/get-pending", decoder, request)
     match response with
     | Ok result ->
         match result.Error with
         | Some error ->
-            Browser.console.error ("get_pending: " + (List.head error.Messages))
+            Browser.Dom.console.error ("get_pending: " + (List.head error.Messages))
             return (raise (PendingEx error))
         | None ->
             return result.Students
@@ -96,25 +95,25 @@ let private remove_student (email : string) (students : Student list) =
 
 let init () =
     { Pending = [ ]; Error = None },
-    Cmd.ofPromise get_pending () GetPendingSuccess GetPendingFailure
+    Cmd.OfPromise.either get_pending () GetPendingSuccess GetPendingFailure
 
 let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     match msg with
     | ApprovePending student ->
-        model, Cmd.ofPromise approve_pending (ApprovePendingRequest.of_student student)
+        model, Cmd.OfPromise.either approve_pending (ApprovePendingRequest.of_student student)
                ApprovePendingSuccess ApprovePendingFailure
     | ApprovePendingSuccess student ->
-        Browser.console.info ("Approved student")
-        model, Cmd.ofPromise get_pending () GetPendingSuccess GetPendingFailure
+        Browser.Dom.console.info ("Approved student")
+        model, Cmd.OfPromise.either get_pending () GetPendingSuccess GetPendingFailure
         
     | ApprovePendingFailure e ->
-        Browser.console.warn ("Failed to approve pending student: " + e.Message)
+        Browser.Dom.console.warn ("Failed to approve pending student: " + e.Message)
         match e with 
         | :? PendingEx as ex ->
-            Browser.console.warn ("Received PendingEx: " + ex.Message)
+            Browser.Dom.console.warn ("Received PendingEx: " + ex.Message)
             { model with Error = Some ex.Data0 }, Cmd.none
         | e ->
-            Browser.console.warn ("Received general exception: " + e.Message)
+            Browser.Dom.console.warn ("Received general exception: " + e.Message)
             { model with Error = Some (APIError.init [APICode.Failure] [e.Message])}, Cmd.none
 
     | GetPendingSuccess students ->
@@ -122,14 +121,14 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | GetPendingFailure e ->
         match e with 
         | :? PendingEx as ex ->
-            Browser.console.warn ("Received PendingEx: " + ex.Message)
+            Browser.Dom.console.warn ("Received PendingEx: " + ex.Message)
             { model with Error = Some ex.Data0 }, Cmd.none
         | e ->
-            Browser.console.warn ("Received general exception: " + e.Message)
+            Browser.Dom.console.warn ("Received general exception: " + e.Message)
             { model with Error = Some (APIError.init [APICode.Failure] [e.Message])}, Cmd.none
 
     | DismissPending student ->
-        model, Cmd.ofPromise dismiss_pending (DismissPendingRequest.of_student student)
+        model, Cmd.OfPromise.either dismiss_pending (DismissPendingRequest.of_student student)
                DismissPendingSuccess DismissPendingFailure
                
     | DismissPendingSuccess email ->
@@ -138,10 +137,10 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | DismissPendingFailure e ->
         match e with 
         | :? PendingEx as ex ->
-            Browser.console.warn ("Received PendingEx: " + ex.Message)
+            Browser.Dom.console.warn ("Received PendingEx: " + ex.Message)
             { model with Error = Some ex.Data0 }, Cmd.none
         | e ->
-            Browser.console.warn ("Received general exception: " + e.Message)
+            Browser.Dom.console.warn ("Received general exception: " + e.Message)
             { model with Error = Some (APIError.init [APICode.Failure] [e.Message])}, Cmd.none
 
     | SignOut ->

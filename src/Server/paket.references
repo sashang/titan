@@ -9,9 +9,8 @@ FluentMigrator
 FluentMigrator.Runner
 FluentMigrator.Runner.Postgres
 Dapper
-System.Runtime.CompilerServices.Unsafe
-Microsoft.Extensions.Configuration.Json
 Thoth.Json.Net
+Thoth.Json.Giraffe
 OpenTokCore
 Microsoft.AspNetCore.Authentication.Google
 Elmish.Bridge.Giraffe

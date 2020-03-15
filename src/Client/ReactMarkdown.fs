@@ -2,11 +2,8 @@
 module ReactMarkdown
 
 open Fable.Core
-open Fable.Helpers.React
-open Fable.Import.React
+open Fable.React
 open Fable.Core.JsInterop
-open Fable.Helpers.React.Props
-open Fulma
 
 
 type ReactMarkdownProps =
