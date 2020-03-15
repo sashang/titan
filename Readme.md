@@ -118,6 +118,11 @@ searches from a set of common paths. This SDK may not be in the one you
 intend to use, so best to start `code` with the right path set in the
 DOTNET_ROOT environment variable.
 
+```
+set -x DOTNET_ROOT <path to sdk>
+code <path to source code>
+```
+
 ### Debugging
 
 It's worth installing Redux DevTools for Chrome as an extension. Then you can
