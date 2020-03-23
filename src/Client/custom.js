@@ -1,5 +1,7 @@
 
-var sub_count_for_tutor = 0
+var sub_count_for_tutor = 0;
+var students = [];
+
 const initLayoutContainer = require('opentok-layout-js');
 const options = {
     maxRatio: 3/2,          // The narrowest ratio that will be used (default 2x3)
@@ -24,13 +26,6 @@ function handle_error(error) {
 export function connect(session, token) {
     if (session)
         session.connect(token, handle_error);
-}
-export function disconnect(session) {
-    console.log("disconnecting session");
-    if (session) {
-        session.disconnect();
-    }
-    sub_count_for_tutor = 0;
 }
 export function init_pub(div_id, res, email) {
     // Create a publisher
@@ -67,6 +62,9 @@ export function connect_session_with_pub(session, publisher, token) {
         }
     });
 }
+
+//email is the tutors/schools email. we filter on that so we don't 
+//accidentally subscribe to another school/tutor.
 export function on_streamcreate_subscribe_filter(session, w, h, email) {
     session.on('streamCreated', function (event) {
         if (event.stream.name == email) {
@@ -79,9 +77,40 @@ export function on_streamcreate_subscribe_filter(session, w, h, email) {
         }
     });
 }
+
+function find_email(email) {
+    var i = 0;
+    for (i = 0; i < students.length; i++)
+    {
+        if (email === students[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function remove_student(email) {
+    console.log("removing " + email)
+    var removed = students.filter((e)=>{return e !== email});
+    console.log("removed = " + removed)
+    students = removed;
+    console.log("students = " + students)
+}
+
+export function disconnect(session) {
+    console.log("disconnecting session");
+    if (session) {
+        //remove all students
+        session.disconnect();
+    }
+    sub_count_for_tutor = 0;
+    students = [];
+}
+
 export function on_streamcreate_subscribe(session, w, h) {
     session.on('streamCreated', function (event) {
-        if (sub_count_for_tutor < 6) {
+        if (sub_count_for_tutor < 14 && !find_email(event.stream.name)) {
+            console.log("adding student " + event.stream.name);
             var sub = session.subscribe(event.stream, 'layoutContainer', {
                 insertMode: 'append',
                 preferedResolution: { width: w, height: h }
@@ -89,18 +118,21 @@ export function on_streamcreate_subscribe(session, w, h) {
                 // height: '100%'
             }, handle_error);
             sub_count_for_tutor++;
+            students.push(event.stream.name);
 
             var layoutContainer = document.getElementById("layoutContainer");
             // Initialize the layout container and get a reference to the layout method
             var layout = initLayoutContainer(layoutContainer).layout;
             layout();
         } else {
-            console.log("Not enough room in the class!!");
+            console.log("Not adding student " + event.stream.name);
         }
     });
     session.on('streamDestroyed', function (event) {
         sub_count_for_tutor--;
         var layoutContainer = document.getElementById("layoutContainer");
+        //remove student email from array
+        remove_student(event.stream.name);
         // Initialize the layout container and get a reference to the layout method
         var layout = initLayoutContainer(layoutContainer).layout;
         layout();
