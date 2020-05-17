@@ -14,3 +14,4 @@ Thoth.Json.Giraffe
 OpenTokCore
 Microsoft.AspNetCore.Authentication.Google
 Elmish.Bridge.Giraffe
+UAParser

@@ -26,3 +26,5 @@ src/Server/appsettings.google.json
 src/Server/appsettings.json.template
 .ionide/symbolCache.db
 src/.ionide/symbolCache.db
+
+.ionide

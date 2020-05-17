@@ -10,8 +10,9 @@ open Giraffe.Serialization
 open Homeless
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
-open Microsoft.AspNetCore.Hosting
+open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Configuration
 open Microsoft.IdentityModel.Tokens
 open Microsoft.AspNetCore.Authentication
@@ -27,6 +28,7 @@ open Thoth.Json.Net
 open Thoth.Json.Giraffe
 open TitanOpenTok
 open TokBoxCB
+open UAParser
 
 type AspNetCoreGoogleOpts = Microsoft.AspNetCore.Authentication.Google.GoogleOptions
 
@@ -223,6 +225,23 @@ let web_app = router {
     forward "" browser_router
 }
 
+
+let check_same_site (context : HttpContext) (options : CookieOptions) =
+    if (options.SameSite = SameSiteMode.None) then
+        let user_agent = context.Request.Headers.["User-Agent"].ToString()
+        let parser = Parser.GetDefault()
+        let client_info = parser.Parse(user_agent)
+        let ua = client_info.UA
+        let logger = context.GetLogger<Debug.DebugLoggerProvider>()
+    //    options.SameSite <- SameSiteMode.None
+     //   options.Secure <- true
+        logger.LogInformation(ua.Family)
+        logger.LogInformation(ua.Major)
+        if (not(ua.Family = "Chrome" && ua.Major = "80")) then
+            logger.LogInformation("User agent does not support samesite")
+            options.SameSite <- SameSiteMode.Unspecified
+
+
 let configure_services startup_options (services:IServiceCollection) =
     let fableJsonSettings = Newtonsoft.Json.JsonSerializerSettings()
     fableJsonSettings.Converters.Add(Fable.JsonConverter())
@@ -240,6 +259,13 @@ let configure_services startup_options (services:IServiceCollection) =
                   .ScanIn(typeof<TitanMigrations.FixForeignKeys>.Assembly)
                   .For.Migrations() |> ignore)
             .AddLogging(fun lb -> lb.AddFluentMigratorConsole() |> ignore) |> ignore
+
+    services.Configure<CookiePolicyOptions>(fun (options : CookiePolicyOptions) ->
+        options.MinimumSameSitePolicy <- SameSiteMode.Unspecified) |> ignore
+(*     services.Configure<CookiePolicyOptions>(fun (options : CookiePolicyOptions) ->
+        options.MinimumSameSitePolicy <- SameSiteMode.Unspecified
+        options.OnAppendCookie <- (fun cookie_context -> check_same_site cookie_context.Context cookie_context.CookieOptions)
+        options.OnDeleteCookie <- (fun cookie_context -> check_same_site cookie_context.Context cookie_context.CookieOptions)) |> ignore *)
 
     //apparently putting this in a scope is the thing to do with asp.net...
     let scope = services.BuildServiceProvider(false).CreateScope()
@@ -270,6 +296,12 @@ let configure_host (settings_file : string) (builder : IWebHostBuilder) =
         //  .UseUrls("https://localhost:4431") |> ignore
     builder
 
+let configure_app (settings_file : string) (builder : IApplicationBuilder) =
+    builder.UseCookiePolicy() |> ignore //before anything that uses cookies, like UseAuthentication
+    builder.UseAuthentication() |> ignore
+    builder
+
+
 let app settings_file (startup_options : RecStartupOptions) =
     application {
         url ("http://0.0.0.0:" + port.ToString() + "/")
@@ -278,6 +310,7 @@ let app settings_file (startup_options : RecStartupOptions) =
         use_static publicPath
         service_config (configure_services startup_options)
         host_config (configure_host settings_file)
+        app_config (configure_app settings_file)
 
         use_google_oauth_with_config (fun (opt:AspNetCoreGoogleOpts) ->
             opt.ClientSecret <- startup_options.GoogleSecret
