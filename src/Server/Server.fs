@@ -5,7 +5,11 @@ open Database
 open Domain
 open FSharp.Control.Tasks
 open FluentMigrator.Runner
-open Giraffe
+open Elmish
+open Elmish.Bridge
+//force Girrafe to be resolved from the global scope and not from
+//Elmish.Bridge which also contains Giraffe namespace.
+open global.Giraffe 
 open Giraffe.Serialization
 open Homeless
 open Microsoft.Extensions.DependencyInjection
@@ -217,6 +221,9 @@ let browser_router = router {
     forward "/signin-google" secure_router
     forward "" defaultView //Use the default view
 }
+
+let server =
+    Elmish.Bridge.Bridge.mkServer
 
 let web_app = router {
     get "/check-session" check_session
