@@ -323,7 +323,10 @@ let app settings_file (startup_options : RecStartupOptions) =
         use_static publicPath
         service_config (configure_services startup_options)
         host_config (configure_host settings_file)
+<<<<<<< HEAD
         disable_diagnostics
+=======
+>>>>>>> c8a3979... Test elmish bridge.
         app_config (configure_app settings_file >> Elmish.Bridge.Giraffe.useWebSockets)
 
         use_google_oauth_with_config (fun (opt:AspNetCoreGoogleOpts) ->
