@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <Compile Include="../Shared/Maybe.fs" />
+    <Compile Include="../Shared/ElmishBridgeModel.fs" />
     <Compile Include="../Shared/Domain.fs" />
     <Compile Include="../Shared/Homeless.fs" />
     <Compile Include="../Shared/ValueDeclarations.fs" />
@@ -27,6 +28,7 @@
     <Compile Include="Database.fs" />
     <Compile Include="AzureMaps.fs" />
     <Compile Include="API.fs" />
+    <Compile Include="ElmishBridgeServer.fs" />
     <Compile Include="Server.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

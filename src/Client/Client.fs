@@ -2,6 +2,7 @@ module Client.Main
 
 open Browser
 open Elmish
+open Elmish.Bridge
 open Elmish.Navigation
 open Elmish.React
 open Pages
@@ -36,7 +37,9 @@ let subscription _ = Cmd.ofSub timer
 
 Program.mkProgram Root.init Root.update Root.view
 |> Program.withSubscription url_sub //detect changes typed into the address bar
-|> Program.withSubscription subscription
+//|> Program.withSubscription subscription
+|> Program.withBridgeConfig (Bridge.endpoint ElmishBridgeModel.endpoint |> Bridge.withMapping Remote)
+//|> Program.withBridge ElmishBridgeModel.endpoint
 |> Program.toNavigable Pages.url_parser url_update
 #if DEBUG
 |> Program.withConsoleTrace

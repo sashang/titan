@@ -8,6 +8,7 @@ open DashboardRouter
 open Domain
 open Elmish
 open Elmish.Navigation
+open ElmishBridgeModel
 open Fable.React.Props
 open Fable.Import
 open Fulma
@@ -45,6 +46,7 @@ type RootMsg =
     | Failure of exn
     | ClickLoadPP
     | ClickLoadTerms
+    | Remote of ClientMsg
 
 type BroadcastState =
     | Tutor
@@ -237,6 +239,9 @@ let view model dispatch =
 *)
 let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     match msg, state with    
+    | Remote(TheClientMsg (Msg1 msg)), state ->
+        Browser.Dom.console.info ("received message '" + msg + "' from server over bridge")
+        state, Cmd.none
 
     | TenSecondsTimer, {Child = DashboardRouterModel model} ->
         let model', cmd = DashboardRouter.update model DashboardRouter.TenSecondsTimer

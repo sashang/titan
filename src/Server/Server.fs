@@ -5,8 +5,6 @@ open Database
 open Domain
 open FSharp.Control.Tasks
 open FluentMigrator.Runner
-open Elmish
-open Elmish.Bridge
 //force Girrafe to be resolved from the global scope and not from
 //Elmish.Bridge which also contains Giraffe namespace.
 open global.Giraffe 
@@ -222,15 +220,18 @@ let browser_router = router {
     forward "" defaultView //Use the default view
 }
 
-let server =
-    Elmish.Bridge.Bridge.mkServer
 
-let web_app = router {
-    get "/check-session" check_session
-    forward "/sign-out" sign_out_router
-    forward "/api" titan_api
-    forward "" browser_router
-}
+let web_app : HttpHandler = 
+    choose [
+        router {
+            get "/check-session" check_session
+            forward "/sign-out" sign_out_router
+            forward "/api" titan_api
+            forward "" browser_router
+        }
+        Elmish.Bridge.Bridge.mkServer ElmishBridgeModel.endpoint ElmishBridgeServer.init ElmishBridgeServer.update
+        |> Elmish.Bridge.Bridge.run Elmish.Bridge.Giraffe.server
+    ]
 
 
 let check_same_site (context : HttpContext) (options : CookieOptions) =
@@ -317,7 +318,7 @@ let app settings_file (startup_options : RecStartupOptions) =
         use_static publicPath
         service_config (configure_services startup_options)
         host_config (configure_host settings_file)
-        app_config (configure_app settings_file)
+        app_config (configure_app settings_file >> Elmish.Bridge.Giraffe.useWebSockets)
 
         use_google_oauth_with_config (fun (opt:AspNetCoreGoogleOpts) ->
             opt.ClientSecret <- startup_options.GoogleSecret

@@ -59,7 +59,11 @@ var CONFIG = {
             target: 'http://localhost:' + (process.env.SERVER_PROXY_PORT || "8085"),
                changeOrigin: true,
                //secure: false
-           }
+           },
+        '/socket': { //endpoint for elmish bridge websocket
+            target: 'http://localhost:' + (process.env.SERVER_PROXY_PORT || "8085"),
+            ws: true,
+        }
        },
     // Use babel-preset-env to generate JS compatible with most-used browsers.
     // More info at https://babeljs.io/docs/en/next/babel-preset-env.html
