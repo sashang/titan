@@ -59,11 +59,11 @@ yarn install bulma --dev
 
 I use Fish as my shell so all shell commands below assumes this.
 
-Ensure you have the dotnet sdk 2.2.300 installed. I've found that exporting the
+Ensure you have the dotnet sdk 3.1.100 installed. I've found that exporting the
 following variables will ensure a headache free existance:
 
 ```
-set -x DOTNET_ROOT $HOME/code/dotnet/2.2.300
+set -x DOTNET_ROOT $HOME/code/dotnet/3.1.100
 set -x ASPNETCORE_ENVIRONMENT Development
 ```
 
@@ -290,6 +290,41 @@ in my cache is 6 months old. I run `paket update` and it breaks my code because
 it pulls in the latest version of that assembly. I've started pinning all
 assemblies to the version number so I don't have to deal with this problem.
 
+### Troubleshooting fable
+
+Fable is the compiler that translates F# to JS using Babel (Fable and Babel rhyme).
+
+Source .fs files need to be under the project root.
+Having them outside the root will trip up the fable compiler.
+
+When upgrading .NET packages in the Client with paket you might get dependency errors.
+Basically one package depends on a version of THoth.Json for example, that's ahead of what was originally there.
+So Thoth.Json is upgraded.
+But this breaks the existing stuff.
+Solution is to search for a version that is compatible with both dependant packages and pin THoth.Json in the paket.dependencies.
+
+```
+group Client
+    source https://api.nuget.org/v3/index.json
+    framework: netstandard2.0
+    storage: none
+
+    nuget Fable.Browser.Url
+    nuget Fable.Browser.Websocket
+    nuget Fable.Core ~> 3
+    nuget Fable.Elmish ~> 3
+    nuget Fable.Elmish.Debugger ~> 3
+    nuget Fable.Elmish.HMR ~> 4
+    nuget Fable.Elmish.React ~> 3
+    nuget Fable.SimpleJson 3.7
+    nuget Thoth.Fetch ~> 1
+    nuget Fable.React ~> 5
+    nuget Fulma ~> 2
+    nuget Fable.FontAwesome.Free ~> 2
+    nuget Thoth.Json 3.1
+```
+
+Here Thoth.Json is included explictly even though it's not a direct dependency.
 
 ## The client
 
