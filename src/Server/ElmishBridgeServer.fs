@@ -6,16 +6,27 @@ open ElmishBridgeModel
 open global.Giraffe 
 open Microsoft.AspNetCore.Http
 
-type Msg = Remote of ServerMsg
+let server_hub = ServerHub<Model, ServerMsg, ClientMsg>()
 
 let init dispatch model =
-    dispatch (TheClientMsg (Msg1 "server message"))
-    model, Cmd.none
+    dispatch TestMessage
+    User(""), Cmd.none
 
 let update dispatch msg model =
     match msg with
-    | Remote() -> failwith "unsupported"
 
-let server (a : HttpFunc) (ctx : HttpContext) =
-    Bridge.mkServer endpoint init update
-    |> Bridge.run Giraffe.server
+    //tutor started their live stream
+    | TutorGoLive ->
+        eprintfn "Received TutorGoLive"
+        eprintfn "Connected clients %A" (server_hub.GetModels().Length)
+        server_hub.BroadcastClient(ClientTutorGoLive)
+        model, Cmd.none
+
+    //tutor stopped their live stream
+    | TutorStopLive ->
+        eprintfn "Received TutorStopLive"
+        eprintfn "Connected clients %A" (server_hub.GetModels().Length)
+        server_hub.BroadcastClient(ClientTutorStopLive)
+        model, Cmd.none
+
+let endpoint = "/socket"

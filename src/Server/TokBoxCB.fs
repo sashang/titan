@@ -8,7 +8,7 @@ open Microsoft.Extensions.Logging
 open System
 open System.Collections.Generic
 open Thoth.Json.Net
-
+open TutorSessionMap
 
 type TokBoxConnection =
     { Id : string
@@ -61,7 +61,6 @@ type TokBoxSession =
 
 type Name = string
 type SessionId = string
-let dict_name_to_session = new Dictionary<Name, SessionId>()
 
 let callback (next : HttpFunc) (ctx : HttpContext) = task {
     let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
@@ -73,6 +72,7 @@ let callback (next : HttpFunc) (ctx : HttpContext) = task {
     //they increment a counter on their end and stop calling back once that counter 
     //reaches a limit.
     ctx.SetStatusCode 200
+    let session_map = ctx.GetService<ISessionMap>()
     try
         let result = Decode.fromString TokBoxSession.decoder body
         match result with
@@ -85,14 +85,14 @@ let callback (next : HttpFunc) (ctx : HttpContext) = task {
             else if data.Event = "streamCreated" then
                 match data.Stream with
                 | Some stream ->
-                    dict_name_to_session.Add(stream.Name, data.SessionId)
+                    session_map.add_session stream.Name data.SessionId
                     return! text "Ok" next ctx
                 | None ->
                     return! text "Ok" next ctx
             else if data.Event = "streamDestroyed" then
                 match data.Stream with
                 | Some stream ->
-                    dict_name_to_session.Remove(stream.Name) |> ignore
+                    session_map.remove_session(stream.Name) |> ignore
                     return! text "Ok" next ctx
                 | None ->
                     return! text "Ok" next ctx
@@ -110,8 +110,9 @@ let callback (next : HttpFunc) (ctx : HttpContext) = task {
 
 let find_by_name (next : HttpFunc) (ctx : HttpContext) = task {
     let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
-    logger.LogInformation("called TokBoxCB.callback")
+    logger.LogInformation("called TokBoxCB.find_by_name")
+    let session_map = ctx.GetService<ISessionMap>()
     let! email = ctx.BindJsonAsync<Domain.EmailRequest>()
-    let result = dict_name_to_session.ContainsKey(email.Email)
+    let result = session_map.has_session(email.Email)
     return! ctx.WriteJsonAsync result
 }

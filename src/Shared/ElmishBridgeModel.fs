@@ -1,9 +1,17 @@
 module ElmishBridgeModel
 
-type TestMessages =
-    | Msg1 of string
+//messages from the client to the server
+type ServerMsg =
+    | TutorGoLive //the tutor has started streaming
+    | TutorStopLive //tutor has stopped streaming
 
-type ServerMsg = unit
-type ClientMsg = TheClientMsg of TestMessages
+//messages from the server to the client
+type ClientMsg =
+    | ClientTutorGoLive
+    | ClientTutorStopLive
+    | TestMessage
+
+type Model =
+    | User of string
 
 let endpoint = "/socket"

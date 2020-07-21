@@ -26,7 +26,6 @@ let from_base64 (s:string) : string = jsNative
 
 
 type RootMsg =
-    | TenSecondsTimer
     | ClickSignOut
     | ClickStopLive
     | ClickTitle
@@ -52,6 +51,11 @@ type BroadcastState =
     | Tutor
     | Student
 
+type WSConnection =
+  | Disconnected
+  | Waiting
+  | Connected of string
+
 type PageModel =
     | LoginModel
     | FAQModel of FAQ.Model
@@ -65,8 +69,11 @@ and
         Session : Session option //who I am
         Claims : TitanClaim option
         BCast : BroadcastState option
+        Connection : WSConnection
     } with
-    static member init = {Child = HomeModel (Home.init ()); Session = None; Claims = None; BCast = None } 
+    static member init = 
+        { Child = HomeModel (Home.init ()); Session = None;
+          Claims = None; BCast = None; Connection = Disconnected } 
 
 let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMsg> =
     match page with
@@ -239,22 +246,20 @@ let view model dispatch =
 *)
 let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     match msg, state with    
-    | Remote(TheClientMsg (Msg1 msg)), state ->
-        Browser.Dom.console.info ("received message '" + msg + "' from server over bridge")
+    | Remote(TestMessage), _ ->
+        Browser.Dom.console.info ("Received test message")
         state, Cmd.none
 
-    | TenSecondsTimer, {Child = DashboardRouterModel model} ->
-        let model', cmd = DashboardRouter.update model DashboardRouter.TenSecondsTimer
-        {state with Child = DashboardRouterModel model'}, Cmd.map DashboardRouterMsg cmd
-
-    | TenSecondsTimer, _ -> //ignore other one second timer messages
-        state, Cmd.none
+    | Remote(ClientTutorGoLive), {Child = DashboardRouterModel model} ->
+        Browser.Dom.console.info ("Tutor has started live stream")
+        let new_model, cmd = DashboardRouter.update model (DashboardRouter.StudentMsg(Student.Dashboard.ClassMsg(Student.Class.TutorStartedStream)))
+        state, Cmd.map DashboardRouterMsg cmd
 
     | SignOutMsg sign_out, state ->
         let cmd = SignOut.update sign_out
         //assume that signing out worked so we delete the sesison
         { Child = HomeModel (Home.init ()); Session = None; Claims = None;
-          BCast = None}, Cmd.map SignOutMsg cmd
+          BCast = None; Connection = Disconnected}, Cmd.map SignOutMsg cmd
 
     | ClickTitle, state ->
         //move to the home page

@@ -23,6 +23,7 @@
     <Compile Include="../Shared/FableJson.fs" />
     <Compile Include="Model/Models.fs" />
     <Compile Include="SchoolView.fs" />
+    <Compile Include="TutorSessionMap.fs" />
     <Compile Include="TokBoxCB.fs" />
     <Compile Include="TitanOpenTok.fs" />
     <Compile Include="Database.fs" />

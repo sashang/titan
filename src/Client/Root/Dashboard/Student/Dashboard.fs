@@ -27,7 +27,6 @@ type Msg =
     | ClickEnrol
     | ClickAccount
     | SignOut
-    | TenSecondsTimer
     | GetEnrolledSchoolsSuccess of School list
     | ClassMsg of Class.Msg
     | EnrolledMsg of Enrolled.Msg
@@ -57,12 +56,6 @@ let init claims =
 
 let update model msg =
     match model, msg with
-    | {Child = ClassModel child}, TenSecondsTimer ->
-        let model', cmd = Student.Class.update child Student.Class.TenSecondsTimer
-        {model with Child = ClassModel model'}, Cmd.map ClassMsg cmd
-
-    | _, TenSecondsTimer ->
-        model, Cmd.none
 
     | {Child = ClassModel child}, ClassMsg msg ->
         Browser.Dom.console.info ("ClassMsg message")

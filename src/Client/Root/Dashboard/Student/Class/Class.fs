@@ -18,13 +18,14 @@ type LiveState =
 
 type Msg =
     | GoLive
+    | TutorStartedStream
+    | TutorStoppedStream
     | CheckTutorIsLive
     | SignOut
     | GetSessionSuccess of OpenTokInfo
     | TokBoxFindByNameSuccess of bool
     | Failure of exn
     | StopLive
-    | TenSecondsTimer
 
 type Model =
     { Session : obj option
@@ -107,18 +108,13 @@ let init school student_email =
 let update (model : Model) (msg : Msg) =
     //TODO: map this to the OTI record based on the email
     match model, msg with
-    | {OTI = Some oti; Session = Some session}, TenSecondsTimer ->
-        model, Cmd.OfPromise.either tokbox_find_by_name {Email = model.School.Email} TokBoxFindByNameSuccess Failure
 
-    | _, TenSecondsTimer ->
-        model, Cmd.none
-
-    | model, TokBoxFindByNameSuccess true ->
-        Browser.Dom.console.info "TokBox says tutor has started class"
+    | model, TutorStartedStream ->
+        Browser.Dom.console.info "Tutor has started streaming"
         {model with TutorLive = On}, Cmd.none
 
-    | model, TokBoxFindByNameSuccess false ->
-        Browser.Dom.console.info "TokBox says tutor has not started class"
+    | model, TutorStoppedStream ->
+        Browser.Dom.console.info "Tutor stopped streaming"
         {model with TutorLive = Off}, Cmd.none
 
     | {OTI = Some oti; Session = Some session; Live = Off}, GoLive ->

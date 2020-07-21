@@ -7,6 +7,7 @@ open FSharp.Control.Tasks
 open FluentMigrator.Runner
 //force Girrafe to be resolved from the global scope and not from
 //Elmish.Bridge which also contains Giraffe namespace.
+open Elmish.Bridge
 open global.Giraffe 
 open Giraffe.Serialization
 open Homeless
@@ -29,6 +30,7 @@ open System.Security.Cryptography.X509Certificates
 open Thoth.Json.Net
 open Thoth.Json.Giraffe
 open TitanOpenTok
+open TutorSessionMap
 open TokBoxCB
 open UAParser
 
@@ -221,17 +223,6 @@ let browser_router = router {
 }
 
 
-let web_app : HttpHandler = 
-    choose [
-        router {
-            get "/check-session" check_session
-            forward "/sign-out" sign_out_router
-            forward "/api" titan_api
-            forward "" browser_router
-        }
-        Elmish.Bridge.Bridge.mkServer ElmishBridgeModel.endpoint ElmishBridgeServer.init ElmishBridgeServer.update
-        |> Elmish.Bridge.Bridge.run Elmish.Bridge.Giraffe.server
-    ]
 
 
 let check_same_site (context : HttpContext) (options : CookieOptions) =
@@ -309,6 +300,22 @@ let configure_app (settings_file : string) (builder : IApplicationBuilder) =
     builder.UseAuthentication() |> ignore
     builder
 
+let server =
+    Bridge.mkServer ElmishBridgeServer.endpoint ElmishBridgeServer.init ElmishBridgeServer.update
+    |> Bridge.withConsoleTrace
+    |> Bridge.withServerHub ElmishBridgeServer.server_hub
+    |> Bridge.run Giraffe.server
+
+let web_app = 
+    choose [
+        router {
+            get "/check-session" check_session
+            forward "/sign-out" sign_out_router
+            forward "/api" titan_api
+            forward "" browser_router
+        }
+        server
+    ]
 
 let app settings_file (startup_options : RecStartupOptions) =
     application {
@@ -318,6 +325,7 @@ let app settings_file (startup_options : RecStartupOptions) =
         use_static publicPath
         service_config (configure_services startup_options)
         host_config (configure_host settings_file)
+        disable_diagnostics
         app_config (configure_app settings_file >> Elmish.Bridge.Giraffe.useWebSockets)
 
         use_google_oauth_with_config (fun (opt:AspNetCoreGoogleOpts) ->
