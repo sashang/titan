@@ -303,6 +303,22 @@ let configure_app (settings_file : string) (builder : IApplicationBuilder) =
     builder.UseAuthentication() |> ignore
     builder
 
+let server =
+    Bridge.mkServer ElmishBridgeServer.endpoint ElmishBridgeServer.init ElmishBridgeServer.update
+    |> Bridge.withConsoleTrace
+    |> Bridge.withServerHub ElmishBridgeServer.server_hub
+    |> Bridge.run Giraffe.server
+
+let web_app = 
+    choose [
+        router {
+            get "/check-session" check_session
+            forward "/sign-out" sign_out_router
+            forward "/api" titan_api
+            forward "" browser_router
+        }
+        server
+    ]
 
 let web_app = 
     choose [
@@ -323,10 +339,7 @@ let app settings_file (startup_options : RecStartupOptions) =
         use_static publicPath
         service_config (configure_services startup_options)
         host_config (configure_host settings_file)
-<<<<<<< HEAD
         disable_diagnostics
-=======
->>>>>>> c8a3979... Test elmish bridge.
         app_config (configure_app settings_file >> Elmish.Bridge.Giraffe.useWebSockets)
 
         use_google_oauth_with_config (fun (opt:AspNetCoreGoogleOpts) ->
