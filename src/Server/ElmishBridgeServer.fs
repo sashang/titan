@@ -30,3 +30,9 @@ let update dispatch msg model =
         model, Cmd.none
 
 let endpoint = "/socket"
+
+let server : HttpFunc -> HttpContext -> HttpFuncResult=
+    Bridge.mkServer endpoint init update
+    |> Bridge.withConsoleTrace
+    |> Bridge.withServerHub server_hub
+    |> Bridge.run Giraffe.server

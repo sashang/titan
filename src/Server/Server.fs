@@ -300,11 +300,6 @@ let configure_app (settings_file : string) (builder : IApplicationBuilder) =
     builder.UseAuthentication() |> ignore
     builder
 
-let server =
-    Bridge.mkServer ElmishBridgeServer.endpoint ElmishBridgeServer.init ElmishBridgeServer.update
-    |> Bridge.withConsoleTrace
-    |> Bridge.withServerHub ElmishBridgeServer.server_hub
-    |> Bridge.run Giraffe.server
 
 let web_app = 
     choose [
@@ -314,7 +309,7 @@ let web_app =
             forward "/api" titan_api
             forward "" browser_router
         }
-        server
+        ElmishBridgeServer.server
     ]
 
 let app settings_file (startup_options : RecStartupOptions) =
