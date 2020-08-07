@@ -65,9 +65,8 @@ let dict_name_to_session = new Dictionary<Name, SessionId>()
 
 let callback (next : HttpFunc) (ctx : HttpContext) = task {
     let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
-    logger.LogInformation("called TokBoxCB.callback")
+    logger.LogInformation("Called TokBoxCB.callback")
     let! body = ctx.ReadBodyFromRequestAsync()
-    logger.LogInformation body
     //we always have to return success to tokbox when we handle a callback regardless
     //of the result of the handling of the callback. If we don't return success
     //they increment a counter on their end and stop calling back once that counter 
@@ -110,8 +109,9 @@ let callback (next : HttpFunc) (ctx : HttpContext) = task {
 
 let find_by_name (next : HttpFunc) (ctx : HttpContext) = task {
     let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
-    logger.LogInformation("called TokBoxCB.callback")
+    logger.LogInformation("Called TokBoxCB.find_by_name")
     let! email = ctx.BindJsonAsync<Domain.EmailRequest>()
+    logger.LogInformation(email.Email)
     let result = dict_name_to_session.ContainsKey(email.Email)
     return! ctx.WriteJsonAsync result
 }
