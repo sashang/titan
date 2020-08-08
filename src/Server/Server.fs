@@ -19,6 +19,7 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Configuration
 open Microsoft.IdentityModel.Tokens
 open Microsoft.AspNetCore.Authentication
+open Microsoft.AspNetCore.Authentication.JwtBearer
 open Saturn
 open Saturn.Auth
 open System
@@ -230,16 +231,13 @@ let check_same_site (context : HttpContext) (options : CookieOptions) =
         let user_agent = context.Request.Headers.["User-Agent"].ToString()
         let parser = Parser.GetDefault()
         let client_info = parser.Parse(user_agent)
-        let ua = client_info.UA
+        eprintfn "client_info = %s" (client_info.String)
         let logger = context.GetLogger<Debug.DebugLoggerProvider>()
-    //    options.SameSite <- SameSiteMode.None
-     //   options.Secure <- true
-        logger.LogInformation(ua.Family)
-        logger.LogInformation(ua.Major)
-        if (not(ua.Family = "Chrome" && ua.Major = "80")) then
-            logger.LogInformation("User agent does not support samesite")
+        if (not (client_info.String.Contains("Chrome/8"))) then
             options.SameSite <- SameSiteMode.Unspecified
-
+        else
+            options.SameSite <- SameSiteMode.None
+            options.Secure <- true
 
 let configure_services startup_options (services:IServiceCollection) =
     let fableJsonSettings = Newtonsoft.Json.JsonSerializerSettings()
@@ -259,12 +257,14 @@ let configure_services startup_options (services:IServiceCollection) =
                   .For.Migrations() |> ignore)
             .AddLogging(fun lb -> lb.AddFluentMigratorConsole() |> ignore) |> ignore
 
+    (*services.Configure<CookiePolicyOptions>(fun (options : CookiePolicyOptions) ->
+        options.MinimumSameSitePolicy <- SameSiteMode.Unspecified) |> ignore*)
     services.Configure<CookiePolicyOptions>(fun (options : CookiePolicyOptions) ->
-        options.MinimumSameSitePolicy <- SameSiteMode.Unspecified) |> ignore
-(*     services.Configure<CookiePolicyOptions>(fun (options : CookiePolicyOptions) ->
         options.MinimumSameSitePolicy <- SameSiteMode.Unspecified
-        options.OnAppendCookie <- (fun cookie_context -> check_same_site cookie_context.Context cookie_context.CookieOptions)
-        options.OnDeleteCookie <- (fun cookie_context -> check_same_site cookie_context.Context cookie_context.CookieOptions)) |> ignore *)
+        options.OnAppendCookie <- (fun cookie_context -> 
+            check_same_site cookie_context.Context cookie_context.CookieOptions
+            eprintfn "samesite mode = %A" (cookie_context.CookieOptions.SameSite.ToString()))
+        options.OnDeleteCookie <- (fun cookie_context -> check_same_site cookie_context.Context cookie_context.CookieOptions)) |> ignore
 
     //apparently putting this in a scope is the thing to do with asp.net...
     let scope = services.BuildServiceProvider(false).CreateScope()
