@@ -137,8 +137,6 @@ let check_session (next : HttpFunc) (ctx : HttpContext) = task {
 
 let render_school_view (next : HttpFunc) (ctx : HttpContext) = task {
     try
-        let logger = ctx.GetLogger<Debug.DebugLoggerProvider>()
-        let config = ctx.GetService<IConfiguration>()
         let db = ctx.GetService<IDatabase>()
         let! result = db.get_school_view
         match result with
@@ -232,7 +230,6 @@ let check_same_site (context : HttpContext) (options : CookieOptions) =
         let parser = Parser.GetDefault()
         let client_info = parser.Parse(user_agent)
         eprintfn "client_info = %s" (client_info.String)
-        let logger = context.GetLogger<Debug.DebugLoggerProvider>()
         if (not (client_info.String.Contains("Chrome/8"))) then
             options.SameSite <- SameSiteMode.Unspecified
         else
@@ -243,7 +240,6 @@ let configure_services startup_options (services:IServiceCollection) =
     let fableJsonSettings = Newtonsoft.Json.JsonSerializerSettings()
     fableJsonSettings.Converters.Add(Fable.JsonConverter())
     services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
-    //services.AddSingleton<IJsonSerializer>(Thoth.Json.Giraffe.ThothSerializer) |> ignore
     services.AddSingleton<IDatabase>(Database(startup_options.ConnectionString)) |> ignore
     services.AddSingleton<ITitanOpenTok>(TitanOpenTok(startup_options.OpenTokKey, startup_options.OpenTokSecret)) |> ignore
     services.AddSingleton<IAzureMaps>(AzureMaps(startup_options.AzureMapsClientId, startup_options.AzureMapsPrimaryKey)) |> ignore
@@ -278,22 +274,29 @@ let get_env_var var =
     | value -> Some value
 
 let configure_logging (builder : ILoggingBuilder) =
-    builder.AddConsole()
-        .AddDebug() |> ignore
+    builder.AddConsole().AddDebug() |> ignore
 
 
 let configure_host (settings_file : string) (builder : IWebHostBuilder) =
     //turns out if you pass an anonymous function to a function that expects an Action<...> or
     //Func<...> the type inference will work out the inner types....so you don't need to specify them.
-    builder.ConfigureAppConfiguration((fun ctx builder -> builder.AddJsonFile(settings_file).Build() |> ignore) ) |> ignore
-        // .ConfigureKestrel(fun ctx opt ->
-        //     let certificate_file = (ctx.Configuration.["certificateSettings:filename"])
-        //     let certificate_password = (ctx.Configuration.["certificateSettings:password"])
-        //     let certificate = new X509Certificate2(certificate_file, certificate_password)
-        //     opt.AddServerHeader <- false
-        //     opt.Listen(IPAddress.Loopback, 4431, (fun opt -> opt.UseHttps(certificate) |> ignore)))
-        //  .UseUrls("https://localhost:4431") |> ignore
-    builder
+    builder.ConfigureAppConfiguration((fun ctx config_builder ->
+                config_builder
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddEnvironmentVariables()
+                    .AddJsonFile(settings_file, false, true)
+                    .Build() |> ignore)) |> ignore
+
+    //if we're in development mode use the localhost crt to simulate https
+    match get_env_var "ASPNETCORE_ENVIRONMENT" with
+    | Some "Development" ->
+        builder.ConfigureKestrel(fun ctx opt ->
+            let certificate_file = (ctx.Configuration.["CertificateFilename"])
+            let certificate_password = (ctx.Configuration.["CertificatePassword"])
+            opt.AddServerHeader <- false
+            opt.Listen(IPAddress.Loopback, 8085, (fun opt -> opt.UseHttps(certificate_file, certificate_password) |> ignore)))
+           .UseUrls("https://localhost:8085")
+    | _ -> builder
 
 let configure_app (settings_file : string) (builder : IApplicationBuilder) =
     builder.UseCookiePolicy() |> ignore //before anything that uses cookies, like UseAuthentication
