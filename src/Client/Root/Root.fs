@@ -255,6 +255,11 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         let new_model, cmd = DashboardRouter.update model (DashboardRouter.StudentMsg(Student.Dashboard.ClassMsg(Student.Class.TutorStartedStream)))
         state, Cmd.map DashboardRouterMsg cmd
 
+    | Remote(ClientTutorStopLive), {Child = DashboardRouterModel model} ->
+        Browser.Dom.console.info ("Tutor has started stopped stream")
+        let new_model, cmd = DashboardRouter.update model (DashboardRouter.StudentMsg(Student.Dashboard.ClassMsg(Student.Class.TutorStoppedStream)))
+        state, Cmd.map DashboardRouterMsg cmd
+
     | SignOutMsg sign_out, state ->
         let cmd = SignOut.update sign_out
         //assume that signing out worked so we delete the sesison
