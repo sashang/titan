@@ -58,8 +58,10 @@ var CONFIG = {
         '/sign-out': {
             target: 'https://localhost:' + (process.env.SERVER_PROXY_PORT || "8085"),
                changeOrigin: true,
-               //secure: false
+               secure: false
            },
+            //secure: false - looks odd for https but it makes things work.
+            //not sure if this is properly conifgured. oh well. 
         '/socket': { //endpoint for elmish bridge websocket
             target: 'https://localhost:' + (process.env.SERVER_PROXY_PORT || "8085"),
             ws: true,
