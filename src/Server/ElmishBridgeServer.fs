@@ -8,25 +8,47 @@ open Microsoft.AspNetCore.Http
 
 let server_hub = ServerHub<Model, ServerMsg, ClientMsg>()
 
-let init dispatch model =
-    dispatch TestMessage
-    User(""), Cmd.none
+let init dispatch () =
+    dispatch ClientInitialize
+    None, Cmd.none
+    //model, Cmd.none
 
 let update dispatch msg model =
+    let is_student (model : Model) : bool =
+        match model with
+        | Some Student -> 
+            true
+        | _ -> false
+
+    let is_tutor (model : Model) : bool =
+        match model with
+        | Some Tutor ->
+            true
+        | _ -> false
+
     match msg with
+    | ClientIs user -> 
+        Some user, Cmd.none
 
     //tutor started their live stream
     | TutorGoLive ->
-        eprintfn "Received TutorGoLive"
-        eprintfn "Connected clients %A" (server_hub.GetModels().Length)
-        server_hub.BroadcastClient(ClientTutorGoLive)
+        server_hub.SendClientIf (fun x -> is_student x) ClientTutorGoLive
         model, Cmd.none
 
     //tutor stopped their live stream
     | TutorStopLive ->
-        eprintfn "Received TutorStopLive"
-        eprintfn "Connected clients %A" (server_hub.GetModels().Length)
-        server_hub.BroadcastClient(ClientTutorStopLive)
+        server_hub.SendClientIf (fun x -> is_student x) ClientTutorStopLive
+        model, Cmd.none
+    
+    //a student wants to know if the tutor has started.
+    | StudentRequestLiveState ->
+        server_hub.SendClientIf (fun x -> is_tutor x) ClientStudentRequestLiveState
+        model, Cmd.none
+
+    | TutorLiveState state ->
+        match state with
+        | On -> server_hub.SendClientIf (fun x -> is_student x) ClientTutorGoLive
+        | Off -> server_hub.SendClientIf (fun x -> is_student x) ClientTutorStopLive
         model, Cmd.none
 
 let endpoint = "/socket"

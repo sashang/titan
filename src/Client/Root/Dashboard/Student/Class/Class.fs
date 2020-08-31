@@ -3,6 +3,7 @@ module Student.Class
 open Client.Shared
 open Domain
 open Elmish
+open ElmishBridgeModel
 open Fable.Import
 open Fable.React
 open Fable.React.Props
@@ -94,8 +95,12 @@ let private classroom_level model dispatch =
                 //disbale the button if the tutor has not started
                 Client.Style.button dispatch GoLive "Go Live!" [ Button.Disabled true ]
             | Off, Some _ , Some _, On -> 
-                Client.Style.button dispatch GoLive "Go Live!" [ ]
-            | _ -> nothing)
+                Client.Style.button dispatch GoLive "Go Live!" [ Button.Disabled false ]
+            | model_live, model_session , model_oti, On -> 
+                Browser.Dom.console.info (sprintf "%A %A %A" model_live model_session model_oti)
+                nothing
+            | _ ->
+                nothing)
         ]
     ]
 
@@ -134,10 +139,15 @@ let update (model : Model) (msg : Msg) =
         {model with Live = Off}, Cmd.OfPromise.either tokbox_find_by_name {Email = model.School.Email} TokBoxFindByNameSuccess Failure
 
     | {Session = Some session}, SignOut ->
-        //we need to porcess the signout click in order to stop the opentok stuff.
+        //we need to process the signout click in order to stop the opentok stuff.
         Browser.Dom.console.info (sprintf "received SignOut for Student.Class" )
         OpenTokJSInterop.disconnect session
         {model with Live = Off; Session = None; OTI = None}, Cmd.none
+
+    | _, SignOut ->
+        //we need to process the signout click in order to stop the opentok stuff.
+        Browser.Dom.console.info (sprintf "received SignOut for Student.Class" )
+        model, Cmd.none
 
     | _, StopLive ->
         Browser.Dom.console.error ("Bad state for StopLive message")
@@ -149,6 +159,7 @@ let update (model : Model) (msg : Msg) =
         let session = OpenTokJSInterop.init_session oti.Key oti.SessionId
         OpenTokJSInterop.on_streamcreate_subscribe_filter session 640 480 model.School.Email
         if session = null then failwith "failed to get js session"
+        Bridge.Bridge.Send(StudentRequestLiveState)
         {model with OTI = Some oti; Session = Some session; Error = None}, Cmd.none
 
     | model, Failure e ->
@@ -172,6 +183,7 @@ let private video =
     ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
+    Browser.Dom.console.info "Student class view function"
     div [ ] [
         classroom_level model dispatch
         video

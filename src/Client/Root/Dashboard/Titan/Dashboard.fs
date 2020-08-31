@@ -2,6 +2,7 @@ module Titan.Dashboard
 
 open Client.Shared
 open Elmish
+open ElmishBridgeModel
 open Fable.Import
 open Fable.React
 open Fulma
@@ -22,6 +23,7 @@ type Msg =
 
 let init (claims : TitanClaim) : Model*Cmd<Msg> =
     let (users_model, users_cmd) = Users.init Users.Unapproved
+    Bridge.Bridge.Send(ClientIs(Titan))
     { Child = UsersModel users_model; Claims = claims},
     Cmd.map UsersMsg users_cmd
 

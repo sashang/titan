@@ -14,10 +14,6 @@ open Client.Shared
 open Thoth.Json
 type TF = Thoth.Fetch.Fetch
 
-type LiveState =
-    | On
-    | Off
-
 type Model =
     { Students : Student list
       OTI : OpenTokInfo option
@@ -32,6 +28,7 @@ type Msg =
     | GoLive
     | StopLive
     | SignOut
+    | StudentRequestLiveState
     | GetSessionSuccess of OpenTokInfo
     | GetSessionFailure of exn
 
@@ -91,6 +88,9 @@ let update (model : Model) (msg : Msg) =
         Browser.Dom.console.error ("Bad state for GoLive message")
         model, Cmd.none
 
+    | model, StudentRequestLiveState ->
+        Bridge.Bridge.Send(TutorLiveState(model.Live))
+        model, Cmd.none
 
     | {Live = On }, StopLive ->
         match model.Session with

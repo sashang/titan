@@ -178,6 +178,7 @@ let private footer model dispatch =
 
 
 let view model dispatch =
+    Browser.Dom.console.info "root view"
     Hero.hero [
         Hero.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Option.Centered) ]
         Hero.Color IsWhite ] [
@@ -224,16 +225,22 @@ let view model dispatch =
         Hero.body [ Common.Props [ Style [ ] ] ] [ 
             match model.Child with
             | LoginModel -> 
+                Browser.Dom.console.info "rendering login"
                 yield Login.view
             | DashboardRouterModel model ->
+                Browser.Dom.console.info "rendering dashboardrouter"
                 yield DashboardRouter.view model (DashboardRouterMsg >> dispatch) 
             | HomeModel model ->
+                Browser.Dom.console.info "rendering home"
                 yield! Home.view model (HomeMsg  >> dispatch)
             | FAQModel model ->
+                Browser.Dom.console.info "rendering faq"
                 yield FAQ.view model (FAQMsg >> dispatch)
             | PrivacyPolicyModel model ->
+                Browser.Dom.console.info "rendering privacy policy"
                 yield PrivacyPolicy.view model (PrivacyPolicyMsg >> dispatch)
             | TermsModel model ->
+                Browser.Dom.console.info "rendering privacy policy"
                 yield Terms.view model (TermsMsg >> dispatch)
         ]
         Hero.foot [ ] [ footer model dispatch ]
@@ -246,23 +253,29 @@ let view model dispatch =
 *)
 let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     match msg, state with    
-    | Remote(TestMessage), _ ->
-        Browser.Dom.console.info ("Received test message")
-        state, Cmd.none
 
     | Remote(ClientTutorGoLive), {Child = DashboardRouterModel model} ->
         Browser.Dom.console.info ("Tutor has started live stream")
-        let new_model, cmd = DashboardRouter.update model (DashboardRouter.StudentMsg(Student.Dashboard.ClassMsg(Student.Class.TutorStartedStream)))
-        state, Cmd.map DashboardRouterMsg cmd
+        let new_model, cmd = DashboardRouter.update model DashboardRouter.TutorStartedStream
+        {state with Child = DashboardRouterModel new_model}, Cmd.map DashboardRouterMsg cmd
 
     | Remote(ClientTutorStopLive), {Child = DashboardRouterModel model} ->
         Browser.Dom.console.info ("Tutor has started stopped stream")
-        let new_model, cmd = DashboardRouter.update model (DashboardRouter.StudentMsg(Student.Dashboard.ClassMsg(Student.Class.TutorStoppedStream)))
-        state, Cmd.map DashboardRouterMsg cmd
+        let new_model, cmd = DashboardRouter.update model DashboardRouter.TutorStoppedStream
+        {state with Child = DashboardRouterModel new_model}, Cmd.map DashboardRouterMsg cmd
+
+    | Remote(ClientStudentRequestLiveState), {Child = DashboardRouterModel model} ->
+        Browser.Dom.console.info ("Student wants to know if tutor is live")
+        let new_model, cmd = DashboardRouter.update model DashboardRouter.StudentRequestLiveState
+        {state with Child = DashboardRouterModel new_model}, Cmd.map DashboardRouterMsg cmd
+
+    | Remote(ClientInitialize), {Child = DashboardRouterModel model} ->
+        let new_model, cmd = DashboardRouter.update model DashboardRouter.ClientInitialize
+        {state with Child = DashboardRouterModel new_model}, Cmd.map DashboardRouterMsg cmd
 
     | SignOutMsg sign_out, state ->
         let cmd = SignOut.update sign_out
-        //assume that signing out worked so we delete the sesison
+        //assume that signing out worked so we delete the session
         { Child = HomeModel (Home.init ()); Session = None; Claims = None;
           BCast = None; Connection = Disconnected}, Cmd.map SignOutMsg cmd
 
@@ -312,10 +325,10 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
             let cmd = SignOut.update SignOut.SignOut
             state, Cmd.map SignOutMsg cmd
 
+
     | CheckSessionSuccess session, state ->
         let jwt_parts = session.Token.Split '.'
         let jwt_content = from_base64 (Array.get jwt_parts 1)
-        Browser.Dom.console.info jwt_content
         let result = Decode.fromString TitanClaim.decoder jwt_content
         match result with
         | Ok claims ->
@@ -323,6 +336,7 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
             | {Child = HomeModel home_model} when claims.is_first_time ->
                 let new_home_model, home_msg = Home.update home_model Home.FirstTimeUser (Some claims)
                 { state with Session = Some session; Claims = Some claims; Child = HomeModel new_home_model}, Cmd.none
+
             | model when claims.IsTitan ->
                 let titan_model, cmd = DashboardRouter.init_titan claims
                 { state with Session = Some session; Claims = Some claims;

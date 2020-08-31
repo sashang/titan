@@ -303,7 +303,7 @@ let configure_app (settings_file : string) (builder : IApplicationBuilder) =
     builder.UseAuthentication() |> ignore
     builder
 
-let web_app : HttpFunc -> HttpContext -> HttpFuncResult = 
+let web_app : HttpHandler = 
     choose [
         router {
             get "/check-session" check_session
