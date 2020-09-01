@@ -35,7 +35,6 @@ type Msg =
 
 let init (claims : TitanClaim) : Model*Cmd<Msg> =
     let class_model, class_cmd = Class.init claims.Email
-    Bridge.Bridge.Send(ClientIs(Tutor))
     { Child = ClassModel class_model; CurrentSession = None; Claims = claims },
     Cmd.map ClassMsg class_cmd
 

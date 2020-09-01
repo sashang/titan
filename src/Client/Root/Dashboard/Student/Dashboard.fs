@@ -54,7 +54,6 @@ let private get_enroled_schools () = promise {
 
 
 let init claims = 
-    Bridge.Bridge.Send(ClientIs(Student))
     {Claims = claims; Error = None; Child = HomeModel; EnrolledSchools = [] },
      Cmd.OfPromise.either get_enroled_schools () GetEnrolledSchoolsSuccess Failure
 

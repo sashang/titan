@@ -195,8 +195,8 @@ let titan_api =  router {
     post "/delete-user-titan" API.delete_user_titan
 
     //calback for tokbox to tell us about sessions starting/ending etc.
-    post "/tokbox-cb" TokBoxCB.callback
-    post "/tokbox-find-by-name" TokBoxCB.find_by_name
+    //post "/tokbox-cb" TokBoxCB.callback
+    //post "/tokbox-find-by-name" TokBoxCB.find_by_name
 }
 
 ///Define the pipeline that http request headers will see
