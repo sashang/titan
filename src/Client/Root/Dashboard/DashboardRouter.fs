@@ -2,6 +2,7 @@ module DashboardRouter
 
 open Client.Shared
 open Elmish
+open ElmishBridgeModel
 open Fable.Import
 
 type PageModel =
@@ -13,8 +14,11 @@ type Msg =
     | TutorMsg of Tutor.Dashboard.Msg
     | StudentMsg of Student.Dashboard.Msg
     | TitanMsg of Titan.Dashboard.Msg
+    | TutorStartedStream
+    | TutorStoppedStream
+    | StudentRequestLiveState
     | SignOut
-    | TenSecondsTimer
+    | ClientInitialize
 
 
 type Model =
@@ -43,17 +47,35 @@ let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
         let new_model, cmd = Tutor.Dashboard.update model Tutor.Dashboard.SignOut
         {Child = TutorModel new_model}, Cmd.map TutorMsg cmd
 
+    | {Child = TutorModel model}, StudentRequestLiveState ->
+        let new_model, cmd = Tutor.Dashboard.update model Tutor.Dashboard.StudentRequestLiveState
+        {Child = TutorModel new_model}, Cmd.map TutorMsg cmd
+
     | _, TutorMsg _  ->
         Browser.Dom.console.error("Received bad TutorMsg.")
         model, Cmd.none
 
-    | {Child = StudentModel model}, TenSecondsTimer ->
-        let new_model, cmd = Student.Dashboard.update model Student.Dashboard.TenSecondsTimer
+    | {Child = StudentModel model}, TutorStartedStream ->
+        let new_model, cmd = Student.Dashboard.update model Student.Dashboard.TutorStartedStream
         {Child = StudentModel new_model}, Cmd.map StudentMsg cmd
 
-    //ignore other pages for the moment.
-    | _ , TenSecondsTimer -> 
-        model, Cmd.none
+    | {Child = StudentModel model}, TutorStoppedStream ->
+        let new_model, cmd = Student.Dashboard.update model Student.Dashboard.TutorStoppedStream
+        {Child = StudentModel new_model}, Cmd.map StudentMsg cmd
+
+    | model, ClientInitialize ->
+        match model with
+        | {Child = StudentModel _} ->
+            Bridge.Bridge.Send(ClientIs(Student))
+            model, Cmd.none
+
+        | {Child = TutorModel _} ->
+            Bridge.Bridge.Send(ClientIs(Tutor))
+            model, Cmd.none
+
+        | {Child = TitanModel _} ->
+            Bridge.Bridge.Send(ClientIs(Titan))
+            model, Cmd.none
 
     | {Child = StudentModel model}, StudentMsg msg  ->
         let new_model, cmd = Student.Dashboard.update model msg

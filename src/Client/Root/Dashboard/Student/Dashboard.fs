@@ -3,6 +3,7 @@ module Student.Dashboard
 open Client.Shared
 open Domain
 open Elmish
+open ElmishBridgeModel
 open Elmish.Navigation
 open Fable.Import
 open Fable.React
@@ -27,7 +28,8 @@ type Msg =
     | ClickEnrol
     | ClickAccount
     | SignOut
-    | TenSecondsTimer
+    | TutorStartedStream
+    | TutorStoppedStream
     | GetEnrolledSchoolsSuccess of School list
     | ClassMsg of Class.Msg
     | EnrolledMsg of Enrolled.Msg
@@ -57,12 +59,14 @@ let init claims =
 
 let update model msg =
     match model, msg with
-    | {Child = ClassModel child}, TenSecondsTimer ->
-        let model', cmd = Student.Class.update child Student.Class.TenSecondsTimer
-        {model with Child = ClassModel model'}, Cmd.map ClassMsg cmd
 
-    | _, TenSecondsTimer ->
-        model, Cmd.none
+    | {Child = ClassModel child}, TutorStartedStream ->
+        let new_model, new_cmd = Student.Class.update child Student.Class.TutorStartedStream
+        {model with Child = ClassModel new_model}, Cmd.map ClassMsg new_cmd
+
+    | {Child = ClassModel child}, TutorStoppedStream ->
+        let new_model, new_cmd = Student.Class.update child Student.Class.TutorStoppedStream
+        {model with Child = ClassModel new_model}, Cmd.map ClassMsg new_cmd
 
     | {Child = ClassModel child}, ClassMsg msg ->
         Browser.Dom.console.info ("ClassMsg message")
@@ -74,7 +78,7 @@ let update model msg =
         let new_model, new_cmd = Student.Class.update child Student.Class.SignOut
         {model with Child = ClassModel new_model}, Cmd.batch [ Cmd.map ClassMsg new_cmd
                                                                Navigation.newUrl (Pages.to_path Pages.Home) ]
-
+        
     | _, ClassMsg _ ->
         Browser.Dom.console.error ("Received ClassMsg when child page is not ClassModel")
         model, Cmd.none

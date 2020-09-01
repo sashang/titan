@@ -3,6 +3,7 @@ module Class
 
 open Domain
 open Elmish
+open ElmishBridgeModel
 open Fable.React
 open Fable.React.Props
 open Fable.Import
@@ -12,10 +13,6 @@ open System
 open Client.Shared
 open Thoth.Json
 type TF = Thoth.Fetch.Fetch
-
-type LiveState =
-    | On
-    | Off
 
 type Model =
     { Students : Student list
@@ -31,6 +28,7 @@ type Msg =
     | GoLive
     | StopLive
     | SignOut
+    | StudentRequestLiveState
     | GetSessionSuccess of OpenTokInfo
     | GetSessionFailure of exn
 
@@ -83,17 +81,22 @@ let update (model : Model) (msg : Msg) =
         Browser.Dom.console.info (sprintf "Clicked GoLive...initialzing publisher with session id = %s" model.OTI.Value.SessionId)
         let publisher = OpenTokJSInterop.init_pub "publisher" "1280x720" model.Email
         OpenTokJSInterop.connect_session_with_pub session publisher model.OTI.Value.Token
+        Bridge.Bridge.Send(TutorGoLive)
         {model with Live = On; Session = Some session}, Cmd.none
 
     | _, GoLive ->
         Browser.Dom.console.error ("Bad state for GoLive message")
         model, Cmd.none
 
+    | model, StudentRequestLiveState ->
+        Bridge.Bridge.Send(TutorLiveState(model.Live))
+        model, Cmd.none
 
     | {Live = On }, StopLive ->
         match model.Session with
         | Some session ->
             OpenTokJSInterop.disconnect session
+            Bridge.Bridge.Send(TutorStopLive)
             {model with Live = Off}, Cmd.none
         | None ->
             model, Cmd.none

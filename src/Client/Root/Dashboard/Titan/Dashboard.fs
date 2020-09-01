@@ -2,6 +2,7 @@ module Titan.Dashboard
 
 open Client.Shared
 open Elmish
+open ElmishBridgeModel
 open Fable.Import
 open Fable.React
 open Fulma

@@ -3,6 +3,7 @@ module Tutor.Dashboard
 open Client.Shared
 open Domain
 open Elmish
+open ElmishBridgeModel
 open Fable.Import
 open Fable.React
 open Fulma
@@ -27,6 +28,7 @@ type Msg =
     | ClickStudents
     | ClickClassroom
     | ClickAccount
+    | StudentRequestLiveState
     | ClickEnrol
     | SignOut
 
@@ -102,6 +104,10 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
 
     | {Child = ClassModel child_model}, SignOut ->
         let new_state, new_cmd = Class.update child_model Class.SignOut
+        {model with Child = ClassModel new_state}, Cmd.map ClassMsg new_cmd
+
+    | {Child = ClassModel child_model}, StudentRequestLiveState ->
+        let new_state, new_cmd = Class.update child_model Class.StudentRequestLiveState
         {model with Child = ClassModel new_state}, Cmd.map ClassMsg new_cmd
 
     | _, ClassMsg _ ->

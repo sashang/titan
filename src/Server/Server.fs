@@ -5,7 +5,10 @@ open Database
 open Domain
 open FSharp.Control.Tasks
 open FluentMigrator.Runner
-open Giraffe
+//force Girrafe to be resolved from the global scope and not from
+//Elmish.Bridge which also contains Giraffe namespace.
+open Elmish.Bridge
+open global.Giraffe 
 open Giraffe.Serialization
 open Homeless
 open Microsoft.Extensions.DependencyInjection
@@ -28,6 +31,7 @@ open System.Security.Cryptography.X509Certificates
 open Thoth.Json.Net
 open Thoth.Json.Giraffe
 open TitanOpenTok
+open TutorSessionMap
 open TokBoxCB
 open UAParser
 
@@ -191,8 +195,8 @@ let titan_api =  router {
     post "/delete-user-titan" API.delete_user_titan
 
     //calback for tokbox to tell us about sessions starting/ending etc.
-    post "/tokbox-cb" TokBoxCB.callback
-    post "/tokbox-find-by-name" TokBoxCB.find_by_name
+    //post "/tokbox-cb" TokBoxCB.callback
+    //post "/tokbox-find-by-name" TokBoxCB.find_by_name
 }
 
 ///Define the pipeline that http request headers will see
@@ -217,12 +221,7 @@ let browser_router = router {
     forward "" defaultView //Use the default view
 }
 
-let web_app = router {
-    get "/check-session" check_session
-    forward "/sign-out" sign_out_router
-    forward "/api" titan_api
-    forward "" browser_router
-}
+
 
 
 let check_same_site (context : HttpContext) (options : CookieOptions) =
@@ -304,6 +303,16 @@ let configure_app (settings_file : string) (builder : IApplicationBuilder) =
     builder.UseAuthentication() |> ignore
     builder
 
+let web_app : HttpHandler = 
+    choose [
+        router {
+            get "/check-session" check_session
+            forward "/sign-out" sign_out_router
+            forward "/api" titan_api
+            forward "" browser_router
+        }
+        ElmishBridgeServer.server
+    ]
 
 let app settings_file (startup_options : RecStartupOptions) =
     application {
@@ -313,7 +322,8 @@ let app settings_file (startup_options : RecStartupOptions) =
         use_static publicPath
         service_config (configure_services startup_options)
         host_config (configure_host settings_file)
-        app_config (configure_app settings_file)
+        disable_diagnostics
+        app_config (configure_app settings_file >> Elmish.Bridge.Giraffe.useWebSockets)
 
         use_google_oauth_with_config (fun (opt:AspNetCoreGoogleOpts) ->
             opt.ClientSecret <- startup_options.GoogleSecret

@@ -2,6 +2,7 @@ module Client.Main
 
 open Browser
 open Elmish
+open Elmish.Bridge
 open Elmish.Navigation
 open Elmish.React
 open Pages
@@ -27,16 +28,10 @@ let url_sub appState : Cmd<_> =
         // listen to custom navigation events published by `Urls.navigate [ . . .  ]`
         window.addEventListener(nav_event, unbox on_change) ]  
 
-let timer dispatch =
-    window.setInterval(fun _ -> 
-        dispatch Root.TenSecondsTimer
-    , 10000) |> ignore
-
-let subscription _ = Cmd.ofSub timer
 
 Program.mkProgram Root.init Root.update Root.view
 |> Program.withSubscription url_sub //detect changes typed into the address bar
-|> Program.withSubscription subscription
+|> Program.withBridgeConfig (Bridge.endpoint ElmishBridgeModel.endpoint |> Bridge.withMapping Root.Remote)
 |> Program.toNavigable Pages.url_parser url_update
 #if DEBUG
 |> Program.withConsoleTrace
