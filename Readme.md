@@ -8,12 +8,13 @@ built to help tutors deliver lessons remotely and manage their classes. The
 provides admin tools for the teacher to manage their students, generate reports
 and manage assignments. It also provides video conferencing facilities.
 
-Tewtin is the customer facing name for the product. It encompasses all services that
-might be needed to deliver the entire service to the customer. This means that
-one can create another project, call it deimos, host it in git, and then place
-it under the umbrella name of Tewtin. For example if I was to create another 
-service that provided an API for taking payments, I might name the repository
-deimos and put all the code related to it there. 
+Tewtin is the business name for the product. It encompasses all services
+(includign titan) that might be needed to deliver the entire service to the
+customer. This means that one can create another project, call it deimos,
+host it in git, and then place it under the umbrella name of Tewtin. For
+example if I was to create another service that provided an API for taking
+payments, I might name the repository deimos and put all the code related to
+it there.
 
 ### In case of my passing away into the grave or wherever.
 
@@ -31,17 +32,23 @@ The following accounts are associated with the username `sashang@tewtin.com`
 * Azure
 * Google analytics
 * Google credentials (oauth secret and key)
-* Tokbox (api key and secret)
+* Vonage (api key and secret)
 * Godaddy
 
 
 If you want to keep running this then talk to https://compositional-it.com/.
 They're an IT consulting firm that will understand the tech stack used.
 
-## Requirements
-The SAFE stack for F# web development. Follow the instructions there to install
-EVERYTHING you need (.net sdk etc...)
-https://safe-stack.github.io/
+## Setting up the development environment
+Initially (2018) I used a linux host but now (2020) WSL 2 is out and you can run Linux very easily on Windows.
+
+- Install Windows 10
+- Install VSCode on Windows. You can run VSCode on Windows and it integrates with WSL2 via a plugin.
+- Install WSL 2 (https://docs.microsoft.com/en-us/windows/wsl/install-win10)
+- Install Ubuntu 20.04 (https://www.microsoft.com/en-au/p/ubuntu-2004-lts/9n6svws3rx71?rtc=1#activetab=pivot:overviewtab)
+- Install dotnet 5 (https://docs.microsoft.com/en-us/dotnet/core/install/linux-ubuntu). You need 5 for vscode and ionide to work.
+- Install dotnet 3.1 (https://docs.microsoft.com/en-us/dotnet/core/install/linux-ubuntu). 3.1 is to build titan.
+- Install the SAFE stack for F# web development. https://safe-stack.github.io/
 
 
 Do a git clone to get the source code.
@@ -59,11 +66,7 @@ yarn install bulma --dev
 
 I use Fish as my shell so all shell commands below assumes this.
 
-Ensure you have the dotnet sdk 3.1.100 installed. I've found that exporting the
-following variables will ensure a headache free existance:
-
 ```
-set -x DOTNET_ROOT $HOME/code/dotnet/3.1.100
 set -x ASPNETCORE_ENVIRONMENT Development
 ```
 
@@ -94,7 +97,7 @@ fake build --target run
 
 The command above should start both the client and the server and web browser
 should open pointing to the client side port. If not point the browser at
-`http://localhost:8080`. This is the client side interface, which is written
+`https://localhost:8080`. This is the client side interface, which is written
 in F# and transpiled to Javascript. It's implemented as a single page app
 which means that the Javascript for all the pages of this site is loaded when
 the user's browser makes the first request. Subsequent pages don't need to
@@ -112,14 +115,7 @@ on top of ASP.NET Core.
 It's easiest to use VSCode with the ionide plugin for fsharp installed. It
 gives good code completion (better than the Vim plugin).
 
-If you start it without the DOTNET_ROOT path set to the path to the SDK in
-use for development, it will find whatever SDK is on your system and it
-searches from a set of common paths. This SDK may not be in the one you
-intend to use, so best to start `code` with the right path set in the
-DOTNET_ROOT environment variable.
-
 ```
-set -x DOTNET_ROOT <path to sdk>
 code <path to source code>
 ```
 
