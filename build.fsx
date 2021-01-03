@@ -69,6 +69,8 @@ Target.create "InstallClient" (fun _ ->
 )
 
 Target.create "Build" (fun _ ->
+    runDotNet "tool restore" clientPath
+    runDotNet "paket restore" clientPath
     runDotNet "build" serverPath
     runTool yarnTool "webpack-cli -p" __SOURCE_DIRECTORY__
 )

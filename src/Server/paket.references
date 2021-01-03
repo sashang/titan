@@ -15,3 +15,5 @@ OpenTokCore
 Microsoft.AspNetCore.Authentication.Google
 Elmish.Bridge.Giraffe
 UAParser
+Microsoft.AspNetCore.Authentication.JwtBearer
+Microsoft.AspNetCore.Authentication.OpenIdConnect
