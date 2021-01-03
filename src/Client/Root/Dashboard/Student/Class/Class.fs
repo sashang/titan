@@ -24,7 +24,6 @@ type Msg =
     | CheckTutorIsLive
     | SignOut
     | GetSessionSuccess of OpenTokInfo
-    | TokBoxFindByNameSuccess of bool
     | Failure of exn
     | StopLive
 
@@ -38,17 +37,6 @@ type Model =
       Error : APIError option}
 
 exception GetSessionEx of APIError
-
-let private tokbox_find_by_name (tutor_email : EmailRequest) = promise {
-    let request = make_post 1 tutor_email
-    let decoder = Decode.Auto.generateDecoder<bool>()
-    let! response = TF.tryFetchAs("/api/tokbox-find-by-name", decoder, request)
-    match response with
-    | Ok result ->
-        return result
-    | Error msg ->
-        return failwith ("Failed to call get find_by_name_result: " + msg)
-}
 
 let private get_live_session_id (tutor_email : EmailRequest) = promise {
     let request = make_post 1 tutor_email
@@ -135,8 +123,7 @@ let update (model : Model) (msg : Msg) =
     | {Session = Some session; Live = On}, StopLive ->
         Browser.Dom.console.info (sprintf "received StopLive for student at school %s" model.School.SchoolName)
         OpenTokJSInterop.disconnect session
-        //we need to check if the tutor is still live.
-        {model with Live = Off}, Cmd.OfPromise.either tokbox_find_by_name {Email = model.School.Email} TokBoxFindByNameSuccess Failure
+        {model with Live = Off}, Cmd.none
 
     | {Session = Some session}, SignOut ->
         //we need to process the signout click in order to stop the opentok stuff.
