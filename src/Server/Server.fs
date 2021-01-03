@@ -17,6 +17,7 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Configuration
+open Microsoft.Extensions.Hosting
 open Microsoft.IdentityModel.Tokens
 open Microsoft.AspNetCore.Authentication
 open Microsoft.AspNetCore.Authentication.JwtBearer
@@ -321,7 +322,7 @@ let app settings_file (startup_options : RecStartupOptions) =
         memory_cache
         use_static publicPath
         service_config (configure_services startup_options)
-        host_config (configure_host settings_file)
+        webhost_config (configure_host settings_file)
         disable_diagnostics
         app_config (configure_app settings_file >> Elmish.Bridge.Giraffe.useWebSockets)
 

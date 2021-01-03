@@ -64,6 +64,7 @@ let update (model : Model) (msg : Msg) : Model * Cmd<Msg> =
         {Child = StudentModel new_model}, Cmd.map StudentMsg cmd
 
     | model, ClientInitialize ->
+        eprintfn "Received clientinitialize"
         match model with
         | {Child = StudentModel _} ->
             Bridge.Bridge.Send(ClientIs(Student))

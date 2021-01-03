@@ -9,6 +9,7 @@ open Microsoft.AspNetCore.Http
 let server_hub = ServerHub<Model, ServerMsg, ClientMsg>()
 
 let init dispatch () =
+    eprintfn "server init"
     dispatch ClientInitialize
     None, Cmd.none
     //model, Cmd.none
