@@ -2,7 +2,7 @@ source https://www.nuget.org/api/v2
 nuget jose-jwt
 clitool FluentMigrator.Console
 clitool dotnet-dev-certs
-version 5.241.2
+version 5.257.0
 
 group Dev
     source https://api.nuget.org/v3/index.json
@@ -24,6 +24,9 @@ group Server
     nuget FluentMigrator.Runner ~> 3
     nuget FSharp.Core
     nuget jose-jwt
+    nuget Microsoft.AspNetCore.Authentication.Google 3.1.10
+nuget Microsoft.AspNetCore.Authentication.JwtBearer 3.1.10
+nuget Microsoft.AspNetCore.Authentication.OpenIdConnect 3.1.10
     nuget OpenTokCore
     nuget Saturn
     nuget Fable.JsonConverter //fable.JsonConverter only works on the server. don't try it in the client.
