@@ -97,16 +97,25 @@ fake build --target run
 
 The command above should start both the client and the server and web browser
 should open pointing to the client side port. If not point the browser at
-`https://localhost:8080`. This is the client side interface, which is written
-in F# and transpiled to Javascript. It's implemented as a single page app
-which means that the Javascript for all the pages of this site is loaded when
-the user's browser makes the first request. Subsequent pages don't need to
-make requests to the server. Requests to the server are only made for specfic
-data that resides on the database or for authentication with other
-authentication providers like Google.
+`https://localhost:8080` or `https://localhost:8081`. This is the client side
+interface, which is written in F# and transpiled to Javascript. It's
+implemented as a single page app which means that the Javascript for all the
+pages of this site is loaded when the user's browser makes the first request.
+Subsequent pages don't need to make requests to the server. Requests to the
+server are only made for specfic data that resides on the database or for
+authentication with other authentication providers like Google.
 
 The server side code runs on port `http://localhost:8085`. This is all in F#
 on top of ASP.NET Core.
+
+### Certificates
+
+When running locally and connecting over https, Edge will complain about the
+certificate not being trusted. You can install the certificate in the windows
+trusted certificate store. Click the Lock icon in the address bar. Click
+'certificate' -> Details -> Copy to file. Then open the control panel, open
+Administrative tools -> Manage Certificates and add the certificate you saved
+under Trusted Root Certificate Authorities -> Certificates.
 
 ## Development
 
