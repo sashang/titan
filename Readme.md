@@ -48,6 +48,7 @@ Initially (2018) I used a linux host but now (2020) WSL 2 is out and you can run
 - Install Ubuntu 20.04 (https://www.microsoft.com/en-au/p/ubuntu-2004-lts/9n6svws3rx71?rtc=1#activetab=pivot:overviewtab)
 - Install dotnet 5 (https://docs.microsoft.com/en-us/dotnet/core/install/linux-ubuntu). You need 5 for vscode and ionide to work.
 - Install dotnet 3.1 (https://docs.microsoft.com/en-us/dotnet/core/install/linux-ubuntu). 3.1 is to build titan.
+- Install Docker Desktop (https://docs.docker.com/docker-for-windows/wsl/)
 - Install the SAFE stack for F# web development. https://safe-stack.github.io/
 
 
