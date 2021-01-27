@@ -415,7 +415,7 @@ string the +production database+. So when developing locally *do not* use
 appsettings.json. Use appsetting.Development.json instead.
 
 ```
-source <path to .net sdk>
+source <path to .net sdk> #if not in default path
 set -e ASPNETCORE_ENVIRONMENT
 fake build --target Docker
 ```
@@ -427,6 +427,10 @@ docker run --rm -it --net=host  sashang/titan
 
 If it's ok then push to dockerhub
 ```
+docker login
+.
+.
+.
 docker push sashang/titan
 ```
 
