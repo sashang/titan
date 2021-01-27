@@ -22,8 +22,8 @@ type Model =
       Error : APIError option}
 
 
-exception GetAllStudentsEx of APIError
-exception DismissStudentEx of APIError
+exception GetAllStudentsException of APIError
+exception DismissStudentException of APIError
 
 type Msg =
     | LoadStudentsSuccess of Student list
@@ -38,7 +38,7 @@ let dismiss_student (student : DismissStudentRequest) = promise {
     let request = make_post 1 student
     let decoder = Decode.Auto.generateDecoder<APIError option>()
     let! response = TF.tryFetchAs("/api/dismiss-student", decoder, request)
-    return map_api_error_result response DismissStudentEx
+    return map_api_error_result response DismissStudentException
 }
 
 let get_all_students () = promise {
@@ -49,11 +49,11 @@ let get_all_students () = promise {
         match result.Error with
         | Some error ->
             Browser.Dom.console.error ("get_all_students: " + (List.head error.Messages))
-            return (raise (GetAllStudentsEx error))
+            return (raise (GetAllStudentsException error))
         | None ->
             return result.Students
     | Error e ->
-        return raise (GetAllStudentsEx (APIError.init [APICode.Fetch] [e]))
+        return raise (GetAllStudentsException (APIError.init [APICode.Fetch] [e]))
 }
 
 let init () =
@@ -69,7 +69,7 @@ let update (model : Model) (msg : Msg) =
         {model with LoadStudentsState = Loaded; Students = students}, Cmd.none
     | LoadStudentsFailure e ->
         match e with 
-        | :? GetAllStudentsEx as ex ->
+        | :? GetAllStudentsException as ex ->
             Browser.Dom.console.warn "Received GetAllStudentsEx"
             { model with Error = Some ex.Data0 }, Cmd.none
         | e ->
@@ -87,7 +87,7 @@ let update (model : Model) (msg : Msg) =
 
     | DismissStudentFailure e ->
         match e with 
-        | :? DismissStudentEx as ex ->
+        | :? DismissStudentException as ex ->
             Browser.Dom.console.warn "Received DismissStudentEx"
             { model with Error = Some ex.Data0 }, Cmd.none
         | e ->
