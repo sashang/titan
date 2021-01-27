@@ -33,23 +33,23 @@ let update dispatch msg model =
 
     //tutor started their live stream
     | TutorGoLive ->
-        server_hub.SendClientIf (fun x -> is_student x) ClientTutorGoLive
+        server_hub.SendClientIf is_student ClientTutorGoLive
         model, Cmd.none
 
     //tutor stopped their live stream
     | TutorStopLive ->
-        server_hub.SendClientIf (fun x -> is_student x) ClientTutorStopLive
+        server_hub.SendClientIf is_student ClientTutorStopLive
         model, Cmd.none
     
     //a student wants to know if the tutor has started.
     | StudentRequestLiveState ->
-        server_hub.SendClientIf (fun x -> is_tutor x) ClientStudentRequestLiveState
+        server_hub.SendClientIf is_tutor ClientStudentRequestLiveState
         model, Cmd.none
 
     | TutorLiveState state ->
         match state with
-        | On -> server_hub.SendClientIf (fun x -> is_student x) ClientTutorGoLive
-        | Off -> server_hub.SendClientIf (fun x -> is_student x) ClientTutorStopLive
+        | On -> server_hub.SendClientIf is_student ClientTutorGoLive
+        | Off -> server_hub.SendClientIf is_student ClientTutorStopLive
         model, Cmd.none
 
 let endpoint = "/socket"
