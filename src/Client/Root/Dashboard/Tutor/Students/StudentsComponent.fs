@@ -17,6 +17,7 @@ open Client.Shared
 
 type Model =
     { Students : Domain.Student list
+      Filtered : Domain.Student list
       LoadStudentsState : LoadingState
       //result of interaction with the api
       Error : APIError option}
@@ -33,6 +34,7 @@ type Msg =
     | DismissStudent of Student
     | DismissStudentSuccess of unit
     | DismissStudentFailure of exn
+    | FilterOnChange of string
 
 let dismiss_student (student : DismissStudentRequest) = promise {
     let request = make_post 1 student
@@ -57,7 +59,7 @@ let get_all_students () = promise {
 }
 
 let init () =
-    { LoadStudentsState = Loading; Students = [ ]; Error = None },
+    { LoadStudentsState = Loading; Students = [ ]; Filtered = []; Error = None },
     Cmd.OfPromise.either get_all_students () LoadStudentsSuccess LoadStudentsFailure
 
 let update (model : Model) (msg : Msg) =
@@ -66,7 +68,7 @@ let update (model : Model) (msg : Msg) =
         model, Cmd.OfPromise.either get_all_students () LoadStudentsSuccess LoadStudentsFailure
         
     | LoadStudentsSuccess students ->
-        {model with LoadStudentsState = Loaded; Students = students}, Cmd.none
+        {model with LoadStudentsState = Loaded; Students = students; Filtered = students}, Cmd.none
     | LoadStudentsFailure e ->
         match e with 
         | :? GetAllStudentsException as ex ->
@@ -93,6 +95,11 @@ let update (model : Model) (msg : Msg) =
         | e ->
             Browser.Dom.console.warn ("Received general exception: " + e.Message)
             model, Cmd.none
+
+    | FilterOnChange text ->
+        let filtered = model.Students |> List.filter (fun x -> x.FirstName.ToUpper().StartsWith(text.ToUpper()) || x.LastName.ToUpper().StartsWith(text.ToUpper()))
+        {model with Filtered = filtered}, Cmd.none
+
 
 
 let private card_footer (student : Student) (dispatch : Msg -> unit) =
@@ -154,7 +161,7 @@ let private render_all_students (model : Model) (dispatch : Msg->unit) =
     | [] ->
         nothing
     | _ ->
-        render_2_students model dispatch model.Students
+        render_2_students model dispatch model.Filtered
     //    Columns.columns [ ] [ for x in model.Students do
     //                             yield single_student model dispatch x] 
 
@@ -165,11 +172,24 @@ let private students_level =
                                                Modifier.TextSize (Screen.All, TextSize.Is5) ]
                             Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "students" ] ] ]
 
+let private filter dispatch =
+    form [] [
+        Field.div [] [
+            Label.label [ ] [ str "Filter" ]
+            Control.div [ ] [ 
+                Input.text [Input.Props [ Props.OnChange (fun ev -> dispatch (FilterOnChange ev.Value)) ]
+                            Input.Placeholder "Ex: Govender"]
+            ]
+        ]
+    ]
+
 let view (model : Model) (dispatch : Msg -> unit) =
-     Box.box' [ ] 
-        [ yield (match model.LoadStudentsState with
-                   | Loaded -> div [ ] [
-                                  students_level
-                                  render_all_students model dispatch
-                               ]
-                   | Loading -> Client.Style.loading_view) ]
+    Container.container [ Container.IsFluid ] [
+        filter dispatch
+        Box.box' [ ] 
+            [ yield (match model.LoadStudentsState with
+                       | Loaded -> div [ ] [
+                                      students_level
+                                      render_all_students model dispatch
+                                   ]
+                       | Loading -> Client.Style.loading_view) ] ]
