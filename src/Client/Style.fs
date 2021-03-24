@@ -67,7 +67,7 @@ let loading_view =
 
 let onEnter msg dispatch =
     function
-    | (ev:KeyboardEvent) when ev.keyCode = ENTER_KEY ->
+    | (ev:KeyboardEvent) when ev.code = "Enter" ->
         ev.preventDefault()
         dispatch msg
     | _ -> ()

@@ -449,11 +449,13 @@ type Database(c : string) =
                 conn.Open()
                 let cmd = """insert into "User" ("FirstName","LastName","Email","Phone") VALUES (@FirstName, @LastName, @Email, @Phone)"""
                 let m = (Map ["Email", email; "FirstName", first; "LastName", last; "Phone", ""])
+                //insert the student and approve them
                 if dapper_map_param_exec cmd m conn = 1 then  
                     let cmd = """insert into "TitanClaims" ("UserId","Type","Value") VALUES
-                        ((select "Id" from "User" where "Email" = @Email), 'IsStudent', 'true')"""
+                        ((select "Id" from "User" where "Email" = @Email), 'IsStudent', 'true'),
+                        ((select "Id" from "User" where "Email" = @Email), 'IsApproved', 'true')"""
                     let m = (Map ["Email", email])
-                    if dapper_map_param_exec cmd m conn = 1 then  
+                    if dapper_map_param_exec cmd m conn = 2 then  
                         return Ok ()
                     else
                         return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")

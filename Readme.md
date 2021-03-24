@@ -74,14 +74,14 @@ set -x ASPNETCORE_ENVIRONMENT Development
 Then cd into the directory you downloaded this source code and run:
 
 ```
-fake build
+dotnet fake build
 ```
 
 This will build it. If there are any errors fix them and then try again.
 
 Once errors are fixed, run it:
 ```
-fake build --target run
+dotnet fake build --target run
 ```
 
 ### Note about .NET SDK and runtime versions
