@@ -1,7 +1,7 @@
 /// I have no idea where these functions should go...
 module Homeless
 
-
+// record that maps to the contents of appsettings.json
 type RecStartupOptions = {
     JWTSecret : string 
     JWTIssuer : string 
@@ -12,6 +12,7 @@ type RecStartupOptions = {
     AzureMapsClientId : string
     AzureMapsPrimaryKey : string
     OpenTokKey : int
+    SendGridAPIKey : string
 }
 //make a list that breaks the original list into one that contains x elem list
 //of the original value

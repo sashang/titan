@@ -7,11 +7,13 @@ open FSharp.Control.Tasks.ContextInsensitive
 open Giraffe
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
+open SendGridAPI
+open SendGrid
+open SendGrid.Helpers.Mail
 open System.Security.Claims
 open System.Net.Mail
 open System
 open TitanOpenTok
-
 
 let get_azure_maps_keys (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
@@ -196,6 +198,47 @@ let register_tutor (next : HttpFunc) (ctx : HttpContext) = task {
         return! ctx.WriteJsonAsync APIError.unauthorized
 }
 
+let sendEmailViaSendGrid (apiKey : string) (destination : string) (name : string) (topic : string) (msg : string) = task {
+    let client = SendGridClient(apiKey)
+    let from = EmailAddress("sashang@tewtin.com", "Sashan Govender")
+    let dest = EmailAddress(destination, name)
+    let email = MailHelper.CreateSingleEmail(from, dest, topic, msg, msg);
+    return! client.SendEmailAsync(email)
+}
+
+let send_email (email : string) (name : string) (topic : string) (msg : string) =
+    let server = "smtp-relay.gmail.com" // ConfigurationManager.AppSettings.["mailserver"]
+    let sender = "sashang@tewtin.com" // ConfigurationManager.AppSettings.["mailsender"]
+    let password = "1TrM3LiX*87D" // ConfigurationManager.AppSettings.["mailpassword"] |> my-decrypt
+    let port = 587
+    let mail_message = new MailMessage(sender, email, topic, "Hi " + name + ", <br/><br/>\r\n\r\n" + msg)
+    mail_message.IsBodyHtml <- true
+    let client = new SmtpClient(server, port)
+    client.EnableSsl <- true
+    client.Credentials <- System.Net.NetworkCredential(sender, password)
+    let observer (e : ComponentModel.AsyncCompletedEventArgs) = 
+        let msg = e.UserState :?> MailMessage
+        if e.Cancelled then
+            ("Mail message cancelled:\r\n" + msg.Subject) |> Console.WriteLine
+        if not (isNull e.Error) then
+            ("Sending mail failed for message:\r\n" + msg.Subject + 
+                ", reason:\r\n" + e.Error.ToString()) |> Console.WriteLine
+        if msg<>Unchecked.defaultof<MailMessage> then msg.Dispose()
+        if client<>Unchecked.defaultof<SmtpClient> then client.Dispose()
+    client.SendCompleted |> Observable.add(observer)
+(*     client.SendCompleted |> Observable.add(fun e -> 
+        let msg = e.UserState :?> MailMessage
+        if e.Cancelled then
+            ("Mail message cancelled:\r\n" + msg.Subject) |> Console.WriteLine
+        if not (isNull e.Error) then
+            ("Sending mail failed for message:\r\n" + msg.Subject + 
+                ", reason:\r\n" + e.Error.ToString()) |> Console.WriteLine
+        if msg<>Unchecked.defaultof<MailMessage> then msg.Dispose()
+        if client<>Unchecked.defaultof<SmtpClient> then client.Dispose()
+    ) *)
+    // Maybe some System.Threading.Thread.Sleep to prevent mail-server hammering
+    client.SendAsync(mail_message, mail_message)
+
 let register_student (next : HttpFunc) (ctx : HttpContext) = task {
     if ctx.User.Identity.IsAuthenticated then
         let! registration = ctx.BindJsonAsync<Domain.StudentRegister>()
@@ -204,6 +247,13 @@ let register_student (next : HttpFunc) (ctx : HttpContext) = task {
         let! result = db.insert_student registration.FirstName registration.LastName registration.Email 
         match result with
         | Ok () ->
+            let email_message = "A student has registered\r\n
+                                 Name: " + registration.FirstName + " " + registration.LastName + "\r\n" +
+                                 "Email: " + registration.Email
+            //send_email "sashang@tewtin.com" "Sashan" "Student Registered" email_message
+            let sendGridAPI = ctx.GetService<ISendGridAPI>()
+            let apiKey = sendGridAPI.getKey
+            let! response = sendEmailViaSendGrid apiKey "sashang@tewtin.com" "Sashan" "New student registered" email_message
             return! ctx.WriteJsonAsync None
         | Error msg ->
             logger.LogWarning msg

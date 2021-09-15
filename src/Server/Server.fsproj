@@ -28,6 +28,7 @@
     <Compile Include="TitanOpenTok.fs" />
     <Compile Include="Database.fs" />
     <Compile Include="AzureMaps.fs" />
+    <Compile Include="SendGridAPI.fs" />
     <Compile Include="API.fs" />
     <Compile Include="ElmishBridgeServer.fs" />
     <Compile Include="Server.fs" />

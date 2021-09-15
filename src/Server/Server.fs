@@ -23,6 +23,7 @@ open Microsoft.AspNetCore.Authentication
 open Microsoft.AspNetCore.Authentication.JwtBearer
 open Saturn
 open Saturn.Auth
+open SendGridAPI
 open System
 open System.IdentityModel.Tokens.Jwt
 open System.IO
@@ -244,6 +245,7 @@ let configure_services startup_options (services:IServiceCollection) =
     services.AddSingleton<IDatabase>(Database(startup_options.ConnectionString)) |> ignore
     services.AddSingleton<ITitanOpenTok>(TitanOpenTok(startup_options.OpenTokKey, startup_options.OpenTokSecret)) |> ignore
     services.AddSingleton<IAzureMaps>(AzureMaps(startup_options.AzureMapsClientId, startup_options.AzureMapsPrimaryKey)) |> ignore
+    services.AddSingleton<ISendGridAPI>(SendGridAPI(startup_options.SendGridAPIKey)) |> ignore
 
     services.AddFluentMigratorCore()
             .ConfigureRunner(fun rb ->

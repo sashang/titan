@@ -17,3 +17,4 @@ Elmish.Bridge.Giraffe
 UAParser
 Microsoft.AspNetCore.Authentication.JwtBearer
 Microsoft.AspNetCore.Authentication.OpenIdConnect
+SendGrid

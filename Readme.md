@@ -417,7 +417,7 @@ appsettings.json. Use appsetting.Development.json instead.
 ```
 source <path to .net sdk> #if not in default path
 set -e ASPNETCORE_ENVIRONMENT
-fake build --target Docker
+dotnet fake build --target Docker
 ```
 
 Test with docker locally
