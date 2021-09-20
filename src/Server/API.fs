@@ -257,6 +257,10 @@ let register_student (next : HttpFunc) (ctx : HttpContext) = task {
             if response.IsSuccessStatusCode then
                 return! ctx.WriteJsonAsync None
             else
+<<<<<<< HEAD
+=======
+                logger.LogError (response.Body.ToString())
+>>>>>>> Handle error if sendgrid fails.
                 return! ctx.WriteJsonAsync (APIError.sendGrid (response.Body.ToString()))
         | Error msg ->
             logger.LogWarning msg
