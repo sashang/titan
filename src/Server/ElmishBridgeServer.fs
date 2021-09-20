@@ -6,7 +6,7 @@ open ElmishBridgeModel
 open global.Giraffe 
 open Microsoft.AspNetCore.Http
 
-let server_hub = ServerHub<Model, ServerMsg, ClientMsg>()
+let serverHub = ServerHub<Model, ServerMsg, ClientMsg>()
 
 let init dispatch () =
     eprintfn "server init"
@@ -15,13 +15,13 @@ let init dispatch () =
     //model, Cmd.none
 
 let update dispatch msg model =
-    let is_student (model : Model) : bool =
+    let isStudent (model : Model) : bool =
         match model with
         | Some Student -> 
             true
         | _ -> false
 
-    let is_tutor (model : Model) : bool =
+    let isTutor (model : Model) : bool =
         match model with
         | Some Tutor ->
             true
@@ -33,23 +33,23 @@ let update dispatch msg model =
 
     //tutor started their live stream
     | TutorGoLive ->
-        server_hub.SendClientIf is_student ClientTutorGoLive
+        serverHub.SendClientIf isStudent ClientTutorGoLive
         model, Cmd.none
 
     //tutor stopped their live stream
     | TutorStopLive ->
-        server_hub.SendClientIf is_student ClientTutorStopLive
+        serverHub.SendClientIf isStudent ClientTutorStopLive
         model, Cmd.none
     
     //a student wants to know if the tutor has started.
     | StudentRequestLiveState ->
-        server_hub.SendClientIf is_tutor ClientStudentRequestLiveState
+        serverHub.SendClientIf isTutor ClientStudentRequestLiveState
         model, Cmd.none
 
     | TutorLiveState state ->
         match state with
-        | On -> server_hub.SendClientIf is_student ClientTutorGoLive
-        | Off -> server_hub.SendClientIf is_student ClientTutorStopLive
+        | On -> serverHub.SendClientIf isStudent ClientTutorGoLive
+        | Off -> serverHub.SendClientIf isStudent ClientTutorStopLive
         model, Cmd.none
 
 let endpoint = "/socket"
@@ -57,5 +57,5 @@ let endpoint = "/socket"
 let server : HttpFunc -> HttpContext -> HttpFuncResult=
     Bridge.mkServer endpoint init update
     |> Bridge.withConsoleTrace
-    |> Bridge.withServerHub server_hub
+    |> Bridge.withServerHub serverHub
     |> Bridge.run Giraffe.server
