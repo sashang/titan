@@ -247,14 +247,17 @@ let register_student (next : HttpFunc) (ctx : HttpContext) = task {
         let! result = db.insert_student registration.FirstName registration.LastName registration.Email 
         match result with
         | Ok () ->
-            let email_message = "A student has registered\r\n
-                                 Name: " + registration.FirstName + " " + registration.LastName + "\r\n" +
+            let email_message = "A student has registered\n
+                                 Name: " + registration.FirstName + " " + registration.LastName + "\n" +
                                  "Email: " + registration.Email
             //send_email "sashang@tewtin.com" "Sashan" "Student Registered" email_message
             let sendGridAPI = ctx.GetService<ISendGridAPI>()
             let apiKey = sendGridAPI.getKey
             let! response = sendEmailViaSendGrid apiKey "sashang@tewtin.com" "Sashan" "New student registered" email_message
-            return! ctx.WriteJsonAsync None
+            if response.IsSuccessStatusCode then
+                return! ctx.WriteJsonAsync None
+            else
+                return! ctx.WriteJsonAsync (APIError.sendGrid (response.Body.ToString()))
         | Error msg ->
             logger.LogWarning msg
             //clean up this error

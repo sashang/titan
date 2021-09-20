@@ -15,6 +15,7 @@ open Thoth.Json.Net
 type APICode =
     | Failure
     | Database
+    | SendGrid //SendGrid error. SendGrid is used for sending emails.
     | Fetch
     | Unauthorized
     | SchoolName
@@ -37,6 +38,8 @@ type APIError =
         {Codes = [APICode.Unauthorized]; Messages = ["You are not authorized"]}
     static member db msg =
         {Codes = [APICode.Database]; Messages = [msg]}
+    static member sendGrid msg =
+        {Codes = [APICode.SendGrid]; Messages = [msg]}
 
     static member titan_open_tok msg =
         {Codes = [APICode.TitanOpenTok]; Messages = [msg]}
