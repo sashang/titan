@@ -12,10 +12,12 @@ type PageType =
     | DashboardTutor
     | DashboardStudent
     | DashboardTitan
+    | Root
 
 
 let to_path =
     function
+    | PageType.Root -> "#"
     | PageType.Home -> "#home"
     | PageType.Login -> "#login"
     | PageType.FAQ -> "#faq"
@@ -31,6 +33,7 @@ let page_parser : Parser<PageType -> _,_> =
     oneOf
         [ map PageType.Home (s "home")
           map PageType.Login (s "login")
+          map PageType.Root (s "")
           map PageType.FAQ (s "faq")
           map PageType.PrivacyPolicy (s "privacy-policy")
           map PageType.Terms (s "terms")

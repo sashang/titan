@@ -30,6 +30,8 @@ type Msg =
     | SetFirstName of string
     | SetLastName of string
     | SetSchoolName of string
+    | RegisterStudentSucceeded of unit
+    | UpdateClaims
     | Success of unit
     | Failure of exn
 
@@ -63,7 +65,7 @@ type Model =
 
 exception RegisterEx of APIError
 
-let submit_tutor (tutor : TutorRegister) = promise {
+let private submit_tutor (tutor : TutorRegister) = promise {
     if not tutor.is_valid then
         return (raise (RegisterEx (APIError.init [APICode.SchoolName] ["Name cannot be blank"])))
     else
@@ -90,7 +92,7 @@ let init active claims =
 
 
 
-let inner_content model dispatch = function
+let private inner_content model dispatch = function
     | TutorForm form ->
         Box.box' [ ]
             [ yield! input_field  model.Error APICode.FirstName
@@ -189,7 +191,13 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
        Cmd.OfPromise.either submit_student 
           {StudentRegister.FirstName = student_model.FirstName
            StudentRegister.LastName = student_model.LastName
-           StudentRegister.Email = student_model.Email } Success Failure
+           StudentRegister.Email = student_model.Email } RegisterStudentSucceeded Failure
+
+    | model, RegisterStudentSucceeded _ ->
+        {model with Active = false
+                    SubForm = None},
+        Cmd.batch [ Navigation.newUrl (Pages.to_path Pages.Root)
+                    Cmd.ofMsg UpdateClaims ]
 
     | model, Success _ ->
         {model with Active = false

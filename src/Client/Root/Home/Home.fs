@@ -37,7 +37,7 @@ type Model =
     static member init = 
         { Email = ""; BetaRegistrationResult = None; Claims = None; Child = None}
 
-exception RegisterException of BetaRegistrationResult
+exception RegisterEx of BetaRegistrationResult
 //what the user sees 1st time
 let private register_punter (punter : Domain.BetaRegistration) = promise {
     let body = Encode.Auto.toString (1, punter)
@@ -54,7 +54,7 @@ let private register_punter (punter : Domain.BetaRegistration) = promise {
         return ()
     | Error msg ->
         let error = {Codes = [BetaRegistrationCode.Failure]; Messages = [msg]}
-        return (raise (RegisterException error))
+        return (raise (RegisterEx error))
 }
 
 let init () = Model.init
@@ -71,7 +71,7 @@ let update  (model : Model) (msg : Msg) (claims : TitanClaim option): Model*Cmd<
         {model with BetaRegistrationResult = None}, Cmd.none
     | _, RegisterFailure err, _ ->
         match err with
-        | :? RegisterException as login_ex -> //TODO: check this with someone who knows more. the syntax is weird, and Data0??
+        | :? RegisterEx as login_ex -> //TODO: check this with someone who knows more. the syntax is weird, and Data0??
             { model with BetaRegistrationResult = Some login_ex.Data0 }, Cmd.none
         | _ ->
             { model with BetaRegistrationResult = None }, Cmd.none

@@ -36,6 +36,7 @@ type RootMsg =
     | CheckSessionFailure of exn
     | SignOutMsg of SignOut.Msg
     | DashboardRouterMsg of DashboardRouter.Msg
+    | FirstTimeMsg of FirstTime.Msg
     | UrlUpdatedMsg of Pages.PageType
     | HomeMsg of Home.Msg
     | PrivacyPolicyMsg of PrivacyPolicy.Msg
@@ -369,8 +370,17 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         {state with Session = None}, Cmd.none 
 
     | HomeMsg home_msg, {Child = HomeModel model} ->
-        let new_model, cmd = Home.update model home_msg model.Claims
-        {state with Child = HomeModel new_model}, Cmd.map HomeMsg cmd
+        match home_msg with
+        //trap the successful registration of a new student.
+        | Home.FirstTimeMsg(FirstTime.RegisterStudentSucceeded ()) ->
+            let new_model, cmd = Home.update model home_msg model.Claims
+            {state with Child = HomeModel new_model},
+
+            Cmd.batch [ Cmd.map HomeMsg cmd
+                        Cmd.OfPromise.either check_session () CheckSessionSuccess CheckSessionFailure ]
+        | _ ->
+            let new_model, cmd = Home.update model home_msg model.Claims
+            {state with Child = HomeModel new_model}, Cmd.map HomeMsg cmd
 
     | _, {Child = HomeModel model} ->
         Browser.Dom.console.error "Received unknown message but child is HomeModel"
