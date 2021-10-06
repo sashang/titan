@@ -1,5 +1,6 @@
 
 var sub_count_for_tutor = 0;
+var max_participants = 20;
 var students = [];
 
 const initLayoutContainer = require('opentok-layout-js');
@@ -109,7 +110,7 @@ export function disconnect(session) {
 
 export function on_streamcreate_subscribe(session, w, h) {
     session.on('streamCreated', function (event) {
-        if (sub_count_for_tutor < 14 && !find_email(event.stream.name)) {
+        if (sub_count_for_tutor < max_participants && !find_email(event.stream.name)) {
             console.log("adding student " + event.stream.name);
             var sub = session.subscribe(event.stream, 'layoutContainer', {
                 insertMode: 'append',
