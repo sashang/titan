@@ -374,8 +374,8 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         //trap the successful registration of a new student.
         | Home.FirstTimeMsg(FirstTime.RegisterStudentSucceeded ()) ->
             let new_model, cmd = Home.update model home_msg model.Claims
-            {state with Child = HomeModel new_model},
 
+            {state with Child = HomeModel new_model},
             Cmd.batch [ Cmd.map HomeMsg cmd
                         Cmd.OfPromise.either check_session () CheckSessionSuccess CheckSessionFailure ]
         | _ ->
