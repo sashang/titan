@@ -2,7 +2,7 @@ module TitanOpenTok
 
 open OpenTokCore
 open Domain
-open FSharp.Control.Tasks.ContextInsensitive
+open FSharp.Control.Tasks
 open System.Collections.Generic
 open System
 open System.Threading.Tasks
@@ -10,7 +10,7 @@ open System.Threading.Tasks
 type ITitanOpenTok =
 
     abstract member get_token : string -> Task<Result<OpenTokInfo, string>>
-    
+
 
 type TitanOpenTok(key:int, secret:string) =
     let tutor_email_to_session = new Dictionary<string, OpenTokCore.Session>()
@@ -34,4 +34,4 @@ type TitanOpenTok(key:int, secret:string) =
                 return Ok {SessionId = session.Id; Token = token; Key = session.ApiKey.ToString() }
         }
 
-            
+

@@ -1,7 +1,6 @@
 module TutorSessionMap
 
 open Domain
-open FSharp.Control.Tasks.ContextInsensitive
 open Elmish.Bridge
 open ElmishBridgeModel
 open System.Collections.Generic
@@ -22,7 +21,7 @@ type ISessionMap =
 //the parantheses after the class name indicate this.
 type TutorSessionMap(add_session) =
     let dict_name_to_session = new Dictionary<Name, SessionId>()
-    let eh_add_session = add_session 
+    let eh_add_session = add_session
     interface ISessionMap with
         member this.add_session name id =
             dict_name_to_session.Add(name, id)

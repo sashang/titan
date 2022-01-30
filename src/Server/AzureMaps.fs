@@ -1,13 +1,6 @@
 module AzureMaps
 
 open Domain
-open FSharp.Control.Tasks.ContextInsensitive
-open Giraffe
-open Microsoft.AspNetCore.Http
-open Microsoft.Extensions.Logging
-open System.Collections.Generic
-open System
-open System.Threading.Tasks
 
 
 type IAzureMaps =

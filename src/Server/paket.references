@@ -4,3 +4,15 @@ FSharp.Core
 Thoth.Json
 FluentMigrator
 Thoth.Json.Net
+Fable.JsonConverter
+Elmish.Bridge.Giraffe
+OpenTokCore
+Dapper
+System.Data.SqlClient
+SendGrid
+FluentMigrator.Runner.Postgres
+UAParser
+FluentMigrator.Runner
+Microsoft.AspNetCore.Authentication
+Microsoft.AspNetCore.Authentication.Google
+Saturn.Extensions.Authorization

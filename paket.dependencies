@@ -2,15 +2,27 @@ source https://api.nuget.org/v3/index.json
 
 storage: none
 framework: net6.0, net5.0, netstandard2.0, netstandard2.1
+nuget Dapper
+nuget Elmish.Bridge.Giraffe
 nuget Fable.Core
 nuget Fable.Elmish
 nuget Fable.Elmish.Debugger
 nuget Fable.Elmish.HMR
 nuget Fable.Elmish.React
+nuget Fable.JsonConverter
 nuget Fable.Remoting.Client
 nuget Feliz
 nuget Feliz.Bulma
 nuget FluentMigrator
+nuget FluentMigrator.Runner
+nuget FluentMigrator.Runner.Postgres
 nuget Fulma
+nuget Microsoft.AspNetCore.Authentication
+nuget Microsoft.AspNetCore.Authentication.Google
+nuget OpenTokCore
 nuget Saturn
+nuget Saturn.Extensions.Authorization
+nuget SendGrid
+nuget System.Data.SqlClient
 nuget Thoth.Json.Net
+nuget UAParser

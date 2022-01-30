@@ -1,7 +1,7 @@
 module TokBoxCB
 
 open Domain
-open FSharp.Control.Tasks.ContextInsensitive
+open FSharp.Control.Tasks
 open Giraffe
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
@@ -14,7 +14,7 @@ type TokBoxConnection =
     { Id : string
       CreatedAt : uint64
       Data : string }
-    
+
     static member init =
         {Id = ""; CreatedAt = 0UL; Data = "" }
 
@@ -45,7 +45,7 @@ type TokBoxSession =
     { SessionId : string
       ProjectId : string
       Event : string
-      Timestamp : uint64 
+      Timestamp : uint64
       Connection : TokBoxConnection option
       Stream : TokBoxStream option }
 
@@ -68,7 +68,7 @@ let callback (next : HttpFunc) (ctx : HttpContext) = task {
     let! body = ctx.ReadBodyFromRequestAsync()
     //we always have to return success to tokbox when we handle a callback regardless
     //of the result of the handling of the callback. If we don't return success
-    //they increment a counter on their end and stop calling back once that counter 
+    //they increment a counter on their end and stop calling back once that counter
     //reaches a limit.
     ctx.SetStatusCode 200
     let session_map = ctx.GetService<ISessionMap>()
@@ -98,7 +98,7 @@ let callback (next : HttpFunc) (ctx : HttpContext) = task {
             else
                 return! text "Ok" next ctx
 
-        | Error message -> 
+        | Error message ->
             logger.LogWarning ("Failed to decode tokbox callback json")
             return! text message next ctx
     with

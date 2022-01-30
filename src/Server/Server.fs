@@ -3,13 +3,13 @@ module Server
 open AzureMaps
 open Database
 open Domain
-open FSharp.Control.Tasks
+open FSharp.Control.TaskBuilder
 open FluentMigrator.Runner
+open FluentMigrator.Runner.Initialization
 //force Girrafe to be resolved from the global scope and not from
 //Elmish.Bridge which also contains Giraffe namespace.
 open Elmish.Bridge
 open global.Giraffe
-open Giraffe.Serialization
 open Homeless
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
@@ -31,7 +31,6 @@ open System.Net
 open System.Security.Claims
 open System.Security.Cryptography.X509Certificates
 open Thoth.Json.Net
-open Thoth.Json.Giraffe
 open TitanOpenTok
 open TutorSessionMap
 open TokBoxCB
@@ -239,9 +238,9 @@ let check_same_site (context : HttpContext) (options : CookieOptions) =
             options.Secure <- true
 
 let configure_services startup_options (services:IServiceCollection) =
-    let fableJsonSettings = Newtonsoft.Json.JsonSerializerSettings()
-    fableJsonSettings.Converters.Add(Fable.JsonConverter())
-    services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
+    //let fableJsonSettings = Newtonsoft.Json.JsonSerializerSettings()
+    //fableJsonSettings.Converters.Add(Fable.JsonConverter())
+    //services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer fableJsonSettings) |> ignore
     services.AddSingleton<IDatabase>(Database(startup_options.ConnectionString)) |> ignore
     services.AddSingleton<ITitanOpenTok>(TitanOpenTok(startup_options.OpenTokKey, startup_options.OpenTokSecret)) |> ignore
     services.AddSingleton<IAzureMaps>(AzureMaps(startup_options.AzureMapsClientId, startup_options.AzureMapsPrimaryKey)) |> ignore
@@ -327,22 +326,26 @@ let app settings_file (startup_options : RecStartupOptions) =
         webhost_config (configure_host settings_file)
         disable_diagnostics
         app_config (configure_app settings_file >> Elmish.Bridge.Giraffe.useWebSockets)
-
-        use_google_oauth_with_config (fun (opt:AspNetCoreGoogleOpts) ->
-            opt.ClientSecret <- startup_options.GoogleSecret
-            opt.ClientId <- startup_options.GoogleClientId
-            opt.CallbackPath <- PathString("/oauth_callback_google")
-            opt.UserInformationEndpoint <- "https://www.googleapis.com/oauth2/v2/userinfo"
-            opt.ClaimActions.Clear()
-            opt.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "id")
-            opt.ClaimActions.MapJsonKey(ClaimTypes.Name, "name")
-            opt.ClaimActions.MapJsonKey(ClaimTypes.GivenName, "given_name")
-            opt.ClaimActions.MapJsonKey(ClaimTypes.Surname, "family_name")
-            opt.ClaimActions.MapJsonKey("urn:google:profile", "link")
-            opt.ClaimActions.MapJsonKey(ClaimTypes.Email, "email"))
-            // opt. startup_options.GoogleClientId startup_options.GoogleSecret "/oauth_callback_google" ["language", "urn:google:language"]
         logging configure_logging
         use_gzip
+
+(*
+        use_google_oauth_with_config (
+            fun (opt:AspNetCoreGoogleOpts) ->
+                opt.ClientSecret <- startup_options.GoogleSecret
+                opt.ClientId <- startup_options.GoogleClientId
+                opt.CallbackPath <- PathString("/oauth_callback_google")
+                opt.UserInformationEndpoint <- "https://www.googleapis.com/oauth2/v2/userinfo"
+                opt.ClaimActions.Clear()
+                opt.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "id")
+                opt.ClaimActions.MapJsonKey(ClaimTypes.Name, "name")
+                opt.ClaimActions.MapJsonKey(ClaimTypes.GivenName, "given_name")
+                opt.ClaimActions.MapJsonKey(ClaimTypes.Surname, "family_name")
+                opt.ClaimActions.MapJsonKey("urn:google:profile", "link")
+                opt.ClaimActions.MapJsonKey(ClaimTypes.Email, "email")
+        )
+        *)
+            // opt. startup_options.GoogleClientId startup_options.GoogleSecret "/oauth_callback_google" ["language", "urn:google:language"]
     }
 
 let settings_file =

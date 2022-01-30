@@ -1,11 +1,9 @@
 /// Functions for managing the database.
 module Database
 
-
-
 open Dapper
 open Domain
-open FSharp.Control.Tasks.ContextInsensitive
+open FSharp.Control.Tasks
 open System.Data.SqlClient
 open System.Collections.Generic
 open System.Dynamic
@@ -14,10 +12,10 @@ open System.Threading.Tasks
 
 let private dapper_query<'Result> (query:string) (connection:SqlConnection) =
     connection.Query<'Result>(query)
-    
+
 let private dapper_param_query<'Result> (query:string) (param:obj) (connection:SqlConnection) : 'Result seq =
     connection.Query<'Result>(query, param)
-    
+
 let private dapper_map_param_query<'Result> (query:string) (param : Map<string,_>) (connection:SqlConnection) : 'Result seq =
     let expando = ExpandoObject()
     let dict = expando :> IDictionary<string,obj>
@@ -52,9 +50,9 @@ type IDatabase =
     abstract member update_school_by_user_id: Models.School -> Task<Result<bool, string>>
 
     abstract member school_from_user_id: string -> Task<Result<Models.School, string>>
-    
+
     abstract member school_from_email: string -> Task<Result<SchoolResponse, string>>
-    
+
     abstract member user_from_email: string -> Task<Result<Models.User, string>>
 
     ///register interested partys
@@ -62,8 +60,8 @@ type IDatabase =
 
     /// query to get all students for a tutor
     abstract member query_students : string -> Task<Result<Domain.Student list, string>>
-    
-    /// 
+
+    ///
     abstract member query_all_schools : Task<Result<Models.School list, string>>
 
     /// query to get all pending students
@@ -77,18 +75,18 @@ type IDatabase =
 
     /// delete pending for a tutor
     abstract member delete_pending_for_tutor : string -> string -> Task<Result<unit, string>>
-    
+
     /// update user given email
     abstract member update_user : string->string -> string -> Task<Result<unit, string>>
-    
+
     /// update school name given email
     abstract member update_school_name : string -> string -> Task<Result<unit, string>>
-    
+
     /// get list of school names and tutors
     abstract member get_school_view : Task<Result<School list, string>>
-    
+
     abstract member insert_enrol_request : string -> string -> Task<Result<unit, string>>
-    
+
     //approve enrol request. Means creating a user in the school table that the user wants to
     //enrol with, then removing the user from the pending table
     abstract member approve_enrol_request : string -> string -> Task<Result<unit, string>>
@@ -96,7 +94,7 @@ type IDatabase =
     abstract member update_user_claim : string -> string -> string -> Task<Result<unit, string>>
 
     abstract member insert_user_claim : string -> string -> string -> Task<Result<unit, string>>
-    
+
     abstract member get_enrolled_schools : string -> Task<Result<School list, string>>
 
     abstract member get_unenrolled_schools : string -> Task<Result<School list, string>>
@@ -114,8 +112,8 @@ type IDatabase =
     ///function for titan user to call to delete another user
     abstract member delete_user_titan : string -> Task<Result<unit, string>>
 
-    
-type Database(c : string) = 
+
+type Database(c : string) =
     member this.connection = c
 
     interface IDatabase with
@@ -124,9 +122,9 @@ type Database(c : string) =
             conn.Open()
             let sql = """delete from "User" where "User"."Email" = @Email;"""
             let map = (Map ["Email", email])
-            if dapper_map_param_exec sql map conn >= 1 then  
+            if dapper_map_param_exec sql map conn >= 1 then
                 return Ok ()
-            else 
+            else
                 return Error ("Did not delete the user with email " + email)
         }
 
@@ -144,7 +142,7 @@ type Database(c : string) =
                              join "Pending" on "User"."Id" = "Pending"."UserId"
                              join "School" on "School"."Id" = "Pending"."SchoolId"
                              join "Tutor" on "Tutor"."UserId" = "User"."Id" where "User"."Email" = @Email;"""
-                
+
                 let result = conn
                              |> dapper_map_param_query<Models.SchoolTutor> sql (Map["Email", email])
                              |> Seq.toList
@@ -170,7 +168,7 @@ type Database(c : string) =
                     |> dapper_query<Models.UserForTitan> sql
                     |> Seq.toList
                     |> List.groupBy (fun x -> x.Email)
-                    |> List.map (fun (key, values) -> 
+                    |> List.map (fun (key, values) ->
                         List.fold (fun (state : Domain.UserForTitan) (x : Models.UserForTitan) ->
                             {state with FirstName = x.FirstName; LastName = x.LastName; Email = x.Email;
                                         IsApproved = state.IsApproved || (x.Type = "IsApproved" && x.Value = "true");
@@ -198,7 +196,7 @@ type Database(c : string) =
                     |> dapper_query<Models.UserForTitan> sql
                     |> Seq.toList
                     |> List.groupBy (fun x -> x.Email)
-                    |> List.map (fun (key, values) -> 
+                    |> List.map (fun (key, values) ->
                         List.fold (fun (state : Domain.UserForTitan) (x : Models.UserForTitan) ->
                             {state with FirstName = x.FirstName; LastName = x.LastName; Email = x.Email;
                                         IsApproved = state.IsApproved || (x.Type = "IsApproved" && x.Value = "true");
@@ -241,9 +239,9 @@ type Database(c : string) =
                              "Student"."SchoolId" = (select "SchoolId" from "Tutor" where "Tutor"."UserId" =
                              (select "User"."Id" from "User" where "User"."Email" = @TutorEmail))"""
                 let m = (Map ["StudentEmail", student_email; "TutorEmail", tutor_email])
-                if dapper_map_param_exec sql m conn = 1 then  
+                if dapper_map_param_exec sql m conn = 1 then
                     return Ok ()
-                else 
+                else
                     return Error ("Did not insert the expected number of records. sql is \"" + sql + "\"")
             with
             |  e ->
@@ -256,14 +254,14 @@ type Database(c : string) =
                 conn.Open()
                 //tutor must be approved for their school to be valid so we check for it in the sql.
                 //The sql builds up a table of schools and tutors of those schools. then using a left join links with the students.
-                //This creates a new dynamic table and missing entries will be null where the school has no students or the email of the student is not the 
+                //This creates a new dynamic table and missing entries will be null where the school has no students or the email of the student is not the
                 //email in the parameter passed to the sql. In those cases the student is not enrolled in the school because their email
                 //is not the same as the email referenced by the query.
                 let sql = """select "School"."Name","TU"."FirstName","TU"."LastName","School"."Info","School"."Subjects", "School"."Location", "TU"."Email"
                              from "School" join "Tutor" on "School"."Id" = "Tutor"."SchoolId"
                              join "User" as "TU" on "TU"."Id" = "Tutor"."UserId"
                              join "TitanClaims" on "TU"."Id" = "TitanClaims"."UserId" and "TitanClaims"."Type" = 'IsApproved' and "TitanClaims"."Value" = 'true'
-                             where "School"."Id" not in 
+                             where "School"."Id" not in
                              (select "Student"."SchoolId" from Student join "User" on "User"."Id" = "Student"."UserId" where "User"."Email" = @StudentEmail
                               union select "Pending"."SchoolId" from "Pending" join "User" on "User"."Id" = "Pending"."UserId" where "User"."Email" = @StudentEmail);
                              """
@@ -277,7 +275,7 @@ type Database(c : string) =
             |  e ->
                 return Error e.Message
         }
-        
+
         member this.get_school_view : Task<Result<School list, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
@@ -296,17 +294,17 @@ type Database(c : string) =
             |  e ->
                 return Error e.Message
         }
-        
-        
+
+
         member this.update_school_name school_name email : Task<Result<unit, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
                 let cmd = """update "School" set "Name" = @Name where "UserId" = (select "Id" from "User" where "Email" = @Email)"""
                 let m = (Map ["Email", email; "Name", school_name])
-                if dapper_map_param_exec cmd m conn = 1 then  
+                if dapper_map_param_exec cmd m conn = 1 then
                     return Ok ()
-                else 
+                else
                     return Error ("Did not update the expected number of records. sql is \"" + cmd + "\"")
             with
             |  e ->
@@ -322,13 +320,13 @@ type Database(c : string) =
                              where "User"."Email" = @Email;"""
                 let m = (Map ["Email", tutor_email; "Name", request.SchoolName; "Info", request.Info; "Subjects", request.Subjects;
                               "Location", request.Location])
-                if dapper_map_param_exec cmd m conn = 1 then  
+                if dapper_map_param_exec cmd m conn = 1 then
                     let cmd = """update "User" set "FirstName" = @FirstName, "LastName" = @LastName
                                  where "Email" = @Email"""
                     let m = (Map ["Email", tutor_email; "FirstName", request.FirstName; "LastName", request.LastName;])
-                    if dapper_map_param_exec cmd m conn = 1 then  
+                    if dapper_map_param_exec cmd m conn = 1 then
                         return Ok ()
-                    else 
+                    else
                         return Error ("Did not update the expected number of records. sql is \"" + cmd + "\"")
                 else
                     return Error ("Did not update the expected number of records. sql is \"" + cmd + "\"")
@@ -336,32 +334,32 @@ type Database(c : string) =
             |  e ->
                 return Error e.Message
         }
-        
+
         member this.update_user first last email : Task<Result<unit, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
                 let cmd = """update "User" set "FirstName" = @FirstName, "LastName" = @LastName where "Email" = @Email"""
                 let m = (Map ["Email", email; "FirstName", first; "LastName", last])
-                if dapper_map_param_exec cmd m conn = 1 then  
+                if dapper_map_param_exec cmd m conn = 1 then
                     return Ok ()
-                else 
+                else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
             with
             |  e ->
                 return Error e.Message
         }
-        
+
         member this.insert_user_claim email claim value : Task<Result<unit, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
-                let cmd = """insert into "TitanClaims" ("UserId", "Type", "Value") values 
+                let cmd = """insert into "TitanClaims" ("UserId", "Type", "Value") values
                              ((select "User"."Id" from "User" where "User"."Email" = @Email), @Type, @Value)"""
                 let m = (Map ["Email", email; "Type", claim; "Value", value])
-                if dapper_map_param_exec cmd m conn = 1 then  
+                if dapper_map_param_exec cmd m conn = 1 then
                     return Ok ()
-                else 
+                else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
             with
             |  e ->
@@ -376,15 +374,15 @@ type Database(c : string) =
                              join "TitanClaims" on "User"."Id" = "TitanClaims"."UserId" where
                              "User"."Email" = @Email and "TitanClaims"."Type" = @Type"""
                 let m = (Map ["Email", email; "Type", claim; "Value", value])
-                if dapper_map_param_exec cmd m conn = 1 then  
+                if dapper_map_param_exec cmd m conn = 1 then
                     return Ok ()
-                else 
+                else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
             with
             |  e ->
                 return Error e.Message
         }
-        
+
         member this.insert_enrol_request student_email school_name : Task<Result<unit, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
@@ -392,9 +390,9 @@ type Database(c : string) =
                 let cmd = """insert into "Pending" ("UserId", "SchoolId") values ((select "Id" from "User" where "Email" = @Email),
                              (select "Id" from "School" where "Name" = @Name))"""
                 let m = (Map ["Email", student_email; "Name", school_name])
-                if dapper_map_param_exec cmd m conn = 1 then  
+                if dapper_map_param_exec cmd m conn = 1 then
                     return Ok ()
-                else 
+                else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
             with
             |  e ->
@@ -434,7 +432,7 @@ type Database(c : string) =
                 let m = (Map ["Email", email; "FirstName", first; "LastName", last; "Phone", ""; "SchoolName", schoolname;
                               "Info", ""; "Subjects", ""; "Location", ""])
 
-                if dapper_map_param_exec cmd m conn <> 0 then  
+                if dapper_map_param_exec cmd m conn <> 0 then
                    return Ok ()
                 else
                    return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
@@ -450,12 +448,12 @@ type Database(c : string) =
                 let cmd = """insert into "User" ("FirstName","LastName","Email","Phone") VALUES (@FirstName, @LastName, @Email, @Phone)"""
                 let m = (Map ["Email", email; "FirstName", first; "LastName", last; "Phone", ""])
                 //insert the student and approve them
-                if dapper_map_param_exec cmd m conn = 1 then  
+                if dapper_map_param_exec cmd m conn = 1 then
                     let cmd = """insert into "TitanClaims" ("UserId","Type","Value") VALUES
                         ((select "Id" from "User" where "Email" = @Email), 'IsStudent', 'true'),
                         ((select "Id" from "User" where "Email" = @Email), 'IsApproved', 'true')"""
                     let m = (Map ["Email", email])
-                    if dapper_map_param_exec cmd m conn = 2 then  
+                    if dapper_map_param_exec cmd m conn = 2 then
                         return Ok ()
                     else
                         return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
@@ -486,7 +484,7 @@ type Database(c : string) =
                 conn.Open()
                 let cmd = """insert into "StudentSchool" ("StudentId","SchoolId") VALUES ((select "Id" from "Student" where "Student"."Email" = @Email),(select "School"."Id" from "School" inner join "AspNetUsers" on "AspNetUsers"."Id" = @Id))"""
                 let m = (Map ["Email", student_email; "Id", tutor_user_id])
-                if dapper_map_param_exec cmd m conn = 1 then  
+                if dapper_map_param_exec cmd m conn = 1 then
                     return Ok ()
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
@@ -502,7 +500,7 @@ type Database(c : string) =
                 let cmd = """delete from "Pending" where "Pending"."UserId" = (select "Id" from "User" where "User"."Email" = @StudentEmail)
                              and "Pending"."SchoolId" = (select "SchoolId" from "Tutor" where "Tutor"."UserId" = (select "Id" from "User" where "User"."Email" = @TutorEmail));"""
                 let m = (Map ["StudentEmail", student_email; "TutorEmail", tutor_email])
-                if dapper_map_param_exec cmd m conn = 1 then  
+                if dapper_map_param_exec cmd m conn = 1 then
                     return Ok ()
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
@@ -520,7 +518,7 @@ type Database(c : string) =
                 conn.Open()
                 let cmd = """delete from "Pending" where "Email" = @Email"""
                 let m = (Map ["Email", email])
-                if dapper_map_param_exec cmd m conn = 1 then  
+                if dapper_map_param_exec cmd m conn = 1 then
                     return Ok ()
                 else
                     return Error ("Did not delete the expected number of records. sql is \"" + cmd + "\"")
@@ -584,7 +582,7 @@ type Database(c : string) =
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
                 let cmd = """insert into "Punter"("Email") values(@Email)"""
-                if conn.Execute(cmd, punter) = 1 then  
+                if conn.Execute(cmd, punter) = 1 then
                     return (Ok true)
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
@@ -605,7 +603,7 @@ type Database(c : string) =
             |  e ->
                 return Error e.Message
         }
-        
+
         member this.user_from_email (email : string) : Task<Result<Models.User, string>> = task {
             try
                 use conn = new SqlConnection(this.connection)
@@ -636,14 +634,14 @@ type Database(c : string) =
             |  e ->
                 return Error e.Message
         }
-        
+
         member this.update_school_by_user_id (school : Models.School) : Task<Result<bool, string>> = task {
 
-            try 
+            try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
                 let cmd = """update "School" set "Name" = @Name, "Principal" = @Principal where "UserId" = @UserId"""
-                if conn.Execute(cmd, school) = 1 then  
+                if conn.Execute(cmd, school) = 1 then
                     return (Ok true)
                 else
                     return Error ("Did not update the expected number of records. sql is \"" + cmd + "\"")
@@ -653,11 +651,11 @@ type Database(c : string) =
         }
 
         member this.insert_school (school : Models.School) : Task<Result<bool, string>> = task {
-            try 
+            try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
                 let cmd = """insert into "School"("Name","UserId", "Principal") values(@Name,@UserId,@Principal)"""
-                if conn.Execute(cmd, school) = 1 then  
+                if conn.Execute(cmd, school) = 1 then
                     return (Ok true)
                 else
                     return Error ("Did not insert the expected number of records. sql is \"" + cmd + "\"")
@@ -668,7 +666,7 @@ type Database(c : string) =
         }
 
         member this.school_from_user_id (user_id : string) : Task<Result<Models.School, string>> = task {
-            try 
+            try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
                 let sql = """select "Name", "Principal" from "School" where "UserId" = @UserId"""
@@ -678,10 +676,10 @@ type Database(c : string) =
             |  e ->
                 return Error e.Message
         }
-        
+
         //aproving an enrolment means adding a user to the school and then removing the request.
         member this.approve_enrol_request (tutor_email : string) (student_email : string) : Task<Result<unit, string>> = task {
-            try 
+            try
                 use conn = new SqlConnection(this.connection)
                 conn.Open()
                 let sql = """select "Id" from "User" where "User"."Email" = @Email"""
@@ -695,17 +693,17 @@ type Database(c : string) =
                 let school_id = conn
                                |> dapper_map_param_query<int> sql (Map ["Email", tutor_email])
                                |> Seq.head
-                
+
                 let cmd = """begin transaction
                                 insert into "Student"("UserId", "SchoolId") values(@UserId,@SchoolId)
                                 delete from "Pending" where "UserId" = @UserID
                               commit"""
                 let m = (Map ["UserId", student_id; "SchoolId", school_id])
-                if dapper_map_param_exec cmd m conn = 2 then  
+                if dapper_map_param_exec cmd m conn = 2 then
                     return Ok ()
                 else
                     return Error ("Failed to insert user. sql is \"" + cmd + "\"")
-                    
+
             with
             |  e ->
                 return Error e.Message

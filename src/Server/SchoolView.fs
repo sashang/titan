@@ -1,9 +1,9 @@
 module SchoolView
 
-open Giraffe.GiraffeViewEngine
+open Giraffe.ViewEngine
 
- 
-    
+
+
 let navbar_end =
     div [ _class "navbar-end" ] [
         div [ _class "navbar-item" ] [
@@ -13,7 +13,7 @@ let navbar_end =
             ]
         ]
     ]
-    
+
 let navbar_brand =
     div [ _class "navbar-brand" ] [
         div [ _class "navbar-item" ] [
@@ -89,13 +89,13 @@ let private school_view_body (schools : Domain.School list) =
     div [_class "container"] [
         yield! [ for s in sublists do yield! single_row (List.ofArray s) ]
     ]
-    
+
 let view (schools : Domain.School list) =
 
     html [] [
         head [] [
             title [] [ str "tewtin" ]
-            meta [ _charset "utf-8"; _name "viewport"; _content "width=device-width, initial-scale=1" ] 
+            meta [ _charset "utf-8"; _name "viewport"; _content "width=device-width, initial-scale=1" ]
             link [_rel "stylesheet"; _href "https://use.fontawesome.com/releases/v5.6.3/css/all.css";
                   _integrity "sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/"; _crossorigin "anonymous"]
             link [_rel "stylesheet"; _href "css/mystyles.css"] //must come berfore material design theme below otherwise it will override material design theme-->
@@ -116,4 +116,4 @@ let view (schools : Domain.School list) =
             ]
         ]
     ]
-    
+
