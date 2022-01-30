@@ -1,7 +1,0 @@
-group Dev
-FSharp.Core
-Microsoft.Extensions.DependencyInjection
-FluentMigrator
-FluentMigrator.Runner
-FluentMigrator.Runner.Postgres
-Thoth.Json.Net

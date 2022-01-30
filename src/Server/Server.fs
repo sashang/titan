@@ -8,7 +8,7 @@ open FluentMigrator.Runner
 //force Girrafe to be resolved from the global scope and not from
 //Elmish.Bridge which also contains Giraffe namespace.
 open Elmish.Bridge
-open global.Giraffe 
+open global.Giraffe
 open Giraffe.Serialization
 open Homeless
 open Microsoft.Extensions.DependencyInjection
@@ -260,7 +260,7 @@ let configure_services startup_options (services:IServiceCollection) =
         options.MinimumSameSitePolicy <- SameSiteMode.Unspecified) |> ignore*)
     services.Configure<CookiePolicyOptions>(fun (options : CookiePolicyOptions) ->
         options.MinimumSameSitePolicy <- SameSiteMode.Unspecified
-        options.OnAppendCookie <- (fun cookie_context -> 
+        options.OnAppendCookie <- (fun cookie_context ->
             check_same_site cookie_context.Context cookie_context.CookieOptions
             eprintfn "samesite mode = %A" (cookie_context.CookieOptions.SameSite.ToString()))
         options.OnDeleteCookie <- (fun cookie_context -> check_same_site cookie_context.Context cookie_context.CookieOptions)) |> ignore
@@ -306,7 +306,7 @@ let configure_app (settings_file : string) (builder : IApplicationBuilder) =
     builder.UseAuthentication() |> ignore
     builder
 
-let web_app : HttpHandler = 
+let web_app : HttpHandler =
     choose [
         router {
             get "/check-session" check_session

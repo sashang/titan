@@ -1,20 +1,6 @@
-group Server
-FSharp.Core
 Saturn
-Fable.JsonConverter
-jose-jwt
-Saturn.Extensions.Authorization
-Microsoft.Extensions.DependencyInjection
+Newtonsoft.Json
+FSharp.Core
+Thoth.Json
 FluentMigrator
-FluentMigrator.Runner
-FluentMigrator.Runner.Postgres
-Dapper
 Thoth.Json.Net
-Thoth.Json.Giraffe
-OpenTokCore
-Microsoft.AspNetCore.Authentication.Google
-Elmish.Bridge.Giraffe
-UAParser
-Microsoft.AspNetCore.Authentication.JwtBearer
-Microsoft.AspNetCore.Authentication.OpenIdConnect
-SendGrid

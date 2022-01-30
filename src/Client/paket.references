@@ -1,19 +1,12 @@
-jose-jwt
-
-group Client
-FSharp.Core
-Fulma.Extensions.Wikiki.Divider
 Fable.Core
-Fable.Fetch
-Fable.Promise
-Fable.Elmish.Browser
-Fable.Elmish.Debugger
+Fable.Elmish
 Fable.Elmish.React
+Fable.Elmish.Debugger
 Fable.Elmish.HMR
-dotnet-fable
+Fable.React
+Fable.Remoting.Client
+Feliz
+Feliz.Bulma
 Fulma
-Fable.FontAwesome
-Fable.FontAwesome.Free
-Elmish.Bridge.Client
-Thoth.Json
-Thoth.Fetch
+Saturn
+Newtonsoft.Json
