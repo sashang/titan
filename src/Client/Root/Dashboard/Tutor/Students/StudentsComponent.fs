@@ -55,7 +55,7 @@ let get_all_students () = promise {
         | None ->
             return result.Students
     | Error e ->
-        return raise (GetAllStudentsException (APIError.init [APICode.Fetch] [e]))
+        return raise (GetAllStudentsException (APIError.init [APICode.Fetch] [e.ToString()]))
 }
 
 let init () =
@@ -66,11 +66,11 @@ let update (model : Model) (msg : Msg) =
     match msg with
     | GetAllStudents ->
         model, Cmd.OfPromise.either get_all_students () LoadStudentsSuccess LoadStudentsFailure
-        
+
     | LoadStudentsSuccess students ->
         {model with LoadStudentsState = Loaded; Students = students; Filtered = students}, Cmd.none
     | LoadStudentsFailure e ->
-        match e with 
+        match e with
         | :? GetAllStudentsException as ex ->
             Browser.Dom.console.warn "Received GetAllStudentsEx"
             { model with Error = Some ex.Data0 }, Cmd.none
@@ -79,7 +79,7 @@ let update (model : Model) (msg : Msg) =
             model, Cmd.none
     | DismissStudent student ->
         model, Cmd.OfPromise.either dismiss_student {Email = student.Email} (DismissStudentSuccess) (DismissStudentFailure)
-        
+
     | DismissStudentSuccess () ->
         model, Cmd.OfPromise.either get_all_students () LoadStudentsSuccess LoadStudentsFailure
 
@@ -88,7 +88,7 @@ let update (model : Model) (msg : Msg) =
         model, Cmd.none
 
     | DismissStudentFailure e ->
-        match e with 
+        match e with
         | :? DismissStudentException as ex ->
             Browser.Dom.console.warn "Received DismissStudentEx"
             { model with Error = Some ex.Data0 }, Cmd.none
@@ -109,7 +109,7 @@ let private card_footer (student : Student) (dispatch : Msg -> unit) =
             [ Icon.icon [ ]
                 [ Fa.i [ Fa.Solid.Trash ]
                     [ ] ] ] ] ]
-    
+
 let private student_content (student : Student) =
       Text.div
         [ Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] [
@@ -129,12 +129,12 @@ let private student_content (student : Student) =
             ]
         ]
 
-let private single_student model dispatch (student : Domain.Student) = 
+let private single_student model dispatch (student : Domain.Student) =
     Column.column [ Column.Width (Screen.All, Column.Is6) ]
-      [ Card.card [ ] 
+      [ Card.card [ ]
           [ Card.header [ Modifiers [ Modifier.BackgroundColor IsTitanSecondary ] ]
-              [ Card.Header.title 
-                    [ Card.Header.Title.Modifiers [ Modifier.TextColor IsWhite ] ] 
+              [ Card.Header.title
+                    [ Card.Header.Title.Modifiers [ Modifier.TextColor IsWhite ] ]
                     [ str (student.FirstName + " " + student.LastName) ] ]
             Card.content [  ] [ yield student_content student ]
             Card.footer [ ]
@@ -143,11 +143,11 @@ let private single_student model dispatch (student : Domain.Student) =
 let rec private render_2_students (model : Model) (dispatch : Msg->unit) (students : Domain.Student list) =
     match students with
     | [] -> nothing
-    | x::[] -> 
+    | x::[] ->
         Columns.columns [ ] [
             single_student model dispatch x
         ]
-    | x::y::others -> 
+    | x::y::others ->
         div [ ] [
             Columns.columns [ ] [
                 single_student model dispatch x
@@ -163,10 +163,10 @@ let private render_all_students (model : Model) (dispatch : Msg->unit) =
     | _ ->
         render_2_students model dispatch model.Filtered
     //    Columns.columns [ ] [ for x in model.Students do
-    //                             yield single_student model dispatch x] 
+    //                             yield single_student model dispatch x]
 
 let private students_level =
-    Level.level [ ] 
+    Level.level [ ]
         [ Level.left [ ]
             [ Level.title [ Common.Modifiers [ Modifier.TextTransform TextTransform.UpperCase
                                                Modifier.TextSize (Screen.All, TextSize.Is5) ]
@@ -176,7 +176,7 @@ let private filter dispatch =
     form [] [
         Field.div [] [
             Label.label [ ] [ str "Filter" ]
-            Control.div [ ] [ 
+            Control.div [ ] [
                 Input.text [Input.Props [ Props.OnChange (fun ev -> dispatch (FilterOnChange ev.Value)) ]
                             Input.Placeholder "Ex: Govender"]
             ]
@@ -186,7 +186,7 @@ let private filter dispatch =
 let view (model : Model) (dispatch : Msg -> unit) =
     Container.container [ Container.IsFluid ] [
         filter dispatch
-        Box.box' [ ] 
+        Box.box' [ ]
             [ yield (match model.LoadStudentsState with
                        | Loaded -> div [ ] [
                                       students_level

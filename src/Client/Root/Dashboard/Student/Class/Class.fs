@@ -29,7 +29,7 @@ type Msg =
 
 type Model =
     { Session : obj option
-      School : School 
+      School : School
       Live : LiveState //we are live
       TutorLive : LiveState //tutor is live
       StudentEmail: string
@@ -45,19 +45,19 @@ let private get_live_session_id (tutor_email : EmailRequest) = promise {
     match response with
     | Ok result ->
         match result.Error with
-        | None -> 
+        | None ->
             match result.Info with
             | Some oti -> return oti
             | None -> return failwith ("Expected opentok info but got nothing")
         | Some api_error ->
             return raise (GetSessionEx api_error)
     | Error msg ->
-        return failwith ("Failed to go live: " + msg)
+        return failwith ("Failed to go live: " + msg.ToString())
 }
 
 let private  nav_item_stop_button (dispatch : Msg -> unit) =
     Navbar.Item.div [ ]
-        [ Button.button 
+        [ Button.button
             [ Button.Color IsDanger
               Button.OnClick (fun e -> dispatch StopLive)  ]
             [ str "Stop" ] ]
@@ -70,7 +70,7 @@ let private class_text (model : Model) =
         "Class has not started"
 
 let private classroom_level model dispatch =
-    Level.level [ ] [ 
+    Level.level [ ] [
         Level.left [ ]
             [ Level.title [ Common.Modifiers [ Modifier.TextTransform TextTransform.UpperCase
                                                Modifier.TextSize (Screen.All, TextSize.Is6) ]
@@ -79,12 +79,12 @@ let private classroom_level model dispatch =
             (match model.Live, model.Session, model.OTI, model.TutorLive with
             | On, Some _, Some _, _ ->
                 nav_item_stop_button dispatch
-            | Off, Some _ , Some _, Off -> 
+            | Off, Some _ , Some _, Off ->
                 //disbale the button if the tutor has not started
                 Client.Style.button dispatch GoLive "Go Live!" [ Button.Disabled true ]
-            | Off, Some _ , Some _, On -> 
+            | Off, Some _ , Some _, On ->
                 Client.Style.button dispatch GoLive "Go Live!" [ Button.Disabled false ]
-            | model_live, model_session , model_oti, On -> 
+            | model_live, model_session , model_oti, On ->
                 Browser.Dom.console.info (sprintf "%A %A %A" model_live model_session model_oti)
                 nothing
             | _ ->
@@ -93,7 +93,7 @@ let private classroom_level model dispatch =
     ]
 
 
-let init school student_email = 
+let init school student_email =
     {School = school; StudentEmail = student_email; Session = None;
      OTI = None; Error = None; Live = Off; TutorLive = Off},
     Cmd.OfPromise.either get_live_session_id {Email = school.Email} GetSessionSuccess Failure
@@ -159,7 +159,7 @@ let update (model : Model) (msg : Msg) =
             model, Cmd.none
 
 
-let private video = 
+let private video =
     div [ HTMLAttr.Id "videos"] [
         div [ HTMLAttr.Id "publisher" ] [
 
@@ -176,5 +176,5 @@ let view (model : Model) (dispatch : Msg -> unit) =
         video
         // Box.box' [ Common.Props [ HTMLAttr.Id ""
         //                           Style [ CSSProp.Height "100%" ] ] ]
-        //     [ video ] 
+        //     [ video ]
     ]

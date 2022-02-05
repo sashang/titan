@@ -29,12 +29,12 @@ type PageModel =
     | FirstTimeModel of FirstTime.Model
 
 type Model =
-    { Email : string 
+    { Email : string
       BetaRegistrationResult : BetaRegistrationResult option
       Claims : TitanClaim option
       Child : PageModel option }
 
-    static member init = 
+    static member init =
         { Email = ""; BetaRegistrationResult = None; Claims = None; Child = None}
 
 exception RegisterEx of BetaRegistrationResult
@@ -53,7 +53,7 @@ let private register_punter (punter : Domain.BetaRegistration) = promise {
     | Ok codes ->
         return ()
     | Error msg ->
-        let error = {Codes = [BetaRegistrationCode.Failure]; Messages = [msg]}
+        let error = {Codes = [BetaRegistrationCode.Failure]; Messages = [msg.ToString()]}
         return (raise (RegisterEx error))
 }
 
@@ -77,7 +77,7 @@ let update  (model : Model) (msg : Msg) (claims : TitanClaim option): Model*Cmd<
             { model with BetaRegistrationResult = None }, Cmd.none
     | {Child = None}, FirstTimeUser, claims ->
         Browser.Dom.console.info "FirstTimeUser message"
-        match claims with 
+        match claims with
         | Some claims ->
             {model with Child = Some (FirstTimeModel (FirstTime.init true claims))}, Cmd.none
         | None ->
@@ -98,29 +98,29 @@ let private of_beta_result (code : BetaRegistrationCode) (result : BetaRegistrat
     List.fold2 (fun acc the_code the_message -> if code = the_code then acc + " " + the_message else acc) "" result.Codes result.Messages
 
 let first_impression =
-    Container.container [ Container.IsFullHD ] 
-        [ Columns.columns [ Columns.IsVCentered ] 
-            [ Column.column []  
-                  [ Heading.h1 
+    Container.container [ Container.IsFullHD ]
+        [ Columns.columns [ Columns.IsVCentered ]
+            [ Column.column []
+                  [ Heading.h1
                         [ Heading.Modifiers [ Modifier.TextColor IsBlack
                                               Modifier.TextTransform TextTransform.Capitalized
                                               Modifier.TextWeight TextWeight.Bold
-                                              Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ] 
+                                              Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
                         [ Text.div [ ] [ str "Connect" ] ]
-                    Heading.h3 
+                    Heading.h3
                         [ Heading.Modifiers [ Modifier.TextColor IsGrey
                                               Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
                         [ Text.div [ Common.Props [ Props.Style [ Props.CSSProp.FontFamily "'Montserrat', sans-serif" ] ] ] [ str "and rediscover teaching." ] ] ]
-              Column.column [] 
-                [ Image.image 
-                    [ Image.IsSquare ] 
+              Column.column []
+                [ Image.image
+                    [ Image.IsSquare ]
                     [ img [ Props.Src "Images/teacher.png" ] ] ] ]
           Columns.columns [ ] [
               Column.column []  [
                   Heading.h3 [ Heading.Modifiers [ Modifier.TextColor IsBlack
                                                    Modifier.TextTransform TextTransform.Italic ] ] [
                       Text.div [ Common.Props [ Props.Style [ Props.CSSProp.FontFamily "'Montserrat', sans-serif" ] ] ] [
-                          str "A platform for independent tutors of school aged kids." 
+                          str "A platform for independent tutors of school aged kids."
                       ]
                   ]
               ]
@@ -129,25 +129,25 @@ let first_impression =
 
 let private goto_url page e =
     Navigation.newUrl (Pages.to_path page) |> List.map (fun f -> f ignore) |> ignore
-    
+
 let pricing =
-    Container.container 
+    Container.container
         [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
         [ Columns.columns [ Columns.IsVCentered ]
             [ Column.column [ ]
-                    [ Image.image 
-                        [ ] 
+                    [ Image.image
+                        [ ]
                         [ img [ Props.Src "Images/greenback.png" ] ] ]
               Column.column [ ]
                     [ Heading.h1 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ]
                         [ str "Pricing" ]
-                      Text.div 
+                      Text.div
                         [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4)
                                              Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
                         [ str "Currently Tewtin is undergoing a trial phase where all services are free of charge!" ] ] ] ]
-                
+
 let curious =
-    Container.container 
+    Container.container
         [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
             [ Columns.columns [ ]
                 [ Column.column [
@@ -158,32 +158,32 @@ let curious =
                         Heading.h1 [ Heading.Modifiers
                                                [ Modifier.TextWeight TextWeight.Bold
                                                  Modifier.TextColor IsBlack
-                                                 Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ] 
+                                                 Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
                                 [ str "Want to know more?" ]
-                        Button.button 
+                        Button.button
                             [ Button.Color IsTitanInfo
                               Button.Size IsLarge
                               Button.OnClick (goto_url Pages.FAQ) ]
                             [ str "Click here to find out" ] ] ] ] ]
-        
+
 let archived_video =
     Container.container
         [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
             [ Columns.columns [ Columns.IsVCentered ]
                 [ Column.column [ ] [
-                      Image.image 
-                        [ Image.IsSquare ] 
+                      Image.image
+                        [ Image.IsSquare ]
                         [ img [ Props.Src "Images/online tutor.png" ] ]
                   ]
                   Column.column [ ] [
                       Heading.h1 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold
-                                                       Modifier.TextAlignment  (Screen.All, TextAlignment.Left) ] ] 
+                                                       Modifier.TextAlignment  (Screen.All, TextAlignment.Left) ] ]
                         [ str "Deliver private lessons to 100s of students." ]
-                      Text.div 
+                      Text.div
                         [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4)
                                              Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
                         [ str "" ]
-                      Text.div 
+                      Text.div
                         [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5)
                                              Modifier.TextTransform TextTransform.Italic
                                              Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
@@ -191,7 +191,7 @@ let archived_video =
                   ]
 
 let no_advertising =
-    Container.container 
+    Container.container
         [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
         [ Columns.columns [ ]
             [ Column.column [ ]
@@ -199,40 +199,40 @@ let no_advertising =
                         [ Heading.h3 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold
                                                            Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
                             [ str "No advertising." ]
-                          Text.div 
+                          Text.div
                             [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4) ] ]
                             [ str "Education should be free from advertising. Free versions of Skype and Google
-                                   Hangouts are reusing student's personal data and conversations for advertising purposes. 
+                                   Hangouts are reusing student's personal data and conversations for advertising purposes.
                                    We don't do this." ] ] ] ] ]
-            
+
 let target_audience =
-    Container.container 
+    Container.container
         [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
         [ Columns.columns [ ]
             [ Column.column [ ]
                     [ Box.box' [ Common.Props [ Props.Style [ Props.CSSProp.Height "100%" ] ] ]
-                        [ Heading.h3 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] 
+                        [ Heading.h3 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ]
                             [ str "Grow your classroom." ]
-                          Text.div 
+                          Text.div
                             [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4) ] ]
                             [ str "Seamless video conferencing with students. No need to dial them in, they just join!" ] ] ]
               Column.column [ ]
                     [ Box.box' [ Common.Props [ Props.Style [ Props.CSSProp.Height "100%" ] ] ]
                         [ Heading.h3 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ]
                             [ str "Manage enrolments" ]
-                          Text.div 
+                          Text.div
                             [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4) ] ]
                             [ str "A guided enrolment process places you in control." ] ] ]
               Column.column [ ]
                     [ Box.box' [ Common.Props [ Props.Style [ Props.CSSProp.Height "100%" ] ] ]
                         [ Heading.h3 [ Heading.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ]
                             [ str "Free to make contact." ]
-                          Text.div 
+                          Text.div
                             [ Common.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is4) ] ]
                             [ str "Students contact tutors free of charge, and vice versa!" ] ] ] ] ]
 
 let testimonials =
-    Container.container 
+    Container.container
         [ Container.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
         [ Heading.h1
             [ Heading.Modifiers [ Modifier.TextColor IsBlack
@@ -240,8 +240,8 @@ let testimonials =
             [ str "Why tutors love us" ]
           Columns.columns [ Columns.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
             [ Column.column [ Column.Width (Screen.All, Column.IsHalf) ]
-                [ Box.box' [] 
-                    [ Text.div 
+                [ Box.box' []
+                    [ Text.div
                         [ Common.Modifiers
                             [ Modifier.TextTransform TextTransform.Italic
                               Modifier.TextSize (Screen.All, TextSize.Is4) ] ]
@@ -250,19 +250,19 @@ let testimonials =
 let private render_error (model : Model) dispatch =
     match model.BetaRegistrationResult with
     | Some result ->
-        match List.exists (fun x -> x = BetaRegistrationCode.BadEmail 
-                                    || x = BetaRegistrationCode.DatabaseError 
+        match List.exists (fun x -> x = BetaRegistrationCode.BadEmail
+                                    || x = BetaRegistrationCode.DatabaseError
                                     || x = BetaRegistrationCode.Failure) result.Codes with
         | true ->
-            Notification.notification 
-                [ Notification.Modifiers 
-                    [ Modifier.TextColor IsWhite  
-                      Modifier.BackgroundColor IsTitanError ]] 
+            Notification.notification
+                [ Notification.Modifiers
+                    [ Modifier.TextColor IsWhite
+                      Modifier.BackgroundColor IsTitanError ]]
                 [ str (of_beta_result BetaRegistrationCode.BadEmail result)
                   str (of_beta_result BetaRegistrationCode.Failure result)
                   str (of_beta_result BetaRegistrationCode.DatabaseError result)
                   Notification.delete [ Common.Props [ OnClick (fun _ -> dispatch ClickDelNot) ] ] [ ] ]
-        | false -> nothing 
+        | false -> nothing
     | None -> nothing
 
 let private beta_program model dispatch =
@@ -273,7 +273,7 @@ let private beta_program model dispatch =
                 [ img [ Props.Src "Images/construction.png" ] ]
               Column.column [ ]
                 [ Heading.h5
-                    [ Heading.Modifiers 
+                    [ Heading.Modifiers
                         [ Modifier.TextColor IsBlack
                           Modifier.TextTransform TextTransform.Italic ] ]
                         [ str "Enter your email and we'll notify you when we are live!" ]
@@ -285,7 +285,7 @@ let private beta_program model dispatch =
                                   Input.Placeholder "Email"
                                   Input.Props [ Props.OnChange (fun ev -> dispatch (SetEmail ev.Value)) ] ] ] ]
                       Column.column [ Column.Width (Screen.All, Column.Is1) ]
-                        [ Button.button 
+                        [ Button.button
                             [ Button.Color IsTitanInfo
                               Button.Props [ Props.OnClick (fun ev -> dispatch ClickRegister)
                                              Props.Style [ Props.CSSProp.Margin "20px" ] ] ]
@@ -294,27 +294,27 @@ let private beta_program model dispatch =
 
 
 let view (model : Model) (dispatch : Msg -> unit) =
-    [ Section.section 
+    [ Section.section
         [ Section.Modifiers [ ] ]
         [ first_impression ]
-      Section.section 
+      Section.section
         [ ]
         [ (match model.Child with
           | Some (FirstTimeModel ft_child) -> FirstTime.view ft_child (dispatch << FirstTimeMsg)
           | _ -> nothing) ]
-      Section.section 
+      Section.section
         [ Section.Modifiers [ Modifier.BackgroundColor IsTitanPrimary ] ]
         [ target_audience ]
-      Section.section 
+      Section.section
         [ Section.Modifiers [ Modifier.BackgroundColor IsWhite ] ]
         [ archived_video ]
-      Section.section 
+      Section.section
         [ Section.Modifiers [ Modifier.BackgroundColor IsTitanPrimary ] ]
         [ no_advertising ]
-      Section.section 
+      Section.section
         [ Section.Modifiers [ Modifier.BackgroundColor IsWhite ] ]
         [ pricing ]
-      Section.section 
+      Section.section
         [ Section.Modifiers [ Modifier.BackgroundColor IsTitanPrimary ] ]
         [ curious ]
     ]

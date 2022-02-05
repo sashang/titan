@@ -15,7 +15,7 @@ type TF = Thoth.Fetch.Fetch
 type PageModel =
     | EnrolledModel of Enrolled.Model //page of schools this student is enroled in
     | ClassModel of Class.Model //live view of the classroom
-    | HomeModel 
+    | HomeModel
 
 type Model =
     { EnrolledSchools : School list
@@ -48,12 +48,12 @@ let private get_enroled_schools () = promise {
         | Some api_error -> return raise (GetEnrolledSchoolsEx api_error)
         | None ->  return result.Schools
     | Error e ->
-        return raise (GetEnrolledSchoolsEx (APIError.init [APICode.Fetch] [e]))
+        return raise (GetEnrolledSchoolsEx (APIError.init [APICode.Fetch] [e.ToString()]))
 }
 
 
 
-let init claims = 
+let init claims =
     {Claims = claims; Error = None; Child = HomeModel; EnrolledSchools = [] },
      Cmd.OfPromise.either get_enroled_schools () GetEnrolledSchoolsSuccess Failure
 
@@ -78,7 +78,7 @@ let update model msg =
         let new_model, new_cmd = Student.Class.update child Student.Class.SignOut
         {model with Child = ClassModel new_model}, Cmd.batch [ Cmd.map ClassMsg new_cmd
                                                                Navigation.newUrl (Pages.to_path Pages.Home) ]
-        
+
     | _, ClassMsg _ ->
         Browser.Dom.console.error ("Received ClassMsg when child page is not ClassModel")
         model, Cmd.none
@@ -108,7 +108,7 @@ let update model msg =
         Browser.Dom.console.info "Got message ClickClassroom"
         let new_state, new_cmd = Student.Class.init school model.Claims.Email
         {model with Child = ClassModel new_state}, Cmd.map ClassMsg new_cmd
-    
+
     | model, ClickEnrol ->
         Browser.Dom.console.info "Got message ClickEnrol"
         let new_state, new_cmd = Enrolled.init ()
@@ -164,4 +164,4 @@ let view (model : Model) (dispatch : Msg -> unit) =
             | HomeModel -> nothing)
         ]
     ]
-    
+

@@ -1,4 +1,4 @@
-/// The root of the client application. It's where the logging in and signing up 
+/// The root of the client application. It's where the logging in and signing up
 /// processing is done. Messages to child pages are routed from here.
 module Root
 
@@ -72,9 +72,9 @@ and
         BCast : BroadcastState option
         Connection : WSConnection
     } with
-    static member init = 
+    static member init =
         { Child = HomeModel (Home.init ()); Session = None;
-          Claims = None; BCast = None; Connection = Disconnected } 
+          Claims = None; BCast = None; Connection = Disconnected }
 
 let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMsg> =
     match page with
@@ -91,7 +91,7 @@ let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMs
                                  Cmd.map (DashboardRouterMsg << DashboardRouter.TutorMsg) cmd
         | {Session = None} ->
             model, Cmd.none
-            
+
     | Some Pages.DashboardStudent ->
         match model with
         | {Session = Some session; Claims = Some claims} ->
@@ -106,7 +106,7 @@ let url_update (page : Pages.PageType option) (model : State) : State*Cmd<RootMs
         { model with Child = HomeModel (Home.init ()) }, Cmd.none
 
     | Some Pages.PageType.Login ->
-        { model with Child = LoginModel}, Cmd.none 
+        { model with Child = LoginModel}, Cmd.none
 
     | Some Pages.PageType.FAQ ->
         let faq_model, cmd = FAQ.init ()
@@ -135,10 +135,10 @@ let check_session () = promise {
                   RequestProperties.Credentials RequestCredentials.Include ]
     let decoder = Decode.Auto.generateDecoder<Session>()
     try
-        let! response = TF.fetchAs<Session>("/check-session", decoder, props)
+        let! response = TF.fetchAs<Session,_>("/check-session", decoder, properties = props)
         Browser.Dom.console.info "decoded response"
         return response
-    with 
+    with
         | e -> return failwith (e.Message)
 }
 
@@ -150,7 +150,7 @@ let private goto_url page e =
 
 let private  nav_item_button (dispatch : RootMsg -> unit) (msg : RootMsg) (text : string) =
     Navbar.Item.div [ ]
-        [ Button.button 
+        [ Button.button
             [ Button.Color IsTitanInfo
               Button.OnClick (fun e -> dispatch msg)  ]
             [ str text ] ]
@@ -158,19 +158,19 @@ let private  nav_item_button (dispatch : RootMsg -> unit) (msg : RootMsg) (text 
 
 let private nav_item_button_url page (text : string) =
     Navbar.Item.div [ ]
-        [ Button.button 
+        [ Button.button
             [ Button.Color IsTitanInfo
               Button.OnClick (goto_url page) ]
             [ str text ] ]
 
 let private nav_item_button_href href (text : string) =
     Navbar.Item.div [ ]
-        [ Button.a 
+        [ Button.a
             [ Button.Color IsWhite
               Button.Props [ Props.Href href ] ]
             [ str text ] ]
 
-let private footer model dispatch = 
+let private footer model dispatch =
     Footer.footer [ Common.Modifiers [ Modifier.BackgroundColor IsTitanPrimary
                                        Modifier.TextColor IsWhite
                                        Modifier.TextAlignment (Screen.All, TextAlignment.Left )  ] ]
@@ -193,13 +193,13 @@ let view model dispatch =
                             ]
                         ]
                         Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
-                            Heading.h3 
+                            Heading.h3
                                 [ Heading.IsSubtitle
                                   Heading.Modifiers [ Modifier.TextColor IsWhite ]
                                   Heading.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ] ] ] [ str MAIN_NAME ]
                         ]
                         Navbar.Item.div [ Navbar.Item.Props [ OnClick (fun e -> dispatch ClickTitle) ] ] [
-                            Heading.h5 
+                            Heading.h5
                                 [ Heading.IsSubtitle
                                   Heading.Modifiers [ Modifier.TextColor IsWhite ]
                                   Heading.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ] ] ] [ str "putting tutors first" ]
@@ -207,7 +207,7 @@ let view model dispatch =
                     ]
                     Navbar.End.div []
                         [ match model.Session with
-                          | None -> 
+                          | None ->
                                 yield nav_item_button_url Pages.Login "Register or Login"
                           | Some session ->
                                 yield nav_item_button dispatch ClickSignOut "Sign Out" ]
@@ -223,14 +223,14 @@ let view model dispatch =
                     ]
             | None -> nothing)
         ]
-        Hero.body [ Common.Props [ Style [ ] ] ] [ 
+        Hero.body [ Common.Props [ Style [ ] ] ] [
             match model.Child with
-            | LoginModel -> 
+            | LoginModel ->
                 Browser.Dom.console.info "rendering login"
                 yield Login.view
             | DashboardRouterModel model ->
                 Browser.Dom.console.info "rendering dashboardrouter"
-                yield DashboardRouter.view model (DashboardRouterMsg >> dispatch) 
+                yield DashboardRouter.view model (DashboardRouterMsg >> dispatch)
             | HomeModel model ->
                 Browser.Dom.console.info "rendering home"
                 yield! Home.view model (HomeMsg  >> dispatch)
@@ -253,7 +253,7 @@ let view model dispatch =
     propagate from the child to parent. It's more subtle than it appears from surface.
 *)
 let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
-    match msg, state with    
+    match msg, state with
 
     | Remote(ClientTutorGoLive), {Child = DashboardRouterModel model} ->
         Browser.Dom.console.info ("Tutor has started live stream")
@@ -317,7 +317,7 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
         state, Cmd.none
 
     | ClickSignOut, state ->
-        match state.Child with 
+        match state.Child with
         | DashboardRouterModel model ->
             let dbr_model, dbr_cmd = DashboardRouter.update model DashboardRouter.SignOut
             let cmd = SignOut.update SignOut.SignOut
@@ -345,12 +345,12 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
 
             | model when claims.IsTutor && claims.IsApproved ->
                 let tutor_model, cmd = DashboardRouter.init_tutor claims
-                { state with 
+                { state with
                     Session = Some session; Claims = Some claims;
                     Child = DashboardRouterModel(tutor_model)}, Cmd.map DashboardRouterMsg cmd
             | model when claims.IsStudent && claims.IsApproved ->
                 let student_model, cmd = DashboardRouter.init_student claims
-                { state with 
+                { state with
                     Session = Some session; Claims = Some claims;
                     Child = DashboardRouterModel(student_model)}, Cmd.map DashboardRouterMsg cmd
             | model when not claims.IsApproved ->
@@ -362,12 +362,12 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
                 Browser.Dom.console.error message
                 state, Cmd.none
 
-        | Error e -> 
+        | Error e ->
             Browser.Dom.console.warn e
-            {state with Session = None}, Cmd.none 
+            {state with Session = None}, Cmd.none
 
     | CheckSessionFailure session, state ->
-        {state with Session = None}, Cmd.none 
+        {state with Session = None}, Cmd.none
 
     | HomeMsg home_msg, {Child = HomeModel model} ->
         match home_msg with
@@ -405,4 +405,4 @@ let update (msg : RootMsg) (state : State) : State * Cmd<RootMsg> =
     | _, {Child = LoginModel} ->
         Browser.Dom.console.error "Received unknown message but child is LoginModel. There should be no messages for this model."
         state, Cmd.none
-    
+

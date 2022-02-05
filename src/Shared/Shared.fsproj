@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Domain.fs" />
+    <Compile Include="ElmishBridgeModel.fs" />
+    <Compile Include="FableJson.fs" />
+    <Compile Include="Homeless.fs" />
+    <Compile Include="Maybe.fs" />
+    <Compile Include="ValueDeclarations.fs" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

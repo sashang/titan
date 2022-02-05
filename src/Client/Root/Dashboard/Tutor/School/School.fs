@@ -18,7 +18,7 @@ exception SaveEx of APIError
 exception LoadSchoolEx of APIError
 exception LoadUserEx of APIError
 
-type AzureMapsSummary = 
+type AzureMapsSummary =
     { Query : string
       QueryType : string
       QueryTime: int
@@ -38,7 +38,7 @@ type AzureMapsSummary =
                   TotalResults = get.Required.Field "totalResults" Decode.int
                   FuzzyLevel = get.Required.Field "fuzzyLevel" Decode.int })
 
-type AzureMapsAddress = 
+type AzureMapsAddress =
     { MunicipalitySubdivision : string option
       Municipality : string
       CountrySecondarySubdivision : string option
@@ -59,9 +59,9 @@ type AzureMapsAddress =
                   Country = get.Required.Field  "country" Decode.string
                   CountryCodeISO3 = get.Required.Field "countryCodeISO3" Decode.string
                   FreeformAddress = get.Required.Field "freeformAddress" Decode.string })
-                  
+
 type AzureMapsResult =
-    { Type : string 
+    { Type : string
       Address : AzureMapsAddress }
     static member decoder : Decoder<AzureMapsResult> =
         Decode.object
@@ -70,7 +70,7 @@ type AzureMapsResult =
                   Address = get.Required.Field "address" AzureMapsAddress.decoder })
 
 
-type AzureMapsResponse = 
+type AzureMapsResponse =
     { Summary : AzureMapsSummary
       Results : AzureMapsResult list }
 
@@ -115,13 +115,13 @@ type Msg =
     | Failure of exn
 
 let private load_school () = promise {
-    let request = make_get 
+    let request = make_get
     let decoder = Decode.Auto.generateDecoder<SchoolResponse>()
     let! response = TF.tryFetchAs("/api/load-school", decoder, request)
     match response with
     | Ok result ->
         match result.Error with
-        | None -> 
+        | None ->
             return result
         | Some api_error ->
             return raise (LoadSchoolEx api_error)
@@ -130,7 +130,7 @@ let private load_school () = promise {
 }
 
 let private get_azure_maps_keys () = promise {
-    let request = make_get 
+    let request = make_get
     let decoder = Decode.Auto.generateDecoder<Domain.AzureMapsKeys>()
     let! response = TF.tryFetchAs("/api/get-azure-maps-keys", decoder, request)
     match response with
@@ -145,7 +145,7 @@ let private get_azure_maps_keys () = promise {
 
 let private azure_maps_search (sub_key, query) = promise {
     let request =
-        [ RequestProperties.Method HttpMethod.GET ] 
+        [ RequestProperties.Method HttpMethod.GET ]
     let decoder = AzureMapsResponse.decoder
     let country_set ="&countrySet=AU,NZ"
     let api_version ="&api-version=1.0"
@@ -159,18 +159,18 @@ let private azure_maps_search (sub_key, query) = promise {
         Browser.Dom.console.info("num_results: " + keys.Summary.NumResults.ToString());
         return keys
     | Error message ->
-        Browser.Dom.console.error("Failed azure maps response: "+ message);
-        return failwith message
+        Browser.Dom.console.error("Failed azure maps response: "+ message.ToString());
+        return failwith (message.ToString())
 }
 
 let private load_user () = promise {
-    let request = make_get 
+    let request = make_get
     let decoder = Decode.Auto.generateDecoder<UserResponse>()
     let! response = TF.tryFetchAs("/api/load-user", decoder, request)
     match response with
     | Ok result ->
         match result.Error with
-        | None -> 
+        | None ->
             return result
         | Some api_error ->
             return raise (LoadUserEx api_error)
@@ -201,14 +201,14 @@ let init () : Model*Cmd<Msg> =
 
 let private of_api_error (result : APIError) =
     List.reduce (fun acc the_message -> acc + " " + the_message) result.Messages
-        
+
 let private of_load_school_result (code : APICode) (result : APIError) =
     List.fold2
         (fun acc the_code the_message -> if code = the_code then acc + " " + the_message else acc)
         "" result.Codes result.Messages
 
-let private std_label text = 
-    Label.label 
+let private std_label text =
+    Label.label
         [ Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
         [ str text ]
 
@@ -221,7 +221,7 @@ let private make_error (result : APIError option) =
             Message.header [ ] [
                 str "Error"
             ]
-            Message.body [   ] [ 
+            Message.body [   ] [
                 Help.help [
                     Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is5) ]
                 ] [
@@ -237,7 +237,7 @@ let private help_first_time_user (result : LoadSchoolResult option) =
         match List.contains APICode.NoSchool result.Error.Codes with
         | true ->
             Help.help
-                [ Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is6) 
+                [ Help.Modifiers [ Modifier.TextSize (Screen.All, TextSize.Is6)
                                    Modifier.TextAlignment (Screen.All, TextAlignment.Left)] ]
                 [ str "Enter your name." ]
         | false -> std_label "Name"
@@ -256,12 +256,12 @@ let private school_name_help_first_time_user (result : LoadSchoolResult option) 
     | _ -> std_label "School Name"
 
 let private account_level =
-    Level.level [ ] 
+    Level.level [ ]
         [ Level.left [ ]
             [ Level.title [ Common.Modifiers [ Modifier.TextTransform TextTransform.UpperCase
                                                Modifier.TextSize (Screen.All, TextSize.Is5) ]
                             Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "Account" ] ] ]
-    
+
 let private image_holder url =
     [ Image.image [ Image.Is128x128 ]
         [ img [ Src url ] ] ]
@@ -270,11 +270,11 @@ let private image_holder url =
 let input_field_location (error : APIError option) (code : APICode) (label: string)
     (text : string) on_change  =
     [ Field.div [ ]
-        (List.append 
+        (List.append
             [ Field.label [ Field.Label.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Left) ] ]
                 [ Field.p [ Field.Modifiers [ Modifier.TextWeight TextWeight.Bold ] ] [ str label ] ]
               Control.div [ ]
-                [ Input.text 
+                [ Input.text
                     [ Input.Value text
                       Input.OnChange on_change ] ] ]
               (match error with
@@ -294,7 +294,7 @@ let input_autosuggest model dispatch =
                 Dropdown.content [ ] [
                     for suggestion in model.Location.Suggestions do
                         yield Dropdown.Item.a [ Dropdown.Item.Props  [ OnClick (fun ev -> dispatch (ClickSuggestion suggestion)) ] ] [
-                                str suggestion 
+                                str suggestion
                               ]
                 ]
             ]
@@ -302,7 +302,7 @@ let input_autosuggest model dispatch =
     ]
 
 
-let school_content (model : Model) (dispatch : Msg->unit) = 
+let school_content (model : Model) (dispatch : Msg->unit) =
     [ Columns.columns [ ]
         [ Column.column [ ]
             [ yield! input_field model.Error APICode.FirstName "First Name" model.FirstName (fun e -> dispatch (SetFirstName e.Value))
@@ -329,7 +329,7 @@ let private go_live dispatch msg text =
     ] [ str text ]
 
 
-let view (model : Model) (dispatch : Msg -> unit) = 
+let view (model : Model) (dispatch : Msg -> unit) =
     match model.SchoolLoadState, model.UserLoadState with
     | Loaded, Loaded ->
         div [ ] [
@@ -339,7 +339,7 @@ let view (model : Model) (dispatch : Msg -> unit) =
                     Card.Header.title [ ] [ ]
                 ]
                 Card.content [ ]
-                    [ yield! school_content model dispatch ] 
+                    [ yield! school_content model dispatch ]
                 Card.footer [ ] [
                     Level.level [] [
                         Level.left [ ] [
@@ -352,7 +352,7 @@ let view (model : Model) (dispatch : Msg -> unit) =
                     ]
                ]
             ]
-            make_error model.Error 
+            make_error model.Error
         ]
     | _, _ ->  Client.Style.loading_view
 
