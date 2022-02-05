@@ -52,25 +52,25 @@ let private approve_pending (pending : ApprovePendingRequest) = promise {
         | None ->
             return ()
     | Error e ->
-        Browser.Dom.console.info ("got generic error: " + e)
-        return raise (ApprovePendingEx (APIError.init [APICode.Fetch] [e]))
+        Browser.Dom.console.info ("got generic error: " + e.ToString())
+        return raise (ApprovePendingEx (APIError.init [APICode.Fetch] [e.ToString()]))
 }
 
 let private dismiss_pending (pending : DismissPendingRequest) = promise {
-    let request = make_post 3 pending 
+    let request = make_post 3 pending
     let decoder = Decode.Auto.generateDecoder<DismissPendingResult>()
     let! response = TF.tryFetchAs("/api/dismiss-pending", decoder, request)
     match response with
     | Ok result ->
         match result.Error with
-        | Some error -> 
+        | Some error ->
             Browser.Dom.console.error ("dismiss_pending: " + (List.head error.Messages))
             return (raise (DismissPendingEx error))
         | _ ->
             return pending.Email //return email, use it to id the student to remove from the model
     | Error e ->
-        Browser.Dom.console.info ("got generic error: " + e)
-        return (raise (DismissPendingEx (APIError.init [APICode.Fetch] [e])))
+        Browser.Dom.console.info ("got generic error: " + e.ToString())
+        return (raise (DismissPendingEx (APIError.init [APICode.Fetch] [e.ToString()])))
 }
 
 let private get_pending () = promise {
@@ -86,7 +86,7 @@ let private get_pending () = promise {
         | None ->
             return result.Students
     | Error e ->
-        return raise (PendingEx (APIError.init [APICode.Fetch] [e]))
+        return raise (PendingEx (APIError.init [APICode.Fetch] [e.ToString()]))
 }
 
 let private remove_student (email : string) (students : Student list) =
@@ -105,10 +105,10 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | ApprovePendingSuccess student ->
         Browser.Dom.console.info ("Approved student")
         model, Cmd.OfPromise.either get_pending () GetPendingSuccess GetPendingFailure
-        
+
     | ApprovePendingFailure e ->
         Browser.Dom.console.warn ("Failed to approve pending student: " + e.Message)
-        match e with 
+        match e with
         | :? PendingEx as ex ->
             Browser.Dom.console.warn ("Received PendingEx: " + ex.Message)
             { model with Error = Some ex.Data0 }, Cmd.none
@@ -119,7 +119,7 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | GetPendingSuccess students ->
         {model with Pending = students}, Cmd.none
     | GetPendingFailure e ->
-        match e with 
+        match e with
         | :? PendingEx as ex ->
             Browser.Dom.console.warn ("Received PendingEx: " + ex.Message)
             { model with Error = Some ex.Data0 }, Cmd.none
@@ -130,12 +130,12 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
     | DismissPending student ->
         model, Cmd.OfPromise.either dismiss_pending (DismissPendingRequest.of_student student)
                DismissPendingSuccess DismissPendingFailure
-               
+
     | DismissPendingSuccess email ->
         {model with Pending = model.Pending |> remove_student email }, Cmd.none
-        
+
     | DismissPendingFailure e ->
-        match e with 
+        match e with
         | :? PendingEx as ex ->
             Browser.Dom.console.warn ("Received PendingEx: " + ex.Message)
             { model with Error = Some ex.Data0 }, Cmd.none
@@ -183,9 +183,9 @@ let private card_footer (student : Student) (dispatch : Msg -> unit) =
                     [ ] ] ] ] ]
 
 
-let private single_student (dispatch : Msg -> unit) (student : Student) = 
+let private single_student (dispatch : Msg -> unit) (student : Student) =
     Column.column [ Column.Width (Screen.All, Column.Is3) ]
-        [ Card.card [ ] 
+        [ Card.card [ ]
             [ ]
           Card.header [ Modifiers [ Modifier.BackgroundColor IsTitanSecondary ] ]
             [ Card.Header.title [ Card.Header.Title.Modifiers [ Modifier.TextColor IsWhite ] ]  [ str (student.FirstName + " " + student.LastName) ] ]
@@ -206,12 +206,12 @@ let private render_all_students (model : Model) (dispatch : Msg->unit) =
                     yield single_student dispatch x] ])
 
 let private students_level =
-    Level.level [ ] 
+    Level.level [ ]
         [ Level.left [ ]
             [ Level.title [ Common.Modifiers [ Modifier.TextTransform TextTransform.UpperCase
                                                Modifier.TextSize (Screen.All, TextSize.Is5) ]
                             Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "enrol" ] ] ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
-    Box.box' [ ] 
+    Box.box' [ ]
         [ yield! List.append [students_level] [yield! render_all_students model dispatch] ]

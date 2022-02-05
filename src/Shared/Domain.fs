@@ -45,7 +45,7 @@ type APIError =
         {Codes = [APICode.TitanOpenTok]; Messages = [msg]}
 
 [<CLIMutable>]
-type OpenTokInfo = 
+type OpenTokInfo =
     { SessionId : string
       Token : string
       Key : string }
@@ -106,16 +106,16 @@ type UserForTitan =
         { FirstName = ""; LastName = ""; Email = ""; IsTitan = false; IsApproved = false; IsStudent = false; IsTutor = false}
 
 [<CLIMutable>]
-type UsersForTitanResponse = 
+type UsersForTitanResponse =
     { Users : UserForTitan list
       Error : APIError option }
     static member init =
         { Users = []; Error = None}
-    static member db_error msg = {Users = []; Error = Some (APIError.db msg) } 
+    static member db_error msg = {Users = []; Error = Some (APIError.db msg) }
 
 [<CLIMutable>]
 type SignOutResult =
-    { Code : SignOutCode 
+    { Code : SignOutCode
       Message : string }
 
 
@@ -168,13 +168,13 @@ type UserResponse =
       Error : APIError option }
     static member init =
         {FirstName = ""; LastName = ""; Error = None}
-        
+
 [<CLIMutable>]
 type GetAllStudentsResult =
     { Error : APIError option
       Students : Student list}
     static member init = {Error = None; Students = []}
-    static member db_error msg = {Students = []; Error = Some (APIError.db msg) } 
+    static member db_error msg = {Students = []; Error = Some (APIError.db msg) }
 
 [<CLIMutableAttribute>]
 type AddStudentSchool =
@@ -241,7 +241,7 @@ type SaveRequest =
       SchoolName : string }
     static member init = {FirstName = ""; LastName = ""; SchoolName = ""; Info = ""; Subjects = ""; Location = ""}
     member this.is_valid = this.FirstName <> "" && this.LastName <> "" && this.SchoolName <> "" && this.Location <> ""
-    
+
 
 [<CLIMutable>]
 type School =
@@ -260,17 +260,17 @@ type School =
 type SchoolsResponse =
     { Schools : School list
       Error : APIError option}
-    
-    static member init = {Schools = []; Error = None} 
-    static member db_error msg = {Schools = []; Error = Some (APIError.db msg) } 
-    
+
+    static member init = {Schools = []; Error = None}
+    static member db_error msg = {Schools = []; Error = Some (APIError.db msg) }
+
 [<CLIMutable>]
 type GetAllSchoolsResult =
     { Schools : School list
       Error : APIError option}
-    
-    static member init = {Schools = []; Error = None} 
-    static member db_error msg = {Schools = []; Error = Some (APIError.db msg) } 
+
+    static member init = {Schools = []; Error = None}
+    static member db_error msg = {Schools = []; Error = Some (APIError.db msg) }
 
 
 [<CLIMutable>]

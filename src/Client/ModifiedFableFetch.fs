@@ -6,6 +6,7 @@ open Fable.Core.JsInterop
 open Fetch
 open Fable.Import
 open Thoth.Json
+open Thoth.Fetch
 
 
 type FetchResult =
@@ -49,14 +50,14 @@ let post_record (url: string) (body: string) (properties: RequestProperties list
 
 /// Map the APIError result if it is there to the exeption.
 /// Map the error (i.e. the string part in Result) to the exception
-let map_api_error_result (response : Result<APIError option,string>) ex_to_raise  = 
+let map_api_error_result (response : Result<APIError option,FetchError>) ex_to_raise  =
     match response with
     | Ok result ->
         match result with
         | Some api_error -> raise (ex_to_raise api_error)
         | None -> ()
     | Error e ->
-        raise (ex_to_raise (APIError.init [APICode.Fetch] [e]))
+        raise (ex_to_raise (APIError.init [APICode.Fetch] [e.ToString()]))
 
 let inline make_post (count : int) (data : 'a) =
     let body = Encode.Auto.toString (count, data)
@@ -65,7 +66,7 @@ let inline make_post (count : int) (data : 'a) =
           RequestProperties.Credentials RequestCredentials.Include
           requestHeaders [ HttpRequestHeaders.ContentType "application/json"
                            HttpRequestHeaders.Accept "application/json"]
-          RequestProperties.Body !^(body) ] 
+          RequestProperties.Body !^(body) ]
     props
 
 let make_get =
@@ -73,7 +74,7 @@ let make_get =
         [ RequestProperties.Method HttpMethod.GET
           RequestProperties.Credentials RequestCredentials.Include
           requestHeaders [ HttpRequestHeaders.ContentType "application/json"
-                           HttpRequestHeaders.Accept "application/json"] ] 
+                           HttpRequestHeaders.Accept "application/json"] ]
     props
-    
-    
+
+

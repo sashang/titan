@@ -24,7 +24,7 @@ type Model =
 type Email = string
 type ClaimType = string
 
-type Msg = 
+type Msg =
     | ClickRadio of (Email*ClaimType)
     | ClickUpdate of Email
     | UpdateSuccess of unit
@@ -53,8 +53,8 @@ let private get_unapproved_users () = promise {
         | None ->
             return result.Users
     | Error e ->
-        Browser.Dom.console.error ("get_unapproved_users failed: " + e)
-        return raise (GetUsersForTitanEx (APIError.init [APICode.Fetch] [e]))
+        Browser.Dom.console.error ("get_unapproved_users failed: " + e.ToString())
+        return raise (GetUsersForTitanEx (APIError.init [APICode.Fetch] [e.ToString()]))
 }
 
 let private get_users_for_titan () = promise {
@@ -70,7 +70,7 @@ let private get_users_for_titan () = promise {
         | None ->
             return result.Users
     | Error e ->
-        return raise (GetUsersForTitanEx (APIError.init [APICode.Fetch] [e]))
+        return raise (GetUsersForTitanEx (APIError.init [APICode.Fetch] [e.ToString()]))
 }
 
 let private update_user_approval (user : UserForTitan)  = promise {
@@ -87,7 +87,7 @@ let private update_user_approval (user : UserForTitan)  = promise {
         | None ->
             return ()
     | Error e ->
-        return raise (UpdateUserApprovalEx (APIError.init [APICode.Fetch] [e]))
+        return raise (UpdateUserApprovalEx (APIError.init [APICode.Fetch] [e.ToString()]))
 }
 
 let private delete_user (user : UserForTitan)  = promise {
@@ -105,12 +105,12 @@ let private delete_user (user : UserForTitan)  = promise {
         | None ->
             return ()
     | Error e ->
-        return raise (DeleteUserEx (APIError.init [APICode.Fetch] [e]))
+        return raise (DeleteUserEx (APIError.init [APICode.Fetch] [e.ToString()]))
 }
 
 
 let init (init_data : UsersToInit) =
-    {Users = []; Error = None}, 
+    {Users = []; Error = None},
     Cmd.OfPromise.either (if init_data = Approved then get_users_for_titan else get_unapproved_users) () GetUsersSuccess Failure
 
 
@@ -151,7 +151,7 @@ let render_user (user : UserForTitan) (dispatch : Msg->unit) =
         ]
     ]
 
-let users (model : Model) (dispatch : Msg->unit) = 
+let users (model : Model) (dispatch : Msg->unit) =
     Columns.columns [ ] [
         Column.column [ ] [
            for user in model.Users do
@@ -160,7 +160,7 @@ let users (model : Model) (dispatch : Msg->unit) =
     ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
-    Container.container 
+    Container.container
         [ Container.IsFluid
           Container.Modifiers [ ] ] [
         users model dispatch
@@ -171,18 +171,18 @@ let update (model : Model) (msg : Msg) =
     match model, msg with
     | model, ClickUpdate email ->
         //update the user with the given email
-        let user_to_update = 
+        let user_to_update =
             model.Users
             |> List.find (fun user -> user.Email = email)
         model, Cmd.OfPromise.either update_user_approval user_to_update UpdateSuccess Failure
 
     | model, ClickDelete email ->
         //update the user with the given email
-        let user_to_update = 
+        let user_to_update =
             model.Users
             |> List.find (fun user -> user.Email = email)
         model, Cmd.OfPromise.either delete_user user_to_update DeleteSuccess Failure
-    
+
     | model, UpdateSuccess () ->
         Browser.Dom.console.info ("Updated user")
         model, Cmd.none
@@ -195,27 +195,27 @@ let update (model : Model) (msg : Msg) =
         Browser.Dom.console.info ("changed " + claim_type + " for " + email)
         match claim_type with
         | "IsTutor" ->
-            let users' = 
+            let users' =
                 model.Users
-                |> List.map (fun (user : UserForTitan) -> 
+                |> List.map (fun (user : UserForTitan) ->
                                 if user.Email = email then {user with IsTutor = not user.IsTutor} else user)
             {model with Users = users'}, Cmd.none
         | "IsStudent" ->
-            let users' = 
+            let users' =
                 model.Users
-                |> List.map (fun (user : UserForTitan) -> 
+                |> List.map (fun (user : UserForTitan) ->
                                 if user.Email = email then {user with IsStudent = not user.IsStudent} else user)
             {model with Users = users'}, Cmd.none
         | "IsApproved" ->
-            let users' = 
+            let users' =
                 model.Users
-                |> List.map (fun (user : UserForTitan) -> 
+                |> List.map (fun (user : UserForTitan) ->
                                 if user.Email = email then {user with IsApproved = not user.IsApproved} else user)
             {model with Users = users'}, Cmd.none
         | "IsTitan" ->
-            let users' = 
+            let users' =
                 model.Users
-                |> List.map (fun (user : UserForTitan) -> 
+                |> List.map (fun (user : UserForTitan) ->
                                 if user.Email = email then {user with IsTitan = not user.IsTitan} else user)
             {model with Users = users'}, Cmd.none
         | _ ->

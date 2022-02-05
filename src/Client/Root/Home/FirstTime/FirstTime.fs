@@ -47,7 +47,7 @@ type StudentFormModel =
       LastName : string
       Email : string }
       static member init fn ln email = {FirstName = fn; LastName = ln; Email = email}
-      
+
 type CategoryForm =
     | TutorForm of TutorFormModel
     | StudentForm of StudentFormModel
@@ -59,7 +59,7 @@ type Model =
       Accepted : bool
       Consent : bool //student has parent or guardian consent
       Error : APIError option }
-    static member init active claims = 
+    static member init active claims =
         {Active = true; Accepted = false; SubForm = None;
          Claims = claims; Error = None; Consent = false}
 
@@ -98,7 +98,7 @@ let private inner_content model dispatch = function
             [ yield! input_field  model.Error APICode.FirstName
                   "First Name" form.FirstName (fun e -> dispatch (SetFirstName e.Value))
               yield! input_field model.Error APICode.LastName
-                "Last Name" form.LastName (fun e -> dispatch (SetLastName e.Value)) 
+                "Last Name" form.LastName (fun e -> dispatch (SetLastName e.Value))
               yield! input_field model.Error APICode.SchoolName
                 "School Name" form.SchoolName (fun e -> dispatch (SetSchoolName e.Value))
               yield! input_field_ro "Email" form.Email
@@ -106,13 +106,13 @@ let private inner_content model dispatch = function
 
     | StudentForm form ->
         Box.box' [ ]
-            [ yield! input_field model.Error APICode.FirstName 
+            [ yield! input_field model.Error APICode.FirstName
                 "First Name" form.FirstName (fun e -> dispatch (SetFirstName e.Value))
               yield! input_field model.Error APICode.LastName
                 "Last Name" form.LastName (fun e -> dispatch (SetLastName e.Value))
-              yield! input_field_ro "Email" form.Email 
+              yield! input_field_ro "Email" form.Email
               yield checkbox CONSENT model.Consent dispatch ClickConsent
-              yield checkbox ACCEPT_TERMS model.Accepted dispatch ClickAcceptTerms ] 
+              yield checkbox ACCEPT_TERMS model.Accepted dispatch ClickAcceptTerms ]
 
 let content (model : Model) (dispatch : Msg -> unit) =
     let is_tutor_form subform =
@@ -120,7 +120,7 @@ let content (model : Model) (dispatch : Msg -> unit) =
         | Some (TutorForm _) -> true
         | _ -> false
 
-    let is_student_form subform = 
+    let is_student_form subform =
         match subform with
         | Some (StudentForm _) -> true
         | _ -> false
@@ -131,7 +131,7 @@ let content (model : Model) (dispatch : Msg -> unit) =
                 [ button_enabled dispatch ClickTutor "Tutor" true ]
               Column.column [ ]
                 [ button_enabled dispatch ClickStudent "Student" true ] ]
-                
+
         (match model.SubForm with
         | Some form -> inner_content model dispatch form
         | None -> nothing)
@@ -139,7 +139,7 @@ let content (model : Model) (dispatch : Msg -> unit) =
 
 let view (model : Model) (dispatch : Msg -> unit) =
 
-    let is_go_enabled = 
+    let is_go_enabled =
         match model.SubForm with
         | Some (TutorForm _) ->
             model.Accepted
@@ -170,9 +170,9 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
 
     | {Accepted = false; SubForm = Some (TutorForm _)} , ClickGo ->
         model, Cmd.none
-        
+
     | {Accepted = true; SubForm = Some (TutorForm tutor_model)} , ClickGo ->
-        model, Cmd.OfPromise.either 
+        model, Cmd.OfPromise.either
                     submit_tutor { TutorRegister.FirstName = tutor_model.FirstName
                                    TutorRegister.LastName = tutor_model.LastName
                                    TutorRegister.Email = tutor_model.Email
@@ -187,8 +187,8 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
         model, Cmd.none
 
     | {Consent = true; Accepted = true; SubForm = Some(StudentForm student_model)}, ClickGo ->
-       {model with Active = true}, 
-       Cmd.OfPromise.either submit_student 
+       {model with Active = true},
+       Cmd.OfPromise.either submit_student
           {StudentRegister.FirstName = student_model.FirstName
            StudentRegister.LastName = student_model.LastName
            StudentRegister.Email = student_model.Email } RegisterStudentSucceeded Failure
@@ -239,7 +239,7 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
 
     | model, ClickConsent ->
         {model with Consent = not model.Consent}, Cmd.none
-    
+
     | _, msg ->
         Browser.Dom.console.warn(sprintf "message not handled %A" msg)
         model,Cmd.none

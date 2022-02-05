@@ -36,20 +36,20 @@ type Msg =
 exception GetSessionEx of APIError
 
 let private get_live_session_id () = promise {
-    let request = make_get 
+    let request = make_get
     let decoder = Decode.Auto.generateDecoder<OTIResponse>()
     let! response = TF.tryFetchAs("/api/get-session-id", decoder, request)
     match response with
     | Ok result ->
         match result.Error with
-        | None -> 
+        | None ->
             match result.Info with
             | Some oti -> return oti
             | None -> return failwith ("Expected opentok info but got nothing")
         | Some api_error ->
             return raise (GetSessionEx api_error)
     | Error msg ->
-        return failwith ("Failed to go live: " + msg)
+        return failwith ("Failed to go live: " + msg.ToString())
 }
 
 
@@ -117,13 +117,13 @@ let update (model : Model) (msg : Msg) =
 
 let private  nav_item_stop_button (dispatch : Msg -> unit) =
     Navbar.Item.div [ ]
-        [ Button.button 
+        [ Button.button
             [ Button.Color IsDanger
               Button.OnClick (fun e -> dispatch StopLive)  ]
             [ str "Stop" ] ]
 
 let private classroom_level model dispatch =
-    Level.level [ ] [ 
+    Level.level [ ] [
         Level.left [ ]
             [ Level.title [ Common.Modifiers [ Modifier.TextTransform TextTransform.UpperCase
                                                Modifier.TextSize (Screen.All, TextSize.Is5) ]
@@ -143,7 +143,7 @@ let private students_in_room (model : Model) =
     | [] -> str "Nobody here"
     | students -> nothing
 
-let private video = 
+let private video =
     div [ HTMLAttr.Id "videos"] [
         div [ HTMLAttr.Id "layoutContainer"] [
         ]

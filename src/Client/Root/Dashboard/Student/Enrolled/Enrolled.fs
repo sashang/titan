@@ -13,7 +13,7 @@ type TF = Thoth.Fetch.Fetch
 open Client.Shared
 
 type Model =
-    { EnrolledSchools : School list //list of schools the student is enrolled in 
+    { EnrolledSchools : School list //list of schools the student is enrolled in
       AllSchools : School list //list of all schools
       PendingSchools : School list //list of schools that the student has requested enrolment
       PendingLoaded : LoadingState
@@ -50,7 +50,7 @@ let private get_enrolled_schools () = promise {
         | Some api_error -> return raise (GetEnrolledSchoolsEx api_error)
         | None ->  return result.Schools
     | Error e ->
-        return raise (GetEnrolledSchoolsEx (APIError.init [APICode.Fetch] [e]))
+        return raise (GetEnrolledSchoolsEx (APIError.init [APICode.Fetch] [e.ToString()]))
 }
 
 ///get the schools that this student has requested enrolment
@@ -65,7 +65,7 @@ let private get_pending_schools () = promise {
         | Some api_error -> return raise (GetPendingSchoolsEx api_error)
         | None ->  return result.Schools
     | Error e ->
-        return raise (GetPendingSchoolsEx (APIError.init [APICode.Fetch] [e]))
+        return raise (GetPendingSchoolsEx (APIError.init [APICode.Fetch] [e.ToString()]))
 }
 
 let private get_unenrolled_schools () = promise {
@@ -84,7 +84,7 @@ let private get_unenrolled_schools () = promise {
             Browser.Dom.console.info "result value ok"
             return result.Schools
     | Error e ->
-        return raise (GetUnenrolledSchoolsEx (APIError.init [APICode.Fetch] [e]))
+        return raise (GetUnenrolledSchoolsEx (APIError.init [APICode.Fetch] [e.ToString()]))
 }
 
 let private enrol_student (er : EnrolRequest) = promise {
@@ -98,7 +98,7 @@ let private enrol_student (er : EnrolRequest) = promise {
         | Some api_error -> return raise (EnrolEx api_error)
         | None -> return ()
     | Error e ->
-        return raise (EnrolEx (APIError.init [APICode.Fetch] [e]))
+        return raise (EnrolEx (APIError.init [APICode.Fetch] [e.ToString()]))
 }
 
 let init () =
@@ -174,7 +174,7 @@ let update (model : Model) (msg : Msg) : Model*Cmd<Msg> =
 
 let private card_footer (school : School) (dispatch : Msg -> unit) =
      Card.Footer.div [ ]
-        [  ] 
+        [  ]
 
 let private card_footer_enrol (school : School) (dispatch : Msg -> unit) =
      Card.Footer.div [ ]
@@ -219,7 +219,7 @@ let render_school (school : School)  (dispatch : Msg -> unit) =
             yield! card_content school dispatch
         ]
         Card.footer [ ] [
-            card_footer school dispatch 
+            card_footer school dispatch
         ]
     ]
 
@@ -236,26 +236,26 @@ let render_school_for_enrolment (school : School)  (dispatch : Msg -> unit) =
             yield! card_content school dispatch
         ]
         Card.footer [ ] [
-            card_footer_enrol school dispatch 
+            card_footer_enrol school dispatch
         ]
     ]
 
 let private pending_schools model dispatch =
-    Level.level [ ] 
+    Level.level [ ]
         [ Level.left [ ]
             [ Level.title [ Common.Modifiers [ Modifier.TextTransform TextTransform.UpperCase
                                                Modifier.TextSize (Screen.All, TextSize.Is5) ]
                             Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "Awaiting approval" ] ] ]
 
 let private your_schools model dispatch =
-    Level.level [ ] 
+    Level.level [ ]
         [ Level.left [ ]
             [ Level.title [ Common.Modifiers [ Modifier.TextTransform TextTransform.UpperCase
                                                Modifier.TextSize (Screen.All, TextSize.Is5) ]
                             Common.Props [ Style [ CSSProp.FontFamily "'Montserrat', sans-serif" ]] ] [ str "your schools" ] ] ]
 
 let private all_schools model dispatch =
-    Level.level [ ] 
+    Level.level [ ]
         [ Level.left [ ]
             [ Level.title [ Common.Modifiers [ Modifier.TextTransform TextTransform.UpperCase
                                                Modifier.TextSize (Screen.All, TextSize.Is5) ]
@@ -273,21 +273,21 @@ let private render_all_school_types model dispatch =
             | [] ->
                 yield nothing
             | _ ->
-                yield pending_schools model dispatch 
+                yield pending_schools model dispatch
                 yield! [ for school in model.PendingSchools do
                             yield render_school school dispatch ]
         ]
         div [] [
-            yield all_schools model dispatch 
+            yield all_schools model dispatch
             yield! [ for school in model.AllSchools do
-                        yield render_school_for_enrolment school dispatch ] 
+                        yield render_school_for_enrolment school dispatch ]
         ]
     ]
 
 //render the schools that this student is enrolled in
 let view (model : Model) (dispatch : Msg -> unit) =
         Box.box' [ ] [
-            
+
             (match model.EnrolledLoaded,model.AllLoaded,model.PendingLoaded,model.ActiveEnrolMessage with
                 | Loaded, Loaded, Loaded, true ->
                     div [ ] [
