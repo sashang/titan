@@ -8,7 +8,7 @@
         "react": "^16.10.2",
         "react-bootstrap": "0.33.1",
         "react-dom": "^16.10.2",
-        "whatwg-fetch": "^3.0.0"
+        "whatwg-fetch": "^3.6.2"
     },
     "devDependencies": {
         "@babel/core": "^7.6.4",
@@ -50,7 +50,7 @@
         "webpack": "^4.41.2",
         "webpack-cli": "^3.3.9",
         "webpack-dev-server": "^3.8.2",
-        "whatwg-fetch": "^3.0.0"
+        "whatwg-fetch": "^3.6.2"
     },
     "scripts": {
         "css-build": "node-sass --omit-source-map-url src/Client/public/sass/mystyles.scss src/Client/public/css/mystyles.css",
