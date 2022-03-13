@@ -2,10 +2,8 @@
 
 ## Introduction
 
-**
-I've stopped working on this startup project and moved onto other things.
-I've made the repository public.
-**
+**I've stopped working on this startup project and moved onto other things.
+I've made the repository public.**
 
 ### A note about the naming
 Titan is the name of this project (a webapp) associated with this git repo. I
